@@ -1,0 +1,10 @@
+var lang = "lox";
+int rand = 7;
+float PI = 3.14;
+string first = "Hello World!";
+string multi = "Now is the winter of our discontent
+Made glorious summer by this sun of York;
+And all the clouds that lour'd upon our house
+In the deep bosom of the ocean buried.";
+
+if(a < b or rand >= PI) c = rand;

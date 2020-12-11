@@ -1,0 +1,6 @@
+var PI = 3.14;
+var a = 5;
+var b = a;
+var c = a + b;
+print PI;
+print c;
