@@ -165,5 +165,24 @@ namespace ULox
             environment.Assign(expr.name, val);
             return val;
         }
+
+        public void Visit(Stmt.Block stmt) => ExecuteBlock(stmt.statements, new Environment(environment));
+
+        private void ExecuteBlock(List<Stmt> statements, Environment environment)
+        {
+            var prevEnv = this.environment;
+            try
+            {
+                this.environment = environment;
+                foreach (var stmt in statements)
+                {
+                    Execute(stmt);
+                }
+            }
+            finally
+            {
+                this.environment = prevEnv;
+            }
+        }
     }
 }

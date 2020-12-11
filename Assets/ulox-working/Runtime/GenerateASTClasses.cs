@@ -21,6 +21,7 @@ namespace ULox
         };
         private static string[] _requiredStmtTypes = new string[]
         {
+            "Block      : List<Stmt> statements",
             "Expression : Expr expression",
             "Print      : Expr expression",
             "Var        : Token name, Expr initializer",
@@ -67,7 +68,9 @@ namespace ULox
             var rootTypeNameLower = rootTypeName.ToLower();
 
             var sb = new StringBuilder();
-            sb.Append($@"namespace ULox
+            sb.Append($@"using System.Collections.Generic;
+
+namespace ULox
 {{
     public abstract class {rootTypeName}
     {{");

@@ -13,6 +13,14 @@ namespace ULox
         }
 
         private Dictionary<string, Object> values = new Dictionary<string, Object>();
+        private Environment enclosing;
+
+        public Environment() { }
+
+        public Environment(Environment enclosing)
+        {
+            this.enclosing = enclosing;
+        }
 
         public void Define(String name, Object value)
         {
@@ -26,6 +34,9 @@ namespace ULox
                 return retval;
             }
 
+            if(enclosing != null) 
+                return enclosing.Get(name);
+
             throw new EnvironmentException(name,$"Undefined variable {name.Lexeme}");
         }
 
@@ -33,6 +44,9 @@ namespace ULox
         {
             if (values.ContainsKey(name.Lexeme))
                 values[name.Lexeme] = val;
+
+            if (enclosing != null)
+                enclosing.Assign(name, val);
 
             throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
         }

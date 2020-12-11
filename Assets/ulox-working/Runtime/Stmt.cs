@@ -1,7 +1,18 @@
+using System.Collections.Generic;
+
 namespace ULox
 {
     public abstract class Stmt
     {
+        public class Block : Stmt
+        {
+            public Block( List<Stmt> statements)
+            {
+                this.statements = statements;
+            }
+            public readonly List<Stmt> statements;
+            public override void Accept(Visitor visitor) => visitor.Visit(this);
+        }
         public class Expression : Stmt
         {
             public Expression( Expr expression)
@@ -36,6 +47,7 @@ namespace ULox
 
         public interface Visitor 
         {
+            void Visit(Block stmt);
             void Visit(Expression stmt);
             void Visit(Print stmt);
             void Visit(Var stmt);
