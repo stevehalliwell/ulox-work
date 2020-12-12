@@ -1,0 +1,9 @@
+var a = false;
+var b = "Hello";
+
+print a or b;
+
+if(b)
+{
+	print "b is truthy";
+}

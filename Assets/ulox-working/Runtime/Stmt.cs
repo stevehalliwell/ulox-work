@@ -22,6 +22,19 @@ namespace ULox
             public readonly Expr expression;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
+        public class If : Stmt
+        {
+            public If( Expr condition, Stmt thenBranch, Stmt elseBranch)
+            {
+                this.condition = condition;
+                this.thenBranch = thenBranch;
+                this.elseBranch = elseBranch;
+            }
+            public readonly Expr condition;
+            public readonly Stmt thenBranch;
+            public readonly Stmt elseBranch;
+            public override void Accept(Visitor visitor) => visitor.Visit(this);
+        }
         public class Print : Stmt
         {
             public Print( Expr expression)
@@ -42,6 +55,17 @@ namespace ULox
             public readonly Expr initializer;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
+        public class While : Stmt
+        {
+            public While( Expr condition, Stmt body)
+            {
+                this.condition = condition;
+                this.body = body;
+            }
+            public readonly Expr condition;
+            public readonly Stmt body;
+            public override void Accept(Visitor visitor) => visitor.Visit(this);
+        }
 
         public abstract void Accept(Visitor visitor);
 
@@ -49,8 +73,10 @@ namespace ULox
         {
             void Visit(Block stmt);
             void Visit(Expression stmt);
+            void Visit(If stmt);
             void Visit(Print stmt);
             void Visit(Var stmt);
+            void Visit(While stmt);
         }
     }
 }

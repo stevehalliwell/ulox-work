@@ -95,7 +95,7 @@ namespace ULox
         {
             var right = Evaluate(expr.right);
 
-            switch(expr.op.TokenType)
+            switch (expr.op.TokenType)
             {
             case TokenType.MINUS:
                 CheckNumberOperand(expr.op, right);
@@ -130,7 +130,7 @@ namespace ULox
             throw new RuntimeTypeException(op, "Operands must be numbers.");
         }
 
-        private static void CheckNumberOperand(Token op,object right)
+        private static void CheckNumberOperand(Token op, object right)
         {
             if (right is double) return;
             throw new RuntimeTypeException(op, "Operands must be numbers.");
@@ -161,7 +161,7 @@ namespace ULox
 
         public object Visit(Expr.Assign expr)
         {
-            var val = Evaluate(expr);
+            var val = Evaluate(expr.value);
             environment.Assign(expr.name, val);
             return val;
         }
@@ -183,6 +183,36 @@ namespace ULox
             {
                 this.environment = prevEnv;
             }
+        }
+
+        public void Visit(Stmt.If stmt)
+        {
+            if (IsTruthy(Evaluate(stmt.condition)))
+                Execute(stmt.thenBranch);
+            else if (stmt.elseBranch != null)
+                Execute(stmt.elseBranch);
+        }
+
+        public object Visit(Expr.Logical expr)
+        {
+            var left = Evaluate(expr.left);
+
+            if (expr.op.TokenType == TokenType.OR)
+            {
+                if (IsTruthy(left)) return left;
+            }
+            else
+            {
+                if (!IsTruthy(left)) return left;
+            }
+
+            return Evaluate(expr.right);
+        }
+
+        public void Visit(Stmt.While stmt)
+        {
+            while (IsTruthy(Evaluate(stmt.condition)))
+                Execute(stmt.body);
         }
     }
 }

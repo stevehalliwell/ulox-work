@@ -46,6 +46,19 @@ namespace ULox
             public readonly object value;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
+        public class Logical : Expr
+        {
+            public Logical( Expr left, Token op, Expr right)
+            {
+                this.left = left;
+                this.op = op;
+                this.right = right;
+            }
+            public readonly Expr left;
+            public readonly Token op;
+            public readonly Expr right;
+            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
+        }
         public class Unary : Expr
         {
             public Unary( Token op, Expr right)
@@ -75,6 +88,7 @@ namespace ULox
             T Visit(Binary expr);
             T Visit(Grouping expr);
             T Visit(Literal expr);
+            T Visit(Logical expr);
             T Visit(Unary expr);
             T Visit(Variable expr);
         }

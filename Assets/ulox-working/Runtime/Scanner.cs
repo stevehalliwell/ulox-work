@@ -23,7 +23,6 @@ namespace ULox
             { "and",    TokenType.AND},
             { "or",     TokenType.OR},
             { "if",     TokenType.IF},
-            { "elseif", TokenType.ELSE_IF},
             { "else",   TokenType.ELSE},
             { "while",  TokenType.WHILE},
             { "for",    TokenType.FOR},

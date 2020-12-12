@@ -24,6 +24,11 @@ namespace ULox
             throw new System.NotImplementedException();
         }
 
+        public string Visit(Expr.Logical expr)
+        {
+            throw new System.NotImplementedException();
+        }
+
         private string Parenthesize(string name, params Expr[] list)
         {
             var sb = new StringBuilder();

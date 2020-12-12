@@ -43,10 +43,16 @@ namespace ULox
         public void Assign(Token name, object val)
         {
             if (values.ContainsKey(name.Lexeme))
+            {
                 values[name.Lexeme] = val;
+                return;
+            }
 
             if (enclosing != null)
+            {
                 enclosing.Assign(name, val);
+                return;
+            }
 
             throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
         }
