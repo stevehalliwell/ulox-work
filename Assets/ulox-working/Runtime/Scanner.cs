@@ -26,14 +26,15 @@ namespace ULox
             { "else",   TokenType.ELSE},
             { "while",  TokenType.WHILE},
             { "for",    TokenType.FOR},
-            { "loop",   TokenType.LOOP},
+            //{ "loop",   TokenType.LOOP},
             { "return", TokenType.RETURN},
-            { "break",  TokenType.BREAK},
-            { "continue", TokenType.CONTINUE},
+            //{ "break",  TokenType.BREAK},
+            //{ "continue", TokenType.CONTINUE},
             { "true",   TokenType.TRUE},
             { "false",  TokenType.FALSE},
             { "null",   TokenType.NULL},
             { "print",  TokenType.PRINT},
+            { "fun",  TokenType.FUNCTION},
         };
 
         public Scanner(Action<string> logger)

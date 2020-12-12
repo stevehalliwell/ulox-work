@@ -19,9 +19,22 @@ namespace ULox
             public RuntimeCallException(Token token, string msg) : base(token, msg) { }
         }
 
+        public class InterpreterControlException : Exception { }
+
+        public class Return : InterpreterControlException
+        {
+            public object Value { get; set; }
+            public Return(object val)
+            {
+                Value = val;
+            }
+        }
+
         private Action<string> _logger;
         private Environment globals = new Environment();
         private Environment currentEnvironment;
+
+        public Environment Globals => globals;
 
         public Interpreter(Action<string> logger)
         {
@@ -43,6 +56,23 @@ namespace ULox
             catch (RuntimeTypeException error)
             {
                 _logger?.Invoke(error.Message);
+            }
+        }
+
+        public void ExecuteBlock(List<Stmt> statements, Environment environment)
+        {
+            var prevEnv = this.currentEnvironment;
+            try
+            {
+                this.currentEnvironment = environment;
+                foreach (var stmt in statements)
+                {
+                    Execute(stmt);
+                }
+            }
+            finally
+            {
+                this.currentEnvironment = prevEnv;
             }
         }
 
@@ -177,22 +207,6 @@ namespace ULox
 
         public void Visit(Stmt.Block stmt) => ExecuteBlock(stmt.statements, new Environment(currentEnvironment));
 
-        private void ExecuteBlock(List<Stmt> statements, Environment environment)
-        {
-            var prevEnv = this.currentEnvironment;
-            try
-            {
-                this.currentEnvironment = environment;
-                foreach (var stmt in statements)
-                {
-                    Execute(stmt);
-                }
-            }
-            finally
-            {
-                this.currentEnvironment = prevEnv;
-            }
-        }
 
         public void Visit(Stmt.If stmt)
         {
@@ -243,6 +257,20 @@ namespace ULox
             }
 
             throw new RuntimeTypeException(expr.paren, "Can only call function types");
+        }
+
+        public void Visit(Stmt.Function stmt)
+        {
+            var func = new Function(stmt);
+            currentEnvironment.Define(stmt.name.Lexeme, func);
+        }
+
+        public void Visit(Stmt.Return stmt)
+        {
+            object val = null;
+            if (stmt.value != null) val = Evaluate(stmt.value);
+
+            throw new Return(val);
         }
     }
 }

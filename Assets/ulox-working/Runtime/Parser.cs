@@ -40,6 +40,7 @@ namespace ULox
         {
             try
             {
+                if (Match(TokenType.FUNCTION)) return Function("function");
                 if (Match(TokenType.VAR)) return VarDeclaration();
 
                 return Statement();
@@ -49,6 +50,31 @@ namespace ULox
                 Synchronize();
                 return null;
             }
+        }
+
+        private Stmt Function(string kind)
+        {
+            var name = Consume(TokenType.IDENT, "Expect " + kind + " name.");
+
+            Consume(TokenType.OPEN_PAREN, "Expect '(' after " + kind + " name.");
+            var parameters = new List<Token>();
+            if (!Check(TokenType.CLOSE_PAREN))
+            {
+                do
+                {
+                    if (parameters.Count >= 255)
+                    {
+                        throw new ParseException(Peek(), "Can't have more than 255 arguments.");
+                    }
+
+                    parameters.Add(Consume(TokenType.IDENT, "Expect parameter name."));
+                } while (Match(TokenType.COMMA));
+            }
+            Consume(TokenType.CLOSE_PAREN, "Expect ')' after parameters.");
+            
+            Consume(TokenType.OPEN_BRACE, "Expect '{' before " + kind + " body.");
+            var body = Block();
+            return new Stmt.Function(name, parameters, body);
         }
 
         private Stmt VarDeclaration()
@@ -69,11 +95,23 @@ namespace ULox
         {
             if (Match(TokenType.FOR)) return ForStatement();
             if (Match(TokenType.IF)) return IfStatement();
-            if (Match(TokenType.PRINT)) return PrintStatement();
+            if (Match(TokenType.PRINT)) return PrintStatement(); 
+            if (Match(TokenType.RETURN)) return ReturnStatement();
             if (Match(TokenType.WHILE)) return WhileStatement();
             if (Match(TokenType.OPEN_BRACE)) return new Stmt.Block(Block());
 
             return ExpressionStatement();
+        }
+
+        private Stmt ReturnStatement()
+        {
+            var keyword = Previous();
+            Expr value = null;
+            if (!Check(TokenType.END_STATEMENT))
+                value = Expression();
+
+            Consume(TokenType.END_STATEMENT, "Expect ; after return value.");
+            return new Stmt.Return(keyword, value);
         }
 
         private Stmt ForStatement()
