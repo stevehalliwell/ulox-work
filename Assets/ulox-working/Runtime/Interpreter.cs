@@ -14,12 +14,21 @@ namespace ULox
             { }
         }
 
+        public class RuntimeCallException : RuntimeTypeException
+        {
+            public RuntimeCallException(Token token, string msg) : base(token, msg) { }
+        }
+
         private Action<string> _logger;
-        private Environment environment = new Environment();
+        private Environment globals = new Environment();
+        private Environment currentEnvironment;
 
         public Interpreter(Action<string> logger)
         {
             _logger = logger;
+            currentEnvironment = globals;
+
+            globals.Define("clock", new NativeExpression(() => System.DateTime.Now.Ticks));
         }
 
         public void Interpret(List<Stmt> statements)
@@ -154,26 +163,26 @@ namespace ULox
                 value = Evaluate(stmt.initializer);
             }
 
-            environment.Define(stmt.name.Lexeme, value);
+            currentEnvironment.Define(stmt.name.Lexeme, value);
         }
 
-        public object Visit(Expr.Variable expr) => environment.Get(expr.name);
+        public object Visit(Expr.Variable expr) => currentEnvironment.Get(expr.name);
 
         public object Visit(Expr.Assign expr)
         {
             var val = Evaluate(expr.value);
-            environment.Assign(expr.name, val);
+            currentEnvironment.Assign(expr.name, val);
             return val;
         }
 
-        public void Visit(Stmt.Block stmt) => ExecuteBlock(stmt.statements, new Environment(environment));
+        public void Visit(Stmt.Block stmt) => ExecuteBlock(stmt.statements, new Environment(currentEnvironment));
 
         private void ExecuteBlock(List<Stmt> statements, Environment environment)
         {
-            var prevEnv = this.environment;
+            var prevEnv = this.currentEnvironment;
             try
             {
-                this.environment = environment;
+                this.currentEnvironment = environment;
                 foreach (var stmt in statements)
                 {
                     Execute(stmt);
@@ -181,7 +190,7 @@ namespace ULox
             }
             finally
             {
-                this.environment = prevEnv;
+                this.currentEnvironment = prevEnv;
             }
         }
 
@@ -213,6 +222,27 @@ namespace ULox
         {
             while (IsTruthy(Evaluate(stmt.condition)))
                 Execute(stmt.body);
+        }
+
+        public object Visit(Expr.Call expr)
+        {
+            var callee = Evaluate(expr.callee);
+            var args = new List<Object>();
+            foreach (var item in expr.arguments)
+            {
+                args.Add(Evaluate(item));
+            }
+
+            if (callee is ICallable calleeCallable)
+            {
+                if (args.Count != calleeCallable.Arity)
+                    throw new RuntimeCallException(expr.paren,
+                        $"Expected { calleeCallable.Arity} args but got { args.Count }");
+
+                return calleeCallable.Call(this, args);
+            }
+
+            throw new RuntimeTypeException(expr.paren, "Can only call function types");
         }
     }
 }

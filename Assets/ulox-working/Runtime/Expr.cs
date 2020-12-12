@@ -28,6 +28,19 @@ namespace ULox
             public readonly Expr right;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
+        public class Call : Expr
+        {
+            public Call( Expr callee, Token paren, List<Expr> arguments)
+            {
+                this.callee = callee;
+                this.paren = paren;
+                this.arguments = arguments;
+            }
+            public readonly Expr callee;
+            public readonly Token paren;
+            public readonly List<Expr> arguments;
+            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
+        }
         public class Grouping : Expr
         {
             public Grouping( Expr expression)
@@ -86,6 +99,7 @@ namespace ULox
         {
             T Visit(Assign expr);
             T Visit(Binary expr);
+            T Visit(Call expr);
             T Visit(Grouping expr);
             T Visit(Literal expr);
             T Visit(Logical expr);
