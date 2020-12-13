@@ -56,6 +56,14 @@ namespace ULox
         private Stmt ClassDeclaration()
         {
             var name = Consume(TokenType.IDENTIFIER, "Expect class name.");
+
+            Expr.Variable superclass = null;
+            if (Match(TokenType.LESS))
+            {
+                Consume(TokenType.IDENTIFIER, "Expect superclass name.");
+                superclass = new Expr.Variable(Previous());
+            }
+
             Consume(TokenType.OPEN_BRACE, "Expect { befefore class body.");
 
             var methods = new List<Stmt.Function>();
@@ -66,7 +74,7 @@ namespace ULox
 
             Consume(TokenType.CLOSE_BRACE, "Expect } after class body.");
 
-            return new Stmt.Class(name, methods);
+            return new Stmt.Class(name, superclass, methods);
         }
 
         private Stmt.Function Function(string kind)
@@ -419,6 +427,15 @@ namespace ULox
             if (Match(TokenType.INT, TokenType.FLOAT, TokenType.STRING))
             {
                 return new Expr.Literal(Previous().Literal);
+            }
+
+            if (Match(TokenType.SUPER))
+            {
+                Token keyword = Previous();
+                Consume(TokenType.DOT, "Expect '.' after 'super'.");
+                Token method = Consume(TokenType.IDENTIFIER,
+                    "Expect superclass method name.");
+                return new Expr.Super(keyword, method);
             }
 
             if (Match(TokenType.THIS)) return new Expr.This(Previous());

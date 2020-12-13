@@ -29,7 +29,8 @@ namespace ULox
         private enum ClassType
         {
             NONE,
-            CLASS
+            CLASS,
+            SUBCLASS,
         }
 
         public Resolver(Interpreter interpreter)
@@ -245,7 +246,28 @@ namespace ULox
         {
             var enclosingClass = currentClass;
             currentClass = ClassType.CLASS;
+
             Declare(stmt.name);
+            Define(stmt.name);
+
+            if (stmt.superclass != null &&
+                stmt.name.Lexeme == stmt.superclass.name.Lexeme)
+            {
+                throw new ResolverException(stmt.superclass.name,
+                    "A class can't inherit from itself.");
+            }
+
+            if (stmt.superclass != null)
+            {
+                currentClass = ClassType.SUBCLASS;
+                Resolve(stmt.superclass);
+            }
+
+            if (stmt.superclass != null)
+            {
+                BeginScope();
+                scopes.Last()["super"] = true;
+            }
 
             BeginScope();
             scopes.Last()["this"] = true;
@@ -262,7 +284,7 @@ namespace ULox
 
             EndScope();
 
-            Define(stmt.name);
+            if (stmt.superclass != null) EndScope();
 
             currentClass = enclosingClass;
         }
@@ -284,6 +306,17 @@ namespace ULox
         {
             if (currentClass == ClassType.NONE)
                 throw new ResolverException(expr.keyword, "Cannot use 'this' outside of a class.");
+
+            ResolveLocal(expr, expr.keyword);
+            return null;
+        }
+
+        public object Visit(Expr.Super expr)
+        {
+            if (currentClass == ClassType.NONE)
+                throw new ResolverException(expr.keyword, "Cannot use 'super' outside of a class.");
+            if (currentClass == ClassType.CLASS)
+                throw new ResolverException(expr.keyword, "Cannot use 'super' in a class with no superclass.");
 
             ResolveLocal(expr, expr.keyword);
             return null;

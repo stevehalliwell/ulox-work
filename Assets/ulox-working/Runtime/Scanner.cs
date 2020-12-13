@@ -38,6 +38,7 @@ namespace ULox
             { "class",  TokenType.CLASS},
             { ".",  TokenType.DOT},
             { "this",  TokenType.THIS},
+            { "super",  TokenType.SUPER},
         };
 
         public Scanner(Action<string> logger)

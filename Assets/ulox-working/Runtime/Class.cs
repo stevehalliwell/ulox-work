@@ -7,13 +7,15 @@ namespace ULox
     {
         private string _name;
         private Dictionary<string, Function> _methods;
+        private Class _superclass;
 
         public string Name => _name;
 
-        public Class(string name, Dictionary<string, Function> methods)
+        public Class(string name, Class superclass, Dictionary<string, Function> methods)
         {
             _name = name;
             _methods = methods;
+            _superclass = superclass;
         }
 
         public int Arity => FindMethod("init")?.Arity ?? 0;
@@ -38,8 +40,13 @@ namespace ULox
 
         public Function FindMethod(string lexeme)
         {
-            _methods.TryGetValue(lexeme, out Function func);
-            return func;
+            if(_methods.TryGetValue(lexeme, out Function func))
+                return func;
+
+            if (_superclass != null)
+                return _superclass.FindMethod(lexeme);
+
+            return null;
         }
     }
 }

@@ -300,7 +300,24 @@ namespace ULox
 
         public void Visit(Stmt.Class stmt)
         {
+            Class superclass = null;
+            if (stmt.superclass != null)
+            {
+                superclass = Evaluate(stmt.superclass) as Class;
+                if (superclass == null) {
+                    throw new RuntimeTypeException(stmt.superclass.name,
+                        "Superclass must be a class.");
+                }
+            }
+
             currentEnvironment.Define(stmt.name.Lexeme, null);
+
+            if (stmt.superclass != null)
+            {
+                currentEnvironment = new Environment(currentEnvironment);
+                currentEnvironment.Define("super", superclass);
+            }
+
 
             var methods = new Dictionary<string, Function>();
             foreach (Stmt.Function method in stmt.methods)
@@ -313,7 +330,11 @@ namespace ULox
                 methods[method.name.Lexeme] = function;
             }
 
-            var @class = new Class(stmt.name.Lexeme, methods);
+            var @class = new Class(stmt.name.Lexeme, superclass, methods);
+            if (superclass != null)
+            {
+                currentEnvironment = currentEnvironment.Enclosing;
+            }
             currentEnvironment.Assign(stmt.name, @class);
         }
 
@@ -345,6 +366,23 @@ namespace ULox
         public object Visit(Expr.This expr)
         {
             return LookUpVariable(expr.keyword, expr);
+        }
+
+        public object Visit(Expr.Super expr)
+        {
+            int distance = localsSideTable[expr];
+            var superclass = (Class)currentEnvironment.GetAtDirect(distance, "super");
+
+            var inst = (Instance)currentEnvironment.GetAtDirect(distance - 1, "this");
+
+            var method = superclass.FindMethod(expr.method.Lexeme);
+
+            if (method == null)
+            {
+                throw new RuntimeTypeException(expr.method,
+                    "Undefined property '" + expr.method.Lexeme + "'.");
+            }
+            return method.Bind(inst);
         }
     }
 }

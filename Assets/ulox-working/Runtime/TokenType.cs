@@ -47,6 +47,7 @@
         FALSE,
         NULL,
         THIS,
+        SUPER,
 
         PRINT,
 

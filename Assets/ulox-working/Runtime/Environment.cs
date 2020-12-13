@@ -15,6 +15,8 @@ namespace ULox
         private Dictionary<string, Object> values = new Dictionary<string, Object>();
         private Environment enclosing;
 
+        public Environment Enclosing => enclosing;
+
         public Environment() { }
 
         public Environment(Environment enclosing)
