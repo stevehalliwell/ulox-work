@@ -13,6 +13,17 @@ namespace ULox
             public readonly List<Stmt> statements;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
+        public class Class : Stmt
+        {
+            public Class( Token name, List<Stmt.Function> methods)
+            {
+                this.name = name;
+                this.methods = methods;
+            }
+            public readonly Token name;
+            public readonly List<Stmt.Function> methods;
+            public override void Accept(Visitor visitor) => visitor.Visit(this);
+        }
         public class Expression : Stmt
         {
             public Expression( Expr expression)
@@ -96,6 +107,7 @@ namespace ULox
         public interface Visitor 
         {
             void Visit(Block stmt);
+            void Visit(Class stmt);
             void Visit(Expression stmt);
             void Visit(Function stmt);
             void Visit(If stmt);

@@ -297,5 +297,14 @@ namespace ULox
         {
             localsSideTable.Add(expr, depth);
         }
+
+        public void Visit(Stmt.Class stmt)
+        {
+            currentEnvironment.Define(stmt.name.Lexeme, null);
+            var @class = new Class(stmt.name.Lexeme);
+            currentEnvironment.Assign(stmt.name, @class);
+        }
+
+        
     }
 }

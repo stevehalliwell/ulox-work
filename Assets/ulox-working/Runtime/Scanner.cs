@@ -35,6 +35,7 @@ namespace ULox
             { "null",   TokenType.NULL},
             { "print",  TokenType.PRINT},
             { "fun",  TokenType.FUNCTION},
+            { "class",  TokenType.CLASS},
         };
 
         public Scanner(Action<string> logger)

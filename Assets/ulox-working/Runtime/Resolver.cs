@@ -225,5 +225,11 @@ namespace ULox
             Resolve(stmt.condition);
             Resolve(stmt.body);
         }
+
+        public void Visit(Stmt.Class stmt)
+        {
+            Declare(stmt.name);
+            Define(stmt.name);
+        }
     }
 }

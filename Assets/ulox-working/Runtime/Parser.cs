@@ -40,6 +40,7 @@ namespace ULox
         {
             try
             {
+                if (Match(TokenType.CLASS)) return ClassDeclaration();
                 if (Match(TokenType.FUNCTION)) return Function("function");
                 if (Match(TokenType.VAR)) return VarDeclaration();
 
@@ -52,7 +53,23 @@ namespace ULox
             }
         }
 
-        private Stmt Function(string kind)
+        private Stmt ClassDeclaration()
+        {
+            var name = Consume(TokenType.IDENT, "Expect class name.");
+            Consume(TokenType.OPEN_BRACE, "Expect { befefore class body.");
+
+            var methods = new List<Stmt.Function>();
+            while(!Check(TokenType.CLOSE_BRACE) && !IsAtEnd())
+            {
+                methods.Add(Function("Method"));
+            }
+
+            Consume(TokenType.CLOSE_BRACE, "Expect } after class body.");
+
+            return new Stmt.Class(name, methods);
+        }
+
+        private Stmt.Function Function(string kind)
         {
             var name = Consume(TokenType.IDENT, "Expect " + kind + " name.");
 
