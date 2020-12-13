@@ -56,5 +56,29 @@ namespace ULox
 
             throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
         }
+
+        public object GetAt(int distance, Token name)
+        {
+            if (Ancestor(distance).values.TryGetValue(name.Lexeme, out object retval))
+                return retval;
+
+            throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
+        }
+
+        public Environment Ancestor(int distnace)
+        {
+            var ret = this;
+            for (int i = 0; i < distnace; i++)
+            {
+                ret = ret.enclosing;
+            }
+
+            return ret;
+        }
+
+        public void AssignAt(int distance, Token name, object val)
+        {
+            Ancestor(distance).values[name.Lexeme] = val;
+        }
     }
 }

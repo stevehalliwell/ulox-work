@@ -10,11 +10,13 @@ namespace ULox
 
         void Start()
         {
+            var interp = new Interpreter(Debug.Log);
             var loxEngine = new LoxEngine(
                 new Scanner(Debug.Log),
-                new Parser(), 
-                new Interpreter(Debug.Log), 
-                Debug.Log);
+                new Parser(),
+                new Resolver(interp),
+                interp,
+                Debug.Log); ;
 
             loxEngine.Run(text.text);
         }

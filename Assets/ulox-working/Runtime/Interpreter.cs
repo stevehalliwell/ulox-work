@@ -33,6 +33,7 @@ namespace ULox
         private Action<string> _logger;
         private Environment globals = new Environment();
         private Environment currentEnvironment;
+        private Dictionary<Expr, int> localsSideTable = new Dictionary<Expr, int>();
 
         public Environment Globals => globals;
 
@@ -196,12 +197,31 @@ namespace ULox
             currentEnvironment.Define(stmt.name.Lexeme, value);
         }
 
-        public object Visit(Expr.Variable expr) => currentEnvironment.Get(expr.name);
+        public object Visit(Expr.Variable expr) => LookUpVariable(expr.name, expr);
+
+        private object LookUpVariable(Token name, Expr.Variable expr)
+        {
+            if(localsSideTable.TryGetValue(expr, out int distance))
+            {
+                return currentEnvironment.GetAt(distance, name);
+            }
+
+            return globals.Get(name);
+        }
 
         public object Visit(Expr.Assign expr)
         {
             var val = Evaluate(expr.value);
-            currentEnvironment.Assign(expr.name, val);
+
+            if(localsSideTable.TryGetValue(expr, out int distance))
+            {
+                currentEnvironment.AssignAt(distance, expr.name, val);
+            }
+            else
+            {
+                globals.Assign(expr.name, val);
+            }
+
             return val;
         }
 
@@ -261,7 +281,7 @@ namespace ULox
 
         public void Visit(Stmt.Function stmt)
         {
-            var func = new Function(stmt);
+            var func = new Function(stmt, currentEnvironment);
             currentEnvironment.Define(stmt.name.Lexeme, func);
         }
 
@@ -271,6 +291,11 @@ namespace ULox
             if (stmt.value != null) val = Evaluate(stmt.value);
 
             throw new Return(val);
+        }
+
+        public void Resolve(Expr expr, int depth)
+        {
+            localsSideTable.Add(expr, depth);
         }
     }
 }
