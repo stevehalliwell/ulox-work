@@ -24,7 +24,7 @@
         LESS,
         LESS_EQUAL,
 
-        IDENT,
+        IDENTIFIER,
         VAR,
         STRING,
         INT,

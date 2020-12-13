@@ -41,6 +41,17 @@ namespace ULox
             public readonly List<Expr> arguments;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
+        public class Get : Expr
+        {
+            public Get( Expr obj, Token name)
+            {
+                this.obj = obj;
+                this.name = name;
+            }
+            public readonly Expr obj;
+            public readonly Token name;
+            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
+        }
         public class Grouping : Expr
         {
             public Grouping( Expr expression)
@@ -72,6 +83,19 @@ namespace ULox
             public readonly Expr right;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
+        public class Set : Expr
+        {
+            public Set( Expr obj, Token name, Expr val)
+            {
+                this.obj = obj;
+                this.name = name;
+                this.val = val;
+            }
+            public readonly Expr obj;
+            public readonly Token name;
+            public readonly Expr val;
+            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
+        }
         public class Unary : Expr
         {
             public Unary( Token op, Expr right)
@@ -100,9 +124,11 @@ namespace ULox
             T Visit(Assign expr);
             T Visit(Binary expr);
             T Visit(Call expr);
+            T Visit(Get expr);
             T Visit(Grouping expr);
             T Visit(Literal expr);
             T Visit(Logical expr);
+            T Visit(Set expr);
             T Visit(Unary expr);
             T Visit(Variable expr);
         }

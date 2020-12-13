@@ -37,7 +37,7 @@ In the deep bosom of the ocean buried.""; ",
             var tokenResults = new TokenType[]
             {
                 TokenType.VAR,
-                TokenType.IDENT,
+                TokenType.IDENTIFIER,
                 TokenType.ASSIGN,
                 TokenType.STRING,
                 TokenType.END_STATEMENT,
@@ -79,7 +79,7 @@ rand
             var tokenResults = new TokenType[]
             {
                 TokenType.VAR,
-                TokenType.IDENT,
+                TokenType.IDENTIFIER,
                 TokenType.ASSIGN,
                 TokenType.INT,
                 TokenType.END_STATEMENT,
@@ -119,7 +119,7 @@ PI
             var tokenResults = new TokenType[]
             {
                 TokenType.VAR,
-                TokenType.IDENT,
+                TokenType.IDENTIFIER,
                 TokenType.ASSIGN,
                 TokenType.FLOAT,
                 TokenType.END_STATEMENT,

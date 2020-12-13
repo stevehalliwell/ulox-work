@@ -24,7 +24,7 @@ namespace ULox
             var statements = new List<Stmt>();
             try
             {
-                while(!IsAtEnd())
+                while (!IsAtEnd())
                 {
                     statements.Add(Declaration());
                 }
@@ -55,11 +55,11 @@ namespace ULox
 
         private Stmt ClassDeclaration()
         {
-            var name = Consume(TokenType.IDENT, "Expect class name.");
+            var name = Consume(TokenType.IDENTIFIER, "Expect class name.");
             Consume(TokenType.OPEN_BRACE, "Expect { befefore class body.");
 
             var methods = new List<Stmt.Function>();
-            while(!Check(TokenType.CLOSE_BRACE) && !IsAtEnd())
+            while (!Check(TokenType.CLOSE_BRACE) && !IsAtEnd())
             {
                 methods.Add(Function("Method"));
             }
@@ -71,7 +71,7 @@ namespace ULox
 
         private Stmt.Function Function(string kind)
         {
-            var name = Consume(TokenType.IDENT, "Expect " + kind + " name.");
+            var name = Consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
 
             Consume(TokenType.OPEN_PAREN, "Expect '(' after " + kind + " name.");
             var parameters = new List<Token>();
@@ -84,11 +84,11 @@ namespace ULox
                         throw new ParseException(Peek(), "Can't have more than 255 arguments.");
                     }
 
-                    parameters.Add(Consume(TokenType.IDENT, "Expect parameter name."));
+                    parameters.Add(Consume(TokenType.IDENTIFIER, "Expect parameter name."));
                 } while (Match(TokenType.COMMA));
             }
             Consume(TokenType.CLOSE_PAREN, "Expect ')' after parameters.");
-            
+
             Consume(TokenType.OPEN_BRACE, "Expect '{' before " + kind + " body.");
             var body = Block();
             return new Stmt.Function(name, parameters, body);
@@ -96,7 +96,7 @@ namespace ULox
 
         private Stmt VarDeclaration()
         {
-            Token name = Consume(TokenType.IDENT, "Expect variable name.");
+            Token name = Consume(TokenType.IDENTIFIER, "Expect variable name.");
 
             Expr initializer = null;
             if (Match(TokenType.ASSIGN))
@@ -112,7 +112,7 @@ namespace ULox
         {
             if (Match(TokenType.FOR)) return ForStatement();
             if (Match(TokenType.IF)) return IfStatement();
-            if (Match(TokenType.PRINT)) return PrintStatement(); 
+            if (Match(TokenType.PRINT)) return PrintStatement();
             if (Match(TokenType.RETURN)) return ReturnStatement();
             if (Match(TokenType.WHILE)) return WhileStatement();
             if (Match(TokenType.OPEN_BRACE)) return new Stmt.Block(Block());
@@ -162,7 +162,7 @@ namespace ULox
                 increment = Expression();
             }
             Consume(TokenType.CLOSE_PAREN, "Expect ')' after for clauses.");
-            
+
             Stmt body = Statement();
 
             if (increment != null)
@@ -253,9 +253,14 @@ namespace ULox
                 Token equals = Previous();
                 Expr value = Assignment();
 
-                if (expr is Expr.Variable varExpr) {
+                if (expr is Expr.Variable varExpr)
+                {
                     Token name = varExpr.name;
                     return new Expr.Assign(name, value);
+                }
+                else if (expr is Expr.Get exprGet)
+                {
+                    return new Expr.Set(exprGet.obj, exprGet.name, value);
                 }
 
                 throw new ParseException(equals, "Invalid assignment target.");
@@ -344,7 +349,7 @@ namespace ULox
                 Expr right = Unary();
                 expr = new Expr.Binary(expr, op, right);
             }
-            
+
             return expr;
         }
 
@@ -369,6 +374,12 @@ namespace ULox
                 if (Match(TokenType.OPEN_PAREN))
                 {
                     expr = FinishCall(expr);
+                }
+                else if (Match(TokenType.DOT))
+                {
+                    var name = Consume(TokenType.IDENTIFIER,
+                        "Expect property name after '.'.");
+                    expr = new Expr.Get(expr, name);
                 }
                 else
                 {
@@ -410,7 +421,7 @@ namespace ULox
                 return new Expr.Literal(Previous().Literal);
             }
 
-            if (Match(TokenType.IDENT))
+            if (Match(TokenType.IDENTIFIER))
             {
                 return new Expr.Variable(Previous());
             }

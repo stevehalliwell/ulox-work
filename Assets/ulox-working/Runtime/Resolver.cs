@@ -21,6 +21,7 @@ namespace ULox
         {
             NONE,
             FUNCTION,
+            METHOD,
         }
 
         public Resolver(Interpreter interpreter)
@@ -229,7 +230,27 @@ namespace ULox
         public void Visit(Stmt.Class stmt)
         {
             Declare(stmt.name);
+
+            foreach (Stmt.Function method in stmt.methods)
+            {
+                FunctionType declaration = FunctionType.METHOD;
+                ResolveFunction(method, declaration);
+            }
+
             Define(stmt.name);
+        }
+
+        public object Visit(Expr.Get expr)
+        {
+            Resolve(expr.obj);
+            return null;
+        }
+
+        public object Visit(Expr.Set expr)
+        {
+            Resolve(expr.val);
+            Resolve(expr.obj);
+            return null;
         }
     }
 }

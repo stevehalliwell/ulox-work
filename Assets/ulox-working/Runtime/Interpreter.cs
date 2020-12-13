@@ -301,10 +301,41 @@ namespace ULox
         public void Visit(Stmt.Class stmt)
         {
             currentEnvironment.Define(stmt.name.Lexeme, null);
-            var @class = new Class(stmt.name.Lexeme);
+
+            var methods = new Dictionary<string, Function>();
+            foreach (Stmt.Function method in stmt.methods)
+            {
+                var function = new Function(method, currentEnvironment);
+                methods[method.name.Lexeme] = function;
+            }
+
+            var @class = new Class(stmt.name.Lexeme, methods);
             currentEnvironment.Assign(stmt.name, @class);
         }
 
-        
+        public object Visit(Expr.Get expr)
+        {
+            var obj = Evaluate(expr.obj);
+            if (obj is Instance objInst)
+            {
+                return objInst.Get(expr.name);
+            }
+
+            throw new RuntimeTypeException(expr.name, "Only instances have properties.");
+        }
+
+        public object Visit(Expr.Set expr)
+        {
+            var obj = Evaluate(expr.obj) as Instance;
+
+            if(obj == null)
+            {
+                throw new RuntimeTypeException(expr.name, "Only instances have fields.");
+            }
+
+            var val = Evaluate(expr.val);
+            obj.Set(expr.name, val);
+            return val;
+        }
     }
 }

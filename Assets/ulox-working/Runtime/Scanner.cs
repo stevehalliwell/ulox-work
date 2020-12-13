@@ -36,6 +36,7 @@ namespace ULox
             { "print",  TokenType.PRINT},
             { "fun",  TokenType.FUNCTION},
             { "class",  TokenType.CLASS},
+            { ".",  TokenType.DOT},
         };
 
         public Scanner(Action<string> logger)
@@ -150,7 +151,7 @@ namespace ULox
             if (foundKeyword)
                 AddTokenSingle(keywordTokenType);
             else
-                AddToken(TokenType.IDENT, identString);
+                AddToken(TokenType.IDENTIFIER, identString);
         }
 
         private void ConsumeNumber()

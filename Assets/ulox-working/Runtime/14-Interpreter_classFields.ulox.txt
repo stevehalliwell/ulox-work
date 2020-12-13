@@ -1,0 +1,18 @@
+class PartialClass 
+{
+}
+
+var partial = PartialClass();
+
+partial.BeginingOfStatement = "Hello ";
+partial.EndOfStatement = "World";
+
+print partial.BeginingOfStatement + partial.EndOfStatement;
+
+class Bacon {
+  eat() {
+    print "Crunch crunch crunch!";
+  }
+}
+
+Bacon().eat(); // Prints "Crunch crunch crunch!".

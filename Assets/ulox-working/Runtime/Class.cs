@@ -1,16 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace ULox
 {
     public class Class : ICallable
     {
         private string _name;
+        private Dictionary<string, Function> _methods;
 
         public string Name => _name;
 
-        public Class(string name)
+        public Class(string name, Dictionary<string, Function> methods)
         {
             _name = name;
+            _methods = methods;
         }
 
         public int Arity => 0;
@@ -23,6 +26,12 @@ namespace ULox
         public override string ToString()
         {
             return "<class " + _name + ">";
+        }
+
+        public Function FindMethod(string lexeme)
+        {
+            _methods.TryGetValue(lexeme, out Function func);
+            return func;
         }
     }
 }
