@@ -65,6 +65,11 @@ namespace ULox
             throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
         }
 
+        public object GetAtDirect(int distance, string nameLexeme)
+        {
+            return Ancestor(distance).values[nameLexeme];
+        }
+
         public Environment Ancestor(int distnace)
         {
             var ret = this;

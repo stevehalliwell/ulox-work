@@ -281,7 +281,7 @@ namespace ULox
 
         public void Visit(Stmt.Function stmt)
         {
-            var func = new Function(stmt, currentEnvironment);
+            var func = new Function(stmt, currentEnvironment, false);
             currentEnvironment.Define(stmt.name.Lexeme, func);
         }
 
@@ -305,7 +305,11 @@ namespace ULox
             var methods = new Dictionary<string, Function>();
             foreach (Stmt.Function method in stmt.methods)
             {
-                var function = new Function(method, currentEnvironment);
+                var function = new Function(
+                    method, 
+                    currentEnvironment,
+                    method.name.Lexeme == "init");
+
                 methods[method.name.Lexeme] = function;
             }
 

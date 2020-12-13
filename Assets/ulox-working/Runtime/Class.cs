@@ -16,11 +16,19 @@ namespace ULox
             _methods = methods;
         }
 
-        public int Arity => 0;
+        public int Arity => FindMethod("init")?.Arity ?? 0;
 
         public object Call(Interpreter interpreter, List<object> args)
         {
-            return new Instance(this);
+            var instance = new Instance(this);
+            
+            var initializer = FindMethod("init");
+            if (initializer != null)
+            {
+                initializer.Bind(instance).Call(interpreter, args);
+            }
+
+            return instance;
         }
 
         public override string ToString()

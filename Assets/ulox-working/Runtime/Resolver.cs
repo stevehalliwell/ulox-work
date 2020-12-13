@@ -16,12 +16,20 @@ namespace ULox
         private List<Dictionary<string, bool>> scopes = new List<Dictionary<string, bool>>();
         private Interpreter _interpreter; 
         private FunctionType currentFunction = FunctionType.NONE;
+        private ClassType currentClass = ClassType.NONE;
 
-        public enum FunctionType
+        private enum FunctionType
         {
             NONE,
             FUNCTION,
+            INITIALIZER,
             METHOD,
+        }
+
+        private enum ClassType
+        {
+            NONE,
+            CLASS
         }
 
         public Resolver(Interpreter interpreter)
@@ -189,7 +197,13 @@ namespace ULox
             {
                 throw new ResolverException(stmt.keyword, "Cannot return outside of a function.");
             }
-            if(stmt.value != null)Resolve(stmt.value);
+            if (stmt.value != null)
+            {
+                if (currentFunction == FunctionType.INITIALIZER)
+                    throw new ResolverException(stmt.keyword, "Cannot return a value from an initializer");
+
+                Resolve(stmt.value);
+            }
         }
 
         public void Visit(Stmt.Var stmt)
@@ -229,6 +243,8 @@ namespace ULox
 
         public void Visit(Stmt.Class stmt)
         {
+            var enclosingClass = currentClass;
+            currentClass = ClassType.CLASS;
             Declare(stmt.name);
 
             BeginScope();
@@ -237,12 +253,18 @@ namespace ULox
             foreach (Stmt.Function method in stmt.methods)
             {
                 FunctionType declaration = FunctionType.METHOD;
+                if (method.name.Lexeme == "init")
+                {
+                    declaration = FunctionType.INITIALIZER;
+                }
                 ResolveFunction(method, declaration);
             }
 
             EndScope();
 
             Define(stmt.name);
+
+            currentClass = enclosingClass;
         }
 
         public object Visit(Expr.Get expr)
@@ -260,6 +282,9 @@ namespace ULox
 
         public object Visit(Expr.This expr)
         {
+            if (currentClass == ClassType.NONE)
+                throw new ResolverException(expr.keyword, "Cannot use 'this' outside of a class.");
+
             ResolveLocal(expr, expr.keyword);
             return null;
         }
