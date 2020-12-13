@@ -46,6 +46,7 @@
         TRUE,
         FALSE,
         NULL,
+        THIS,
 
         PRINT,
 

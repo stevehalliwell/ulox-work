@@ -33,6 +33,13 @@ namespace ULox
             return null;
         }
 
+        public Function Bind(Instance instance)
+        {
+            var env = new Environment(_closure);
+            env.Define("this", instance);
+            return new Function(_declaration, env);
+        }
+
         public override string ToString() => $"<fn {_declaration.name.Lexeme}>";
     }
 }

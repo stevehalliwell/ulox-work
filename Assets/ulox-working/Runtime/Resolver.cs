@@ -231,11 +231,16 @@ namespace ULox
         {
             Declare(stmt.name);
 
+            BeginScope();
+            scopes.Last()["this"] = true;
+
             foreach (Stmt.Function method in stmt.methods)
             {
                 FunctionType declaration = FunctionType.METHOD;
                 ResolveFunction(method, declaration);
             }
+
+            EndScope();
 
             Define(stmt.name);
         }
@@ -250,6 +255,12 @@ namespace ULox
         {
             Resolve(expr.val);
             Resolve(expr.obj);
+            return null;
+        }
+
+        public object Visit(Expr.This expr)
+        {
+            ResolveLocal(expr, expr.keyword);
             return null;
         }
     }

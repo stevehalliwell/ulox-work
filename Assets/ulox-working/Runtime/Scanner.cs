@@ -37,6 +37,7 @@ namespace ULox
             { "fun",  TokenType.FUNCTION},
             { "class",  TokenType.CLASS},
             { ".",  TokenType.DOT},
+            { "this",  TokenType.THIS},
         };
 
         public Scanner(Action<string> logger)
@@ -146,10 +147,8 @@ namespace ULox
 
             var identString = workingSpaceStringBuilder.ToString();
 
-            var foundKeyword = keywords.TryGetValue(identString, out var keywordTokenType);
-
-            if (foundKeyword)
-                AddTokenSingle(keywordTokenType);
+            if (keywords.TryGetValue(identString, out var keywordTokenType))
+                AddToken(keywordTokenType, identString);
             else
                 AddToken(TokenType.IDENTIFIER, identString);
         }

@@ -96,6 +96,15 @@ namespace ULox
             public readonly Expr val;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
+        public class This : Expr
+        {
+            public This( Token keyword)
+            {
+                this.keyword = keyword;
+            }
+            public readonly Token keyword;
+            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
+        }
         public class Unary : Expr
         {
             public Unary( Token op, Expr right)
@@ -129,6 +138,7 @@ namespace ULox
             T Visit(Literal expr);
             T Visit(Logical expr);
             T Visit(Set expr);
+            T Visit(This expr);
             T Visit(Unary expr);
             T Visit(Variable expr);
         }

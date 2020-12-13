@@ -199,7 +199,7 @@ namespace ULox
 
         public object Visit(Expr.Variable expr) => LookUpVariable(expr.name, expr);
 
-        private object LookUpVariable(Token name, Expr.Variable expr)
+        private object LookUpVariable(Token name, Expr expr)
         {
             if(localsSideTable.TryGetValue(expr, out int distance))
             {
@@ -336,6 +336,11 @@ namespace ULox
             var val = Evaluate(expr.val);
             obj.Set(expr.name, val);
             return val;
+        }
+
+        public object Visit(Expr.This expr)
+        {
+            return LookUpVariable(expr.keyword, expr);
         }
     }
 }
