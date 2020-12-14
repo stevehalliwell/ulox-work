@@ -90,6 +90,10 @@ namespace ULox
                                 _stringReader.ReadLine();
                                 _line++;
                             }
+                            else if(Match('*'))
+                            {
+                                ConsumeBlockComment();
+                            }
                             else
                             {
                                 AddTokenSingle(TokenType.SLASH);
@@ -131,6 +135,22 @@ namespace ULox
                 }
 
                 Tokens.Add(new Token(TokenType.EOF, "", null, _line, _characterNumber));
+            }
+        }
+
+        //TODO test this
+        private void ConsumeBlockComment()
+        {
+            while(!IsAtEnd())
+            {
+                if (Match('*') && Match('/'))
+                {
+                    return;
+                }
+                else
+                {
+                    Advance();
+                }
             }
         }
 
@@ -248,7 +268,11 @@ namespace ULox
         {
             if (_stringReader.Peek() == matchingCharToConsume)
             {
-                _stringReader.Read();
+                if(_stringReader.Read() == '\n')
+                {
+                    _line++;
+                    _characterNumber = 0;
+                }
                 _characterNumber++;
 
                 return true;
