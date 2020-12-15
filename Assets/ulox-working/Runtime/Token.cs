@@ -29,7 +29,7 @@
 
         public override string ToString()
         {
-            return $"{Line}:{Character} - {TokenType} {Lexeme} {Literal}";
+            return $"{Line}:{Character} - {TokenType} {Lexeme}";
         }
     }
 }

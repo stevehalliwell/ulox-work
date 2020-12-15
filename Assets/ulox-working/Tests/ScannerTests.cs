@@ -1,8 +1,7 @@
 ﻿using NUnit.Framework;
 using System.Linq;
-using ULox;
 
-namespace Tests
+namespace ULox.Tests
 {
     public class ScannerTests
     {
@@ -251,7 +250,7 @@ var res = a * b + c - 1 / 2 % 9";
         [Test]
         public void Scanner_LogicClasses_TokenTypeMatch()
         {
-            var testString = @" var logic = true and false or true;
+            var testString = @"var logic = true and false or true;
 var comparison = 1 < 2 and 2 >= 3 or 1 > 2 and 2 <= 3
 
 class WithInit{
