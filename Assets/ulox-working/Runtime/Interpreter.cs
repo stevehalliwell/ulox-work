@@ -114,6 +114,12 @@ namespace ULox
                 return (double)left * (double)right;
             case TokenType.PLUS:
                 {
+                    //we want to concat with + but the starting var may be empty or null
+                    if (left is null)
+                        return right;
+                    else if (right is null)
+                        return left;
+
                     if (left is double leftD && right is double rightD)
                         return leftD + rightD;
                     if (left is string leftS && right is string rightS)

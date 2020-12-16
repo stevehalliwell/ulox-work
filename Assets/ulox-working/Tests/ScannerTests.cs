@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace ULox.Tests
@@ -127,10 +128,11 @@ PI
             }
         }
 
-        [Test]
-        public void Scanner_FunctionDeclareCall_TokenTypeMatch()
+        public static IEnumerable<TestCaseData> Generator()
         {
-            var testString = @"fun foo(p)
+
+            yield return new TestCaseData(
+@"fun foo(p)
 {
     var a = p;
     var b = ""Hello"";
@@ -139,9 +141,8 @@ PI
         var a = 7;
     }
     var res = bar();
-}";
-
-            var tokenResults = new TokenType[]
+}",
+new TokenType[]
             {
                 TokenType.FUNCTION,
                 TokenType.IDENTIFIER,
@@ -179,24 +180,11 @@ PI
                 TokenType.END_STATEMENT,
                 TokenType.CLOSE_BRACE,
                 TokenType.EOF,
-            };
+            })
+                .SetName("FunctionDeclareCall");
 
-            var scanner = new Scanner(null);
-
-            scanner.Scan(testString);
-
-            var resultingTokenTypes = scanner.Tokens.Select(x => x.TokenType).ToArray();
-
-            for (int i = 0; i < resultingTokenTypes.Length; i++)
-            {
-                Assert.AreEqual(tokenResults[i], resultingTokenTypes[i]);
-            }
-        }
-
-        [Test]
-        public void Scanner_CommentsMath_TokenTypeMatch()
-        {
-            var testString = @" var a = 1;
+            yield return new TestCaseData(
+@" var a = 1;
 //var b = 2.1;
 var c = ""hello"";
 /*
@@ -204,9 +192,8 @@ var c = ""hello"";
         including this /*
 */
 
-var res = a * b + c - 1 / 2 % 9";
-
-            var tokenResults = new TokenType[]
+var res = a * b + c - 1 / 2 % 9",
+new TokenType[]
             {
                 TokenType.VAR,
                 TokenType.IDENTIFIER,
@@ -233,24 +220,11 @@ var res = a * b + c - 1 / 2 % 9";
                 TokenType.PERCENT,
                 TokenType.INT,
                 TokenType.EOF,
-            };
+            })
+                .SetName("Comments");
 
-            var scanner = new Scanner(null);
-
-            scanner.Scan(testString);
-
-            var resultingTokenTypes = scanner.Tokens.Select(x => x.TokenType).ToArray();
-
-            for (int i = 0; i < resultingTokenTypes.Length; i++)
-            {
-                Assert.AreEqual(tokenResults[i], resultingTokenTypes[i]);
-            }
-        }
-
-        [Test]
-        public void Scanner_LogicClasses_TokenTypeMatch()
-        {
-            var testString = @"var logic = true and false or true;
+            yield return new TestCaseData(
+@"var logic = true and false or true;
 var comparison = 1 < 2 and 2 >= 3 or 1 > 2 and 2 <= 3
 
 class WithInit{
@@ -262,10 +236,9 @@ class WithInit{
     }
 }
 
-var inst = WithInit(!logic,comparison,3)";
-
-            var tokenResults = new TokenType[]
-            {
+var inst = WithInit(!logic,comparison,3)",
+new TokenType[]
+{
                 TokenType.VAR,
                 TokenType.IDENTIFIER,
                 TokenType.ASSIGN,
@@ -338,8 +311,14 @@ var inst = WithInit(!logic,comparison,3)";
                 TokenType.INT,
                 TokenType.CLOSE_PAREN,
                 TokenType.EOF,
-            };
+})
+                .SetName("LogicClasses");
+        }
 
+        [Test]
+        [TestCaseSource(nameof(Generator))]
+        public void Scanner_TokenTypeMatch(string testString, TokenType[] tokenResults)
+        {
             var scanner = new Scanner(null);
 
             scanner.Scan(testString);
@@ -352,6 +331,33 @@ var inst = WithInit(!logic,comparison,3)";
             {
                 Assert.AreEqual(tokenResults[i], resultingTokenTypes[i]);
             }
+        }
+
+        [Test]
+        public void Scanner_Reset_SameResult()
+        {
+            var testString = @"var a = 1; a = 2 * a;
+fun foo(p)
+{
+    var a = p;
+    var b = ""Hello"";
+    fun bar()
+    {
+        var a = 7;
+    }
+    var res = bar();
+}";
+
+            var scanner = new Scanner(null);
+            scanner.Scan(testString);
+
+            var firstRes = scanner.Tokens;
+
+            scanner.Reset();
+
+            scanner.Scan(testString);
+
+            Assert.AreEqual(firstRes, scanner.Tokens);
         }
     }
 }

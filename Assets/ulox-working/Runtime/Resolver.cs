@@ -129,6 +129,7 @@ namespace ULox
                 if(scopes[i].ContainsKey(name.Lexeme))
                 {
                     _interpreter.Resolve(expr, scopes.Count - 1 - i);
+                    return;
                 }
             }
         }

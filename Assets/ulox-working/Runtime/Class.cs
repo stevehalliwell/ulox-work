@@ -33,11 +33,6 @@ namespace ULox
             return instance;
         }
 
-        public override string ToString()
-        {
-            return "<class " + _name + ">";
-        }
-
         public Function FindMethod(string lexeme)
         {
             if(_methods.TryGetValue(lexeme, out Function func))
@@ -48,5 +43,7 @@ namespace ULox
 
             return null;
         }
+
+        public override string ToString() => $"<class {_name}>";
     }
 }

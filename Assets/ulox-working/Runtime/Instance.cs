@@ -18,11 +18,6 @@ namespace ULox
             _class = @class;
         }
 
-        public override string ToString()
-        {
-            return "<inst " + _class.Name + ">";
-        }
-
         public object Get(Token name)
         {
             if (fields.TryGetValue(name.Lexeme, out object obj))
@@ -36,9 +31,8 @@ namespace ULox
             throw new InstanceException(name, "Undefined property '" + name.Lexeme + "'.");
         }
 
-        public void Set(Token name, object val)
-        {
-            fields[name.Lexeme] = val;
-        }
+        public void Set(Token name, object val) => fields[name.Lexeme] = val;
+
+        public override string ToString() => $"<inst {_class.Name}>";
     }
 }

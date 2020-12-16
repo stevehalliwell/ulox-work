@@ -31,11 +31,6 @@ namespace ULox.Tests
             }
         }
 
-        public void Reset()
-        {
-            stringBuilder = new StringBuilder();
-        }
-
         public void Print(List<Stmt> stmts)
         {
             for (int i = 0; i < stmts.Count; i++)

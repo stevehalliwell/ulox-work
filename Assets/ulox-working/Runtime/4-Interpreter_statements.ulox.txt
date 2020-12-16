@@ -1,3 +1,0 @@
-print 1 + 2 / (7 + 3);
-print true;
-print "Hello World";

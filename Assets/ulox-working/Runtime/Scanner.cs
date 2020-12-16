@@ -8,10 +8,10 @@ namespace ULox
     //TODO see challenges
     public class Scanner
     {
-        public List<Token> Tokens { get; private set; } = new List<Token>();
+        public List<Token> Tokens { get; private set; }
         private int _line, _characterNumber;
         private StringReader _stringReader;
-        private StringBuilder workingSpaceStringBuilder = new StringBuilder();
+        private StringBuilder workingSpaceStringBuilder;
         private Char _currentChar;
         private Action<string> _logger;
         private Dictionary<string, TokenType> keywords = new Dictionary<string, TokenType>()
@@ -44,15 +44,17 @@ namespace ULox
         public Scanner(Action<string> logger)
         {
             _logger = logger;
+            Reset();
         }
 
         public void Reset()
         {
             Tokens = new List<Token>();
-            _line = 1;
+            _line = 0;
             _characterNumber = 0;
             if (_stringReader != null)
                 _stringReader.Dispose();
+            workingSpaceStringBuilder = new StringBuilder();
         }
 
         public void Scan(string text)
