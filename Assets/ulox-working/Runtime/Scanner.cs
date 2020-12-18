@@ -8,6 +8,12 @@ namespace ULox
     //TODO see challenges
     public class Scanner
     {
+        public class ScannerException : LoxException
+        {
+            public ScannerException(TokenType tokenType, int line, int character, string msg) 
+                : base(tokenType, line, character, msg) { }
+        }
+
         public List<Token> Tokens { get; private set; }
         private int _line, _characterNumber;
         private StringReader _stringReader;
@@ -41,9 +47,8 @@ namespace ULox
             { "super",  TokenType.SUPER},
         };
 
-        public Scanner(Action<string> logger)
+        public Scanner()
         {
-            _logger = logger;
             Reset();
         }
 
@@ -129,7 +134,7 @@ namespace ULox
                             }
                             else
                             {
-                                Error($"Unexpected character '{(char)_currentChar}'"); 
+                                throw new ScannerException(TokenType.IDENTIFIER,_line, _characterNumber,$"Unexpected character '{(char)_currentChar}'"); 
                             }
                             break;
                         }
@@ -214,7 +219,7 @@ namespace ULox
             var startingChar = _characterNumber;
             workingSpaceStringBuilder.Clear();
             Advance();//skip leading " 
-            while (_currentChar > 0)
+            while (!IsAtEnd())
             {
                 if (_currentChar == '\n') _line++;
 
@@ -230,7 +235,7 @@ namespace ULox
                 Advance();
             }
 
-            Error("Unterminated String", startingLine, startingChar);
+            throw new ScannerException(TokenType.IDENTIFIER, _line, _characterNumber, "Unterminated String");
         }
 
         private void Advance()
@@ -281,17 +286,6 @@ namespace ULox
             }
             return false;
         }
-
-        private void Error(string v)
-        {
-            Error(v, _line, _characterNumber);
-        }
-
-        private void Error(string v, int lineNumber, int characterNumber)
-        {
-            _logger.Invoke($"{v}|{lineNumber}:{characterNumber}");
-        }
-
 
         //was own function but lexeme as litteral made more sense at the time
         private void AddTokenSingle(TokenType simpleToken)

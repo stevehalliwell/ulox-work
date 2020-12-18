@@ -34,7 +34,7 @@ In the deep bosom of the ocean buried.""; ",
                 TokenType.EOF
             };
 
-            var scanner = new Scanner(null);
+            var scanner = new Scanner();
 
             scanner.Scan(testString);
 
@@ -76,7 +76,7 @@ rand
                 TokenType.EOF
             };
 
-            var scanner = new Scanner(null);
+            var scanner = new Scanner();
 
             scanner.Scan(testString);
 
@@ -116,7 +116,7 @@ PI
                 TokenType.EOF
             };
 
-            var scanner = new Scanner(null);
+            var scanner = new Scanner();
 
             scanner.Scan(testString);
 
@@ -319,7 +319,7 @@ new TokenType[]
         [TestCaseSource(nameof(Generator))]
         public void Scanner_TokenTypeMatch(string testString, TokenType[] tokenResults)
         {
-            var scanner = new Scanner(null);
+            var scanner = new Scanner();
 
             scanner.Scan(testString);
 
@@ -348,7 +348,7 @@ fun foo(p)
     var res = bar();
 }";
 
-            var scanner = new Scanner(null);
+            var scanner = new Scanner();
             scanner.Scan(testString);
 
             var firstRes = scanner.Tokens;

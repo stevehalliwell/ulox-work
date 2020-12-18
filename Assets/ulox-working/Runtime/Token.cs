@@ -1,9 +1,16 @@
 ﻿namespace ULox
 {
-    public class TokenException : System.Exception
+    public class TokenException : LoxException
     {
         public TokenException(Token token, string msg)
-            : base($"{token.TokenType}|{token.Line}:{token.Character}\n{msg}")
+            : base(token.TokenType,token.Line,token.Character,msg)
+        { }
+    }
+
+    public class LoxException : System.Exception
+    {
+        public LoxException(TokenType tokenType, int line, int character, string msg)
+            : base($"{tokenType}|{line}:{character} {msg}")
         { }
     }
     public readonly struct Token

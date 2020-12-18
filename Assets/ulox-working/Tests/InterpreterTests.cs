@@ -20,16 +20,30 @@ namespace ULox.Tests
             {
                 var interp = new Interpreter(SetResult);
                 loxEngine = new LoxEngine(
-                    new Scanner(SetResult),
-                    new Parser(),
+                    new Scanner(),
+                    new Parser() { CatchAndSynch = false},
                     new Resolver(interp),
                     interp,
                     SetResult);
             }
 
-            public void Run(string testString)
+            public void Run(string testString, bool catchAndLogExceptions)
             {
-                loxEngine.Run(testString);
+                try
+                {
+                    loxEngine.Run(testString);
+                }
+                catch (System.Exception e)
+                {
+                    if (catchAndLogExceptions)
+                    {
+                        SetResult(e.Message);
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
             }
         }
 
@@ -243,6 +257,253 @@ class BostonCream < Doughnut {
 BostonCream().cook();",
 @"Fry until golden brown.Pipe full of custard and coat with chocolate.")
                 .SetName("Class_Super");
+
+            yield return new TestCaseData(
+@"var a = 10;
+a = -a;
+print a;",
+@"-10")
+                .SetName("Unary");
+
+            yield return new TestCaseData(
+@"print ""hello incomplete string;",
+@"IDENTIFIER|0:32 Unterminated String")
+                .SetName("IncompleteStringDeclare");
+
+            yield return new TestCaseData(
+@"@",
+@"IDENTIFIER|0:1 Unexpected character '@'")
+                .SetName("UnexpectedChar");
+
+            yield return new TestCaseData(
+@"
+var i;
+for(i = 0; i < 3; i = i + 1)
+{
+    print i;
+}",
+@"012")
+                .SetName("ForExprInitialiser");
+
+            yield return new TestCaseData(
+@"
+var a = 2;
+if(a == 0)
+{print 1;}
+else if (a == 1)
+{}
+else
+{print 3;}",
+@"3")
+                .SetName("IfElseChain");
+
+            yield return new TestCaseData(
+@"print a;",
+@"IDENTIFIER|0:8 Undefined variable a")
+                .SetName("UndefinedVar");
+
+            yield return new TestCaseData(
+@"var Func = 6;
+print Func();",
+@"CLOSE_PAREN|1:13 Can only call function types")
+                .SetName("NotAFunc");
+
+            yield return new TestCaseData(
+@"class Undef
+{
+}
+
+print Undef().a;",
+@"IDENTIFIER|4:16 Undefined property 'a'.")
+                .SetName("UndefinedProperty");
+
+            yield return new TestCaseData(
+@"var a = 1 + a;",
+@"IDENTIFIER|0:18 Undefined variable a")
+                .SetName("CannotReadDuringInitGlobal");
+
+            yield return new TestCaseData(
+@"fun Local()
+{
+    var a = 1 + a;
+}",
+@"IDENTIFIER|2:26 Can't read local variable in its own initializer.")
+                .SetName("CannotReadDuringInitLocal");
+
+            yield return new TestCaseData(
+@"var a = 1;
+return a;",
+@"RETURN|1:6 Cannot return outside of a function.")
+                .SetName("CannotReturnWhenNotWithinAFunc");
+
+            yield return new TestCaseData(
+@"class Initer
+{
+    init()
+    {
+        this.a = 1;
+        return this.a;
+    }
+}",
+@"RETURN|5:22 Cannot return a value from an initializer")
+                .SetName("CannotReturnValueFromInit");
+
+            yield return new TestCaseData(
+@"var a = 1;
+var a = 2;",
+@"An item with the same key has already been added. Key: a")
+                .SetName("CannotHaveDuplicateGlobals");
+
+            yield return new TestCaseData(
+@"fun Local()
+{
+    var a = 1;
+    var a = 2;
+}",
+@"IDENTIFIER|3:14 Already a variable with this name in this scope.")
+                .SetName("CannotHaveDuplicateLocals");
+
+            yield return new TestCaseData(
+@"class Base {}
+class Child < Child {}",
+@"IDENTIFIER|1:22 A class can't inherit from itself.")
+                .SetName("CannotSuperSelf");
+
+            yield return new TestCaseData(
+@"fun Thiser()
+{
+    this.a = 5;
+}",
+@"THIS|2:12 Cannot use 'this' outside of a class.")
+                .SetName("CannotUseThisOutsideMethods");
+
+            yield return new TestCaseData(
+@"class Base {}
+class Child {
+    init()
+    {
+        super.init();
+    }
+}",
+@"SUPER|4:21 Cannot use 'super' in a class with no superclass.")
+                .SetName("CannotSuperWithoutBase");
+
+            yield return new TestCaseData(
+@"fun init()
+{
+    super.init();
+}
+",
+@"SUPER|2:13 Cannot use 'super' outside of a class.")
+                .SetName("CannotSuperOutsideClass");
+
+            yield return new TestCaseData(
+@"var a = print 7;",
+@"PRINT|0:16 Expect expression.")
+                .SetName("CannotRValueStatementsInAssign");
+
+            yield return new TestCaseData(
+@"var a = 1;
+
+if(a != null)
+{
+    print a;
+}",
+@"1")
+                .SetName("IfNotNull");
+
+            yield return new TestCaseData(
+@"var a = 1;
+
+if(a >= 1)
+{
+    print a;
+}",
+@"1")
+                .SetName("GreaterOrEqual");
+
+            yield return new TestCaseData(
+@"var a = ""Hello "";
+var b;
+var c;
+var d = ""World"";
+
+print (a+b)+c+d;",
+@"Hello World")
+                .SetName("StringNullConcats");
+
+            yield return new TestCaseData(
+@"fun A(){}
+fun B(){}
+
+var res = A+B;",
+@"PLUS|3:15 Operands must be numbers or strings.")
+                .SetName("CannotPlusFunctions");
+
+            yield return new TestCaseData(
+@"var a = ""hello"";
+var b = !a;
+
+print b;",
+@"False")
+                .SetName("NotNotTruthy");
+
+            yield return new TestCaseData(
+@"var a = ""hello"";
+var b = 6;
+var c = a - b;",
+@"MINUS|2:15 Operands must be numbers.")
+                .SetName("CannotSubtractNonNumbers");
+
+            yield return new TestCaseData(
+@"fun Func(){}
+var a = -Func;",
+@"MINUS|1:12 Operands must be numbers.")
+                .SetName("CannotNegateNonNumbers");
+
+            yield return new TestCaseData(
+@"fun Func(a,b){}
+Func(7);",
+@"CLOSE_PAREN|1:7 Expected 2 args but got 1")
+                .SetName("CannotCallFunctionWithIncorrectParamCount");
+
+            yield return new TestCaseData(
+@"fun Func(a,b){}
+class Klass < Func{}",
+@"IDENTIFIER|1:21 Superclass must be a class.")
+                .SetName("SuperMustBeClass");
+
+            yield return new TestCaseData(
+@"fun Func(a,b){}
+
+print Func.a;",
+@"IDENTIFIER|2:13 Only instances have properties.")
+                .SetName("OnlyInstHasGet");
+
+            yield return new TestCaseData(
+@"fun Func(a,b){}
+
+Func.a = 67;",
+@"IDENTIFIER|2:6 Only instances have fields.")
+                .SetName("OnlyInstHasSet");
+
+            yield return new TestCaseData(
+@"class Doughnut {
+  cook() {
+    print ""Fry until golden brown."";
+  }
+}
+
+class BostonCream < Doughnut {
+  cook() {
+    super.Missing();
+    print ""Pipe full of custard and coat with chocolate."";
+  }
+}
+
+BostonCream().cook();",
+@"IDENTIFIER|8:21 Undefined property 'Missing'.")
+                .SetName("Class_SuperMissingMethod");
         }
 
     [Test]
@@ -251,11 +512,9 @@ BostonCream().cook();",
         {
             var engine = new TestLoxEngine();
 
-            engine.Run(testString);
+            engine.Run(testString, true);
 
             Assert.AreEqual(requiredResult, engine.InterpreterResult);
         }
     }
 }
-
-

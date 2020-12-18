@@ -186,7 +186,7 @@ var inst = WithInit(!logic,comparison,3);",
         [TestCaseSource(nameof(Generator))]
         public void Parser_MatchesPrinter(string testString, string requiredAST)
         {
-            var scanner = new Scanner(null);
+            var scanner = new Scanner();
             scanner.Scan(testString);
 
             var parser = new Parser();

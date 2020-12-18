@@ -147,7 +147,6 @@ namespace ULox
                 CheckNumberOperand(expr.op, right);
                 return -(double)right;
             case TokenType.BANG:
-                CheckNumberOperand(expr.op, right);
                 return !IsTruthy(right);
             }
 

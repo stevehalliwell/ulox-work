@@ -17,6 +17,7 @@ namespace ULox
 
         private List<Token> _tokens;
         private int current = 0;
+        public bool CatchAndSynch { get; set; } = true;
 
         public List<Stmt> Parse(List<Token> tokens)
         {
@@ -32,7 +33,10 @@ namespace ULox
             }
             catch (ParseException exception)
             {
-                return null;
+                if (CatchAndSynch)
+                    return null;
+                else
+                    throw;
             }
             return statements;
         }
@@ -48,8 +52,15 @@ namespace ULox
             }
             catch (ParseException exception)
             {
-                Synchronize();
-                return null;
+                if (CatchAndSynch)
+                {
+                    Synchronize();
+                    return null;
+                }
+                else
+                {
+                    throw;
+                }
             }
         }
 
