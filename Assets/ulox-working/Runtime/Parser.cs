@@ -463,6 +463,19 @@ namespace ULox
                 return new Expr.Grouping(expr);
             }
 
+            if (Match(TokenType.ASSIGN,
+                TokenType.GREATER,
+                TokenType.GREATER_EQUAL,
+                TokenType.LESS,
+                TokenType.LESS_EQUAL,
+                TokenType.PLUS,
+                TokenType.SLASH,
+                TokenType.STAR,
+                TokenType.QUESTION))
+            {
+                throw new ParseException(Previous(), "Missing left-had operand.");
+            }
+
             throw new ParseException(Peek(), "Expect expression.");
         }
 

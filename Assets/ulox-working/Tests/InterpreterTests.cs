@@ -520,6 +520,16 @@ Say(""Hello"","" "",""World!"");",
 print a;",
 @"3")
                 .SetName("SimpleConditional");
+
+            yield return new TestCaseData(
+@"print + 5;",
+@"PLUS|0:8 Missing left-had operand.")
+                .SetName("MissingLHS");
+
+            yield return new TestCaseData(
+@"print """";",
+@"")
+                .SetName("Empty");
         }
 
     [Test]
