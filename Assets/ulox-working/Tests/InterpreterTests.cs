@@ -504,6 +504,22 @@ class BostonCream < Doughnut {
 BostonCream().cook();",
 @"IDENTIFIER|8:21 Undefined property 'Missing'.")
                 .SetName("Class_SuperMissingMethod");
+
+            yield return new TestCaseData(
+@"fun Say(a,b,c)
+{
+    print a + b + c;
+}
+
+Say(""Hello"","" "",""World!"");",
+@"Hello World!")
+                .SetName("CallFuncWithLiterals");
+
+            yield return new TestCaseData(
+@"var a = 1 < 2 ? 3 : 4;
+print a;",
+@"3")
+                .SetName("SimpleConditional");
         }
 
     [Test]

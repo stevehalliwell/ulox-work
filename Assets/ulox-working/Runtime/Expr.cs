@@ -136,6 +136,19 @@ namespace ULox
             public readonly Token name;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
+        public class Conditional : Expr
+        {
+            public Conditional( Expr condition, Expr ifTrue, Expr ifFalse)
+            {
+                this.condition = condition;
+                this.ifTrue = ifTrue;
+                this.ifFalse = ifFalse;
+            }
+            public readonly Expr condition;
+            public readonly Expr ifTrue;
+            public readonly Expr ifFalse;
+            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
+        }
 
         public abstract T Accept<T>(Visitor<T> visitor);
 
@@ -153,6 +166,7 @@ namespace ULox
             T Visit(This expr);
             T Visit(Unary expr);
             T Visit(Variable expr);
+            T Visit(Conditional expr);
         }
     }
 }

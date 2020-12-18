@@ -24,6 +24,7 @@ namespace ULox
             "This     : Token keyword",
             "Unary    : Token op, Expr right",
             "Variable : Token name",
+            "Conditional : Expr condition, Expr ifTrue, Expr ifFalse",
         };
         private static string[] _requiredStmtTypes = new string[]
         {

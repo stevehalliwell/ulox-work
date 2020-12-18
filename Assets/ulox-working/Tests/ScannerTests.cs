@@ -313,6 +313,25 @@ new TokenType[]
                 TokenType.EOF,
 })
                 .SetName("LogicClasses");
+
+            yield return new TestCaseData(
+@"var a = 1 < 2 ? 3 : 4;",
+new TokenType[]
+{
+            TokenType.VAR,
+            TokenType.IDENTIFIER,
+            TokenType.ASSIGN,
+            TokenType.INT,
+            TokenType.LESS,
+            TokenType.INT,
+            TokenType.QUESTION,
+            TokenType.INT,
+            TokenType.COLON,
+            TokenType.INT,
+            TokenType.END_STATEMENT,
+            TokenType.EOF,
+})
+                .SetName("Conditional");
         }
 
         [Test]

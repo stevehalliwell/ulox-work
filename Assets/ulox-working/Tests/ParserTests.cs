@@ -177,6 +177,12 @@ var inst = WithInit(!logic,comparison,3);",
 
 
             yield return new TestCaseData(
+@"var a = 1 < 2 ? 3 : 4;",
+@"{ var 0:6 - IDENTIFIER a[ cond [ 0:15 - LESS < [ 1 ] [ 2 ] ] ? [ 3 ] : [ 4 ] ] }")
+                .SetName("Conditional");
+
+
+            yield return new TestCaseData(
 @"",
 @"")
                 .SetName("Empty");

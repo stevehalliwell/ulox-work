@@ -255,7 +255,7 @@ namespace ULox
             return new Stmt.Expression(expr);
         }
 
-        private Expr Expression() => Assignment();
+        private Expr Expression() => Conditional();
 
         internal void Reset()
         {
@@ -464,6 +464,22 @@ namespace ULox
             }
 
             throw new ParseException(Peek(), "Expect expression.");
+        }
+
+        private Expr Conditional()
+        {
+            Expr expr = Assignment();
+
+            if (Match(TokenType.QUESTION))
+            {
+                Expr thenBranch = Expression();
+                Consume(TokenType.COLON,
+                    "Expect ':' after then branch of conditional expression.");
+                Expr elseBranch = Conditional();
+                expr = new Expr.Conditional(expr, thenBranch, elseBranch);
+            }
+
+            return expr;
         }
 
         private void Synchronize()

@@ -389,5 +389,13 @@ namespace ULox
             }
             return method.Bind(inst);
         }
+
+        public object Visit(Expr.Conditional expr)
+        {
+            if (IsTruthy(Evaluate(expr.condition)))
+                return Evaluate(expr.ifTrue);
+            else 
+                return Evaluate(expr.ifFalse);
+        }
     }
 }

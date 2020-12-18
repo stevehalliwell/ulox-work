@@ -84,6 +84,8 @@ namespace ULox
                     case ';': AddTokenSingle(TokenType.END_STATEMENT); break;
                     case '*': AddTokenSingle(TokenType.STAR); break;
                     case '%': AddTokenSingle(TokenType.PERCENT); break;
+                    case ':': AddTokenSingle(TokenType.COLON); break;
+                    case '?': AddTokenSingle(TokenType.QUESTION); break;
 
                     case '!': AddTokenSingle(Match('=') ? TokenType.BANG_EQUAL : TokenType.BANG); break;
                     case '=': AddTokenSingle(Match('=') ? TokenType.EQUALITY : TokenType.ASSIGN); break;

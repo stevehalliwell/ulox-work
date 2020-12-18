@@ -270,5 +270,17 @@ namespace ULox.Tests
             Print(stmt.body);
             Dent();
         }
+
+        public Object Visit(Expr.Conditional expr)
+        {
+            Print("cond ");
+            Print(expr.condition);
+            Print(" ? ");
+            Print(expr.ifTrue);
+            Print(" : ");
+            Print(expr.ifFalse);
+
+            return null;
+        }
     }
 }

@@ -322,5 +322,13 @@ namespace ULox
             ResolveLocal(expr, expr.keyword);
             return null;
         }
+
+        public object Visit(Expr.Conditional expr)
+        {
+            Resolve(expr.condition);
+            Resolve(expr.ifTrue);
+            Resolve(expr.ifFalse);
+            return null;
+        }
     }
 }
