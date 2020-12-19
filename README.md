@@ -12,3 +12,6 @@ Don't expect this to be used (very much) in production. At least not in the stat
 - Add implementation related jlox challanges to the interpreter, including tests. 
 - Add standard lib equivilant for interpreter.
 - Add Unity specific hooks and functions.
+- Add REPL support.
+- Add Performance tests.
+- Possibly Lambdas.

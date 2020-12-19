@@ -19,30 +19,44 @@ namespace ULox
             public RuntimeCallException(Token token, string msg) : base(token, msg) { }
         }
 
-        public class InterpreterControlException : Exception { }
+        public class InterpreterControlException : Exception 
+        {
+            public Token From { get; set; }
+            public InterpreterControlException(Token from) { From = from; }
+        }
 
         public class Return : InterpreterControlException
         {
             public object Value { get; set; }
-            public Return(object val)
+            public Return(Token from, object val):base(from)
             {
                 Value = val;
             }
         }
 
+        public class Break : InterpreterControlException
+        {
+            public Break(Token from) : base(from) { }
+        }
+
+        public class Continue : InterpreterControlException
+        {
+            public Continue(Token from):base(from){}
+        }
+
         private Action<string> _logger;
-        private Environment globals = new Environment();
+        private Environment _globals = new Environment();
         private Environment currentEnvironment;
         private Dictionary<Expr, int> localsSideTable = new Dictionary<Expr, int>();
 
-        public Environment Globals => globals;
+        public Environment Globals => _globals;
 
         public Interpreter(Action<string> logger)
         {
             _logger = logger;
-            currentEnvironment = globals;
+            currentEnvironment = Globals;
 
-            globals.Define("clock", new NativeExpression(() => System.DateTime.Now.Ticks));
+            Globals.Define("clock", new NativeExpression(() => System.DateTime.Now.Ticks));
         }
 
         public void Interpret(List<Stmt> statements)
@@ -216,7 +230,7 @@ namespace ULox
                 return currentEnvironment.GetAt(distance, name);
             }
 
-            return globals.Get(name);
+            return Globals.Get(name);
         }
 
         public object Visit(Expr.Assign expr)
@@ -229,7 +243,7 @@ namespace ULox
             }
             else
             {
-                globals.Assign(expr.name, val);
+                Globals.Assign(expr.name, val);
             }
 
             return val;
@@ -265,7 +279,31 @@ namespace ULox
         public void Visit(Stmt.While stmt)
         {
             while (IsTruthy(Evaluate(stmt.condition)))
-                Execute(stmt.body);
+            {
+                try
+                {
+                    Execute(stmt.body);
+                }
+                catch (Break)
+                {
+                    return;
+                }
+                catch (Continue)
+                { 
+                }
+
+                if(stmt.increment != null) Execute(stmt.increment);
+            }
+        }
+
+        public void Visit(Stmt.Break stmt)
+        {
+            throw new Break(stmt.keyword);
+        }
+
+        public void Visit(Stmt.Continue stmt)
+        {
+            throw new Continue(stmt.keyword);
         }
 
         public object Visit(Expr.Call expr)
@@ -300,7 +338,7 @@ namespace ULox
             object val = null;
             if (stmt.value != null) val = Evaluate(stmt.value);
 
-            throw new Return(val);
+            throw new Return(stmt.keyword, val);
         }
 
         public void Resolve(Expr expr, int depth)

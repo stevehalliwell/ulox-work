@@ -268,6 +268,12 @@ namespace ULox.Tests
             Indent();
             PrintLine();
             Print(stmt.body);
+            if (stmt.increment != null)
+            {
+                PrintLine();
+                Print(stmt.increment);
+            }
+
             Dent();
         }
 
@@ -281,6 +287,16 @@ namespace ULox.Tests
             Print(expr.ifFalse);
 
             return null;
+        }
+
+        public void Visit(Stmt.Break stmt)
+        {
+            Print("break ");
+        }
+
+        public void Visit(Stmt.Continue stmt)
+        {
+            Print("continue ");
         }
     }
 }

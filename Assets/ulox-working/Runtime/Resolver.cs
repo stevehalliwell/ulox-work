@@ -4,7 +4,6 @@ using System.Linq;
 
 namespace ULox
 {
-    //todo challenges
     public class Resolver : Expr.Visitor<Object>,
                                Stmt.Visitor
     {
@@ -241,6 +240,7 @@ namespace ULox
         {
             Resolve(stmt.condition);
             Resolve(stmt.body);
+            if (stmt.increment != null) Resolve(stmt.increment);
         }
 
         public void Visit(Stmt.Class stmt)
@@ -329,6 +329,14 @@ namespace ULox
             Resolve(expr.ifTrue);
             Resolve(expr.ifFalse);
             return null;
+        }
+
+        public void Visit(Stmt.Break stmt)
+        {
+        }
+
+        public void Visit(Stmt.Continue stmt)
+        {
         }
     }
 }

@@ -18,6 +18,7 @@ namespace ULox
         private List<Token> _tokens;
         private int current = 0;
         public bool CatchAndSynch { get; set; } = true;
+        private int _loopDepth;
 
         public List<Stmt> Parse(List<Token> tokens)
         {
@@ -134,6 +135,8 @@ namespace ULox
             if (Match(TokenType.PRINT)) return PrintStatement();
             if (Match(TokenType.RETURN)) return ReturnStatement();
             if (Match(TokenType.WHILE)) return WhileStatement();
+            if (Match(TokenType.BREAK)) return BreakStatement();
+            if (Match(TokenType.CONTINUE)) return ContinueStatement();
             if (Match(TokenType.OPEN_BRACE)) return new Stmt.Block(Block());
 
             return ExpressionStatement();
@@ -148,6 +151,28 @@ namespace ULox
 
             Consume(TokenType.END_STATEMENT, "Expect ; after return value.");
             return new Stmt.Return(keyword, value);
+        }
+
+        private Stmt BreakStatement()
+        {
+            var keyword = Previous();
+            if (_loopDepth == 0)
+            {
+                throw new ParseException(keyword, "Cannot break when not within a loop.");
+            }
+            Consume(TokenType.END_STATEMENT, "Expect ; after break.");
+            return new Stmt.Break(keyword);
+        }
+
+        private Stmt ContinueStatement()
+        {
+            var keyword = Previous();
+            if (_loopDepth == 0)
+            {
+                throw new ParseException(keyword, "Cannot continue when not within a loop.");
+            }
+            Consume(TokenType.END_STATEMENT, "Expect ; after continue.");
+            return new Stmt.Continue(keyword);
         }
 
         private Stmt ForStatement()
@@ -182,36 +207,30 @@ namespace ULox
             }
             Consume(TokenType.CLOSE_PAREN, "Expect ')' after for clauses.");
 
+            _loopDepth++;
             Stmt body = Statement();
 
-            if (increment != null)
-            {
-                body = new Stmt.Block(
-                    new List<Stmt>() {
-                        body,
-                        new Stmt.Expression(increment),
-                        });
-            }
-
             if (condition == null) condition = new Expr.Literal(true);
-            body = new Stmt.While(condition, body);
+            body = new Stmt.While(condition, body, new Stmt.Expression(increment));
 
             if (initializer != null)
             {
                 body = new Stmt.Block(new List<Stmt>() { initializer, body });
             }
 
+            _loopDepth--;
             return body;
         }
 
         private Stmt WhileStatement()
         {
+            _loopDepth++;
             Consume(TokenType.OPEN_PAREN, "Expect '(' after 'while'.");
             Expr condition = Expression();
             Consume(TokenType.CLOSE_PAREN, "Expect ')' after condition.");
             Stmt body = Statement();
-
-            return new Stmt.While(condition, body);
+            _loopDepth--;
+            return new Stmt.While(condition, body, null);
         }
 
         private Stmt IfStatement()
@@ -261,6 +280,7 @@ namespace ULox
         {
             _tokens = null;
             current = 0;
+            _loopDepth = 0;
         }
 
         private Expr Assignment()

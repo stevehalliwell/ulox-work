@@ -11,8 +11,8 @@ namespace ULox.Tests
 @"for(var i = 0; i < 10; i = i+1) {print i;}",
 @"{ { var 0:10 - IDENTIFIER i[ 0 ] }
 { while [ 0:23 - LESS < [ 0:20 - IDENTIFIER i ] [ 10 ] ]
-  { { { print [ 0:51 - IDENTIFIER i ] } }
-  { [ assign 0:31 - IDENTIFIER i[ 0:38 - PLUS + [ 0:37 - IDENTIFIER i ] [ 1 ] ] ] } } } }")
+  { { print [ 0:51 - IDENTIFIER i ] } }
+  { [ assign 0:31 - IDENTIFIER i[ 0:38 - PLUS + [ 0:37 - IDENTIFIER i ] [ 1 ] ] ] } } }")
                 .SetName("ForLoop");
             yield return new TestCaseData(
 @"var a = 1;",

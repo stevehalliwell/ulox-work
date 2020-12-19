@@ -94,13 +94,33 @@ namespace ULox
         }
         public class While : Stmt
         {
-            public While( Expr condition, Stmt body)
+            public While( Expr condition, Stmt body, Stmt increment)
             {
                 this.condition = condition;
                 this.body = body;
+                this.increment = increment;
             }
             public readonly Expr condition;
             public readonly Stmt body;
+            public readonly Stmt increment;
+            public override void Accept(Visitor visitor) => visitor.Visit(this);
+        }
+        public class Break : Stmt
+        {
+            public Break( Token keyword)
+            {
+                this.keyword = keyword;
+            }
+            public readonly Token keyword;
+            public override void Accept(Visitor visitor) => visitor.Visit(this);
+        }
+        public class Continue : Stmt
+        {
+            public Continue( Token keyword)
+            {
+                this.keyword = keyword;
+            }
+            public readonly Token keyword;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
 
@@ -117,6 +137,8 @@ namespace ULox
             void Visit(Return stmt);
             void Visit(Var stmt);
             void Visit(While stmt);
+            void Visit(Break stmt);
+            void Visit(Continue stmt);
         }
     }
 }

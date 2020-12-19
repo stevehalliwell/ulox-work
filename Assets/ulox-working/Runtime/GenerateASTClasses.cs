@@ -39,7 +39,10 @@ namespace ULox
             "Print      : Expr expression",
             "Return     : Token keyword, Expr value",
             "Var        : Token name, Expr initializer",
-            "While      : Expr condition, Stmt body",
+            "While      : Expr condition, Stmt body," +
+                        " Stmt increment",
+            "Break      : Token keyword",
+            "Continue   : Token keyword",
         };
 
         [MenuItem("Create/GenerateASTClasses")]
@@ -106,14 +109,19 @@ namespace ULox
             {{");
                 foreach (var fieldItem in fields)
                 {
-                    var varName = fieldItem.Split(' ')[1].Trim();
-                    sb.AppendLine($"                this.{varName} = {varName};");
+                    var fieldItemSplits = fieldItem.Split(' ');
+                    if (fieldItemSplits.Length > 1)
+                    {
+                        var varName = fieldItemSplits[1].Trim();
+                        sb.AppendLine($"                this.{varName} = {varName};");
+                    }
                 }
                 sb.AppendLine(@"            }");
 
                 foreach (var fieldItem in fields)
                 {
-                    sb.AppendLine($"            public readonly {fieldItem};");
+                    if(fieldItem.Length > 1)
+                        sb.AppendLine($"            public readonly {fieldItem};");
                 }
                 sb.AppendLine(acceptVisitorLine);
                 sb.Append(@"        }");

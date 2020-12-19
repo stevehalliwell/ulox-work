@@ -522,6 +522,12 @@ print a;",
                 .SetName("SimpleConditional");
 
             yield return new TestCaseData(
+@"var a = !(1 < 2) ? 3 : 4;
+print a;",
+@"4")
+                .SetName("SimpleConditionalReverse");
+
+            yield return new TestCaseData(
 @"print + 5;",
 @"PLUS|0:8 Missing left-had operand.")
                 .SetName("MissingLHS");
@@ -530,6 +536,46 @@ print a;",
 @"print ""Hello "" + 7;",
 @"Hello 7")
                 .SetName("AutoNumberToStringConcat");
+
+            yield return new TestCaseData(
+@"var a = 0;
+while(a < 10)
+{
+    print a;
+    if (a > 3) {break;}
+    a = a + 1;
+}",
+@"01234")
+                .SetName("WhileBreak");
+
+            yield return new TestCaseData(
+@"for(var i = 0; i < 10; i = i + 1)
+{
+    print i;
+    if (i > 3) {break;}
+}",
+@"01234")
+                .SetName("ForBreak");
+
+            yield return new TestCaseData(
+@"var a = 0;
+while(a < 10)
+{
+    a = a + 1;
+    if (a > 3) {continue;}
+    print a;
+}",
+@"123")
+                .SetName("WhileContinue");
+
+            yield return new TestCaseData(
+@"for(var i = 0; i < 10; i = i + 1)
+{
+    if (i > 3) {continue;}
+    print i;
+}",
+@"0123")
+                .SetName("ForContinue");
 
             yield return new TestCaseData(
 @"print """";",
