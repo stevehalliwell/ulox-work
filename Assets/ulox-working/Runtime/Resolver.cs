@@ -4,6 +4,7 @@ using System.Linq;
 
 namespace ULox
 {
+    //TODO resolver challenge 4,http://craftinginterpreters.com/resolving-and-binding.html https://github.com/munificent/craftinginterpreters/tree/master/note/answers/chapter11_resolving/4/com/craftinginterpreters
     public class Resolver : Expr.Visitor<Object>,
                                Stmt.Visitor
     {
@@ -12,10 +13,21 @@ namespace ULox
             public ResolverException(Token token, string msg) : base(token, msg) { }
         }
 
-        private List<Dictionary<string, bool>> scopes = new List<Dictionary<string, bool>>();
+        private class VariableUse
+        {
+            public Token name;
+            public enum State { Declared, Defined, Read };
+            public State state;
+            public VariableUse(Token Name, State _state) { name = Name; state = _state; }
+        }
+
+        private List<Dictionary<string, VariableUse>> scopes = new List<Dictionary<string, VariableUse>>();
         private Interpreter _interpreter; 
         private FunctionType currentFunction = FunctionType.NONE;
         private ClassType currentClass = ClassType.NONE;
+        private List<ResolverWarning> resolverWarnings = new List<ResolverWarning>();
+
+        public List<ResolverWarning> ResolverWarnings => resolverWarnings;
 
         private enum FunctionType
         {
@@ -40,6 +52,9 @@ namespace ULox
         public void Reset()
         {
             scopes.Clear();
+            currentFunction = FunctionType.NONE;
+            currentClass = ClassType.NONE;
+            resolverWarnings = new List<ResolverWarning>();
         }
 
         public void Resolve(List<Stmt> statements)
@@ -63,7 +78,7 @@ namespace ULox
         public object Visit(Expr.Assign expr)
         {
             Resolve(expr.value);
-            ResolveLocal(expr, expr.name);
+            ResolveLocal(expr, expr.name, false);
             return null;
         }
 
@@ -112,22 +127,29 @@ namespace ULox
         public object Visit(Expr.Variable expr)
         {
             if (scopes.Count > 0 &&
-                scopes.Last().TryGetValue(expr.name.Lexeme, out bool existingFlag) && existingFlag == false)
+                scopes.Last().TryGetValue(expr.name.Lexeme, out var existingFlag) && 
+                existingFlag.state == VariableUse.State.Declared)
             {
                 throw new ResolverException(expr.name, "Can't read local variable in its own initializer.");
             }
             
-            ResolveLocal(expr, expr.name);
+            ResolveLocal(expr, expr.name, true);
             return null;
         }
 
-        private void ResolveLocal(Expr expr, Token name)
+        private void ResolveLocal(Expr expr, Token name, bool isRead)
         {
             for (int i = scopes.Count-1; i >= 0 ; i--)
             {
                 if(scopes[i].ContainsKey(name.Lexeme))
                 {
                     _interpreter.Resolve(expr, scopes.Count - 1 - i);
+                    
+                    if(isRead)
+                    {
+                        scopes[i][name.Lexeme].state = VariableUse.State.Read;
+                    }
+                    
                     return;
                 }
             }
@@ -142,12 +164,25 @@ namespace ULox
 
         private void BeginScope()
         {
-            scopes.Add(new Dictionary<string, bool>());
+            scopes.Add(new Dictionary<string, VariableUse>());
         }
 
         private void EndScope()
         {
+            foreach (var item in scopes.Last().Values)
+            {
+                if (item.state != VariableUse.State.Read)
+                {
+                    Warning(item.name, "Local variable is never read.");
+                }
+            }
+
             scopes.RemoveAt(scopes.Count-1);
+        }
+
+        private void Warning(Token name, string msg)
+        {
+            resolverWarnings.Add(new ResolverWarning() { Token = name, Message = msg });
         }
 
         public void Visit(Stmt.Expression stmt)
@@ -233,13 +268,13 @@ namespace ULox
                 throw new ResolverException(name, "Already a variable with this name in this scope.");
             }
 
-            scope.Add(name.Lexeme, false);
+            scope.Add(name.Lexeme, new VariableUse(name,VariableUse.State.Declared));
         }
 
         private void Define(Token name)
         {
             if (scopes.Count == 0) return;
-            scopes.Last()[name.Lexeme] = true;
+            scopes.Last()[name.Lexeme].state = VariableUse.State.Defined;
         }
 
         public void Visit(Stmt.While stmt)
@@ -273,11 +308,11 @@ namespace ULox
             if (stmt.superclass != null)
             {
                 BeginScope();
-                scopes.Last()["super"] = true;
+                scopes.Last()["super"] = new VariableUse(stmt.name, VariableUse.State.Read);
             }
 
             BeginScope();
-            scopes.Last()["this"] = true;
+            scopes.Last()["this"] = new VariableUse(stmt.name, VariableUse.State.Read);
 
             foreach (Stmt.Function method in stmt.methods)
             {
@@ -314,7 +349,7 @@ namespace ULox
             if (currentClass == ClassType.NONE)
                 throw new ResolverException(expr.keyword, "Cannot use 'this' outside of a class.");
 
-            ResolveLocal(expr, expr.keyword);
+            ResolveLocal(expr, expr.keyword, false);
             return null;
         }
 
@@ -325,7 +360,7 @@ namespace ULox
             if (currentClass == ClassType.CLASS)
                 throw new ResolverException(expr.keyword, "Cannot use 'super' in a class with no superclass.");
 
-            ResolveLocal(expr, expr.keyword);
+            ResolveLocal(expr, expr.keyword, false);
             return null;
         }
 

@@ -61,16 +61,9 @@ namespace ULox
 
         public void Interpret(List<Stmt> statements)
         {
-            try
+            foreach (var item in statements)
             {
-                foreach (var item in statements)
-                {
-                    Execute(item);
-                }
-            }
-            catch (RuntimeTypeException error)
-            {
-                _logger?.Invoke(error.Message);
+                Execute(item);
             }
         }
 

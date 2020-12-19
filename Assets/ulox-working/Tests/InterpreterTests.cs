@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -13,17 +14,20 @@ namespace ULox.Tests
         {
             public string InterpreterResult { get; private set; }
             private LoxEngine loxEngine;
+            private Resolver resolver;
+            private Interpreter interpreter;
 
             void SetResult(string str) => InterpreterResult += str;
 
             public TestLoxEngine()
             {
-                var interp = new Interpreter(SetResult);
+                interpreter = new Interpreter(SetResult);
+                resolver = new Resolver(interpreter);
                 loxEngine = new LoxEngine(
                     new Scanner(),
                     new Parser() { CatchAndSynch = false},
-                    new Resolver(interp),
-                    interp,
+                    resolver,
+                    interpreter,
                     SetResult);
             }
 
@@ -32,6 +36,12 @@ namespace ULox.Tests
                 try
                 {
                     loxEngine.Run(testString);
+
+                    SetResult(
+                        string.Join(
+                            "\n",
+                            resolver.ResolverWarnings.Select(x => $"{x.Token} {x.Message}")
+                            ));
                 }
                 catch (System.Exception e)
                 {
@@ -611,6 +621,16 @@ thrice(fun(a) {
                 .SetName("CannotContinueHere");
 
             yield return new TestCaseData(
+@"fun Func()
+{
+    var a = 1;
+    var b = 2;
+    print b;
+}",
+@"2:14 - IDENTIFIER a Local variable is never read.")
+                .SetName("UnusedLocals");
+
+            yield return new TestCaseData(
 @"print """";",
 @"")
                 .SetName("Empty");
@@ -628,8 +648,3 @@ thrice(fun(a) {
         }
     }
 }
-
-
-// "1".
-// "2".
-// "3".
