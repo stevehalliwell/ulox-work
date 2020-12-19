@@ -222,12 +222,18 @@ namespace ULox.Tests
         {
             Print("fun ");
             Print(stmt.name);
-            if(stmt.parameters?.Count > 0)
-                Print(stmt.parameters);
+            Print(stmt.function);
+        }
+
+        public Object Visit(Expr.Function expr)
+        {
+            if (expr.parameters?.Count > 0)
+                Print(expr.parameters);
             Indent();
             PrintLine();
-            Print(stmt.body);
+            Print(expr.body);
             Dent();
+            return null;
         }
 
         public void Visit(Stmt.If stmt)

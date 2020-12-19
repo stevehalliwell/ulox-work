@@ -578,6 +578,39 @@ while(a < 10)
                 .SetName("ForContinue");
 
             yield return new TestCaseData(
+@"fun thrice(fn)
+{
+    for (var i = 1; i <= 3; i = i + 1)
+    {
+        fn(i);
+    }
+}
+
+thrice(fun(a) {
+    print a;
+});",
+@"123")
+                .SetName("Lambda");
+
+            yield return new TestCaseData(
+@"fun Func()
+{
+    var a = 1;
+    break;
+}",
+@"BREAK|3:13 Cannot break when not within a loop.")
+                .SetName("CannotBreakHere");
+
+            yield return new TestCaseData(
+@"fun Func()
+{
+    var a = 1;
+    continue;
+}",
+@"CONTINUE|3:16 Cannot continue when not within a loop.")
+                .SetName("CannotContinueHere");
+
+            yield return new TestCaseData(
 @"print """";",
 @"")
                 .SetName("Empty");
@@ -595,3 +628,8 @@ while(a < 10)
         }
     }
 }
+
+
+// "1".
+// "2".
+// "3".

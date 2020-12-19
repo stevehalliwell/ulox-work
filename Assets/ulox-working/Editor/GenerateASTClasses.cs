@@ -25,6 +25,7 @@ namespace ULox
             "Unary    : Token op, Expr right",
             "Variable : Token name",
             "Conditional : Expr condition, Expr ifTrue, Expr ifFalse",
+            "Function : List<Token> parameters, List<Stmt> body",
         };
         private static string[] _requiredStmtTypes = new string[]
         {
@@ -32,8 +33,7 @@ namespace ULox
             "Class      : Token name, Expr.Variable superclass," +
                         " List<Stmt.Function> methods",
             "Expression : Expr expression",
-            "Function   : Token name, List<Token> parameters," +
-                        " List<Stmt> body",
+            "Function   : Token name, Expr.Function function",
             "If         : Expr condition, Stmt thenBranch," +
                         " Stmt elseBranch",
             "Print      : Expr expression",

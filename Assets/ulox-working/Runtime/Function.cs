@@ -4,12 +4,18 @@ namespace ULox
 {
     public class Function : ICallable
     {
-        private Stmt.Function _declaration;
+        private string _name;
+        private Expr.Function _declaration;
         private Environment _closure;
         private bool _isInitializer;
 
-        public Function(Stmt.Function declaration, Environment closure, bool isInitializer)
+        public Function(
+            string name,
+            Expr.Function declaration, 
+            Environment closure, 
+            bool isInitializer)
         {
+            _name = name;
             _declaration = declaration;
             _closure = closure;
             _isInitializer = isInitializer;
@@ -44,9 +50,14 @@ namespace ULox
         {
             var env = new Environment(_closure);
             env.Define("this", instance);
-            return new Function(_declaration, env, _isInitializer);
+            return new Function(_name, _declaration, env, _isInitializer);
         }
 
-        public override string ToString() => $"<fn {_declaration.name.Lexeme}>";
+        public override string ToString()
+        {
+            if(!string.IsNullOrEmpty(_name))
+                return $"<fn {_name}>";
+            return "<fn>";
+        }
     }
 }

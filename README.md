@@ -14,4 +14,3 @@ Don't expect this to be used (very much) in production. At least not in the stat
 - Add Unity specific hooks and functions.
 - Add REPL support.
 - Add Performance tests.
-- Possibly Lambdas.

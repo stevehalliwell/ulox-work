@@ -46,7 +46,11 @@ namespace ULox
             try
             {
                 if (Match(TokenType.CLASS)) return ClassDeclaration();
-                if (Match(TokenType.FUNCTION)) return Function("function");
+                if (Check(TokenType.FUNCTION) && CheckNext(TokenType.IDENTIFIER))
+                {
+                    Consume(TokenType.FUNCTION, null);
+                    return Function("function");
+                }
                 if (Match(TokenType.VAR)) return VarDeclaration();
 
                 return Statement();
@@ -92,7 +96,11 @@ namespace ULox
         private Stmt.Function Function(string kind)
         {
             var name = Consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
+            return new Stmt.Function(name, FunctionBody(kind));
+        }
 
+        private Expr.Function FunctionBody(string kind)
+        { 
             Consume(TokenType.OPEN_PAREN, "Expect '(' after " + kind + " name.");
             var parameters = new List<Token>();
             if (!Check(TokenType.CLOSE_PAREN))
@@ -111,7 +119,7 @@ namespace ULox
 
             Consume(TokenType.OPEN_BRACE, "Expect '{' before " + kind + " body.");
             var body = Block();
-            return new Stmt.Function(name, parameters, body);
+            return new Expr.Function(parameters, body);
         }
 
         private Stmt VarDeclaration()
@@ -451,6 +459,7 @@ namespace ULox
 
         private Expr Primary()
         {
+            if (Match(TokenType.FUNCTION)) return FunctionBody("function");
             if (Match(TokenType.FALSE)) return new Expr.Literal(false);
             if (Match(TokenType.TRUE)) return new Expr.Literal(true);
             if (Match(TokenType.NULL)) return new Expr.Literal(null);
@@ -558,6 +567,12 @@ namespace ULox
                 }
             }
             return false;
+        }
+
+        private bool CheckNext(TokenType type)
+        {
+            if (IsAtEnd()) return false;
+            return _tokens[current + 1].TokenType == type;
         }
 
         private bool Check(TokenType type)

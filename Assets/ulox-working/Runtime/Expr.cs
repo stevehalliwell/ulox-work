@@ -149,6 +149,17 @@ namespace ULox
             public readonly Expr ifFalse;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
+        public class Function : Expr
+        {
+            public Function( List<Token> parameters, List<Stmt> body)
+            {
+                this.parameters = parameters;
+                this.body = body;
+            }
+            public readonly List<Token> parameters;
+            public readonly List<Stmt> body;
+            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
+        }
 
         public abstract T Accept<T>(Visitor<T> visitor);
 
@@ -167,6 +178,7 @@ namespace ULox
             T Visit(Unary expr);
             T Visit(Variable expr);
             T Visit(Conditional expr);
+            T Visit(Function expr);
         }
     }
 }

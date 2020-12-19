@@ -160,21 +160,27 @@ namespace ULox
             Declare(stmt.name);
             Define(stmt.name);
 
-            ResolveFunction(stmt, FunctionType.FUNCTION);
+            ResolveFunction(stmt.function, FunctionType.FUNCTION);
         }
 
-        private void ResolveFunction(Stmt.Function stmt, FunctionType functionType)
+        public object Visit(Expr.Function expr)
+        {
+            ResolveFunction(expr, FunctionType.FUNCTION);
+            return null;
+        }
+
+        private void ResolveFunction(Expr.Function func, FunctionType functionType)
         {
             var enclosingFunctionType = currentFunction;
             currentFunction = functionType;
 
             BeginScope();
-            foreach (var param in stmt.parameters)
+            foreach (var param in func.parameters)
             {
                 Declare(param);
                 Define(param);
             }
-            Resolve(stmt.body);
+            Resolve(func.body);
             EndScope();
 
             currentFunction = enclosingFunctionType;
@@ -280,7 +286,7 @@ namespace ULox
                 {
                     declaration = FunctionType.INITIALIZER;
                 }
-                ResolveFunction(method, declaration);
+                ResolveFunction(method.function, declaration);
             }
 
             EndScope();

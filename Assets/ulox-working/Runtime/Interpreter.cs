@@ -329,8 +329,13 @@ namespace ULox
 
         public void Visit(Stmt.Function stmt)
         {
-            var func = new Function(stmt, currentEnvironment, false);
+            var func = new Function(stmt.name.Lexeme, stmt.function, currentEnvironment, false);
             currentEnvironment.Define(stmt.name.Lexeme, func);
+        }
+
+        public object Visit(Expr.Function expr)
+        {
+            return new Function(null, expr, currentEnvironment, false);
         }
 
         public void Visit(Stmt.Return stmt)
@@ -371,7 +376,8 @@ namespace ULox
             foreach (Stmt.Function method in stmt.methods)
             {
                 var function = new Function(
-                    method, 
+                    method.name.Lexeme,
+                    method.function, 
                     currentEnvironment,
                     method.name.Lexeme == "init");
 
