@@ -122,9 +122,14 @@ namespace ULox
 
                     if (left is double leftD && right is double rightD)
                         return leftD + rightD;
-                    if (left is string leftS && right is string rightS)
-                        return leftS + rightS;
-
+                    if (left is string leftS)
+                    {
+                        if (right is string rightS)
+                            return leftS + rightS;
+                        else 
+                            return leftS + right.ToString();
+                            
+                    }
                     throw new RuntimeTypeException(expr.op, "Operands must be numbers or strings.");
                 }
                 break;

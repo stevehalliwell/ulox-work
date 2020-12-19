@@ -527,6 +527,11 @@ print a;",
                 .SetName("MissingLHS");
 
             yield return new TestCaseData(
+@"print ""Hello "" + 7;",
+@"Hello 7")
+                .SetName("AutoNumberToStringConcat");
+
+            yield return new TestCaseData(
 @"print """";",
 @"")
                 .SetName("Empty");
