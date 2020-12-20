@@ -101,21 +101,26 @@ namespace ULox
 
         private Expr.Function FunctionBody(string kind)
         { 
-            Consume(TokenType.OPEN_PAREN, "Expect '(' after " + kind + " name.");
-            var parameters = new List<Token>();
-            if (!Check(TokenType.CLOSE_PAREN))
-            {
-                do
-                {
-                    if (parameters.Count >= 255)
-                    {
-                        throw new ParseException(Peek(), "Can't have more than 255 arguments.");
-                    }
+            List<Token> parameters = null;
 
-                    parameters.Add(Consume(TokenType.IDENTIFIER, "Expect parameter name."));
-                } while (Match(TokenType.COMMA));
+            if(kind != "Method" || Check(TokenType.OPEN_PAREN))
+            {
+                parameters = new List<Token>();
+                Consume(TokenType.OPEN_PAREN, "Expect '(' after " + kind + " name.");
+                if (!Check(TokenType.CLOSE_PAREN))
+                {
+                    do
+                    {
+                        if (parameters.Count >= 255)
+                        {
+                            throw new ParseException(Peek(), "Can't have more than 255 arguments.");
+                        }
+
+                        parameters.Add(Consume(TokenType.IDENTIFIER, "Expect parameter name."));
+                    } while (Match(TokenType.COMMA));
+                }
+                Consume(TokenType.CLOSE_PAREN, "Expect ')' after parameters.");
             }
-            Consume(TokenType.CLOSE_PAREN, "Expect ')' after parameters.");
 
             Consume(TokenType.OPEN_BRACE, "Expect '{' before " + kind + " body.");
             var body = Block();

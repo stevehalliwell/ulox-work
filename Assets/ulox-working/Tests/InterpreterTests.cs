@@ -631,6 +631,22 @@ thrice(fun(a) {
                 .SetName("UnusedLocals");
 
             yield return new TestCaseData(
+@"class Circle {
+  init(radius) {
+    this.radius = radius;
+  }
+
+  area {
+    return 3.14 * this.radius * this.radius;
+  }
+}
+
+var circle = Circle(4);
+print circle.area;",
+@"50.24")
+                .SetName("ClassGetProperty");
+
+            yield return new TestCaseData(
 @"print """";",
 @"")
                 .SetName("Empty");

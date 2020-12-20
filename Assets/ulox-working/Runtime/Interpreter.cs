@@ -390,7 +390,15 @@ namespace ULox
             var obj = Evaluate(expr.obj);
             if (obj is Instance objInst)
             {
-                return objInst.Get(expr.name);
+                object result = objInst.Get(expr.name);
+                if (result is Function resultFunc)
+                {
+                    if (resultFunc.IsGetter)
+                    {
+                        result = resultFunc.Call(this, null);
+                    }
+                }
+                return result;
             }
 
             throw new RuntimeTypeException(expr.name, "Only instances have properties.");

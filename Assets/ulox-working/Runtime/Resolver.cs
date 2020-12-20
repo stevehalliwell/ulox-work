@@ -210,10 +210,13 @@ namespace ULox
             currentFunction = functionType;
 
             BeginScope();
-            foreach (var param in func.parameters)
+            if (func.parameters != null)
             {
-                Declare(param);
-                Define(param);
+                foreach (var param in func.parameters)
+                {
+                    Declare(param);
+                    Define(param);
+                }
             }
             Resolve(func.body);
             EndScope();

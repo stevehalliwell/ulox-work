@@ -23,11 +23,17 @@ namespace ULox
 
         public int Arity => _declaration.parameters.Count;
 
+        public bool IsGetter => _declaration.parameters == null;
+
         public object Call(Interpreter interpreter, List<object> args)
         {
             var environment = new Environment(_closure);
-            for (int i = 0; i < _declaration.parameters.Count; i++) {
-                environment.Define(_declaration.parameters[i].Lexeme, args[i]);
+            if (_declaration.parameters != null)
+            {
+                for (int i = 0; i < _declaration.parameters.Count; i++)
+                {
+                    environment.Define(_declaration.parameters[i].Lexeme, args[i]);
+                }
             }
 
             try
