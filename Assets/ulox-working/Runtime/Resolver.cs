@@ -327,6 +327,14 @@ namespace ULox
                 ResolveFunction(method.function, declaration);
             }
 
+            foreach (Stmt.Function method in stmt.metaMethods)
+            {
+                BeginScope();
+                scopes.Last()["this"] = new VariableUse(stmt.name, VariableUse.State.Read);
+                ResolveFunction(method.function, FunctionType.METHOD);
+                EndScope();
+            }
+
             EndScope();
 
             if (stmt.superclass != null) EndScope();

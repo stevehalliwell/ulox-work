@@ -647,6 +647,29 @@ print circle.area;",
                 .SetName("ClassGetProperty");
 
             yield return new TestCaseData(
+@"class Math {
+  class square(n) {
+    return n * n;
+  }
+}
+
+print Math.square(3);",
+@"9")
+                .SetName("MetaClassMethods");
+
+            yield return new TestCaseData(
+@"class Math {
+  class square(n) {
+    return n * n;
+  }
+}
+
+Math.pi = 3.14;
+print Math.pi;",
+@"3.14")
+                .SetName("MetaClassFieldStorage");
+
+            yield return new TestCaseData(
 @"print """";",
 @"")
                 .SetName("Empty");

@@ -15,15 +15,17 @@ namespace ULox
         }
         public class Class : Stmt
         {
-            public Class( Token name, Expr.Variable superclass, List<Stmt.Function> methods)
+            public Class( Token name, Expr.Variable superclass, List<Stmt.Function> methods, List<Stmt.Function> metaMethods)
             {
                 this.name = name;
                 this.superclass = superclass;
                 this.methods = methods;
+                this.metaMethods = metaMethods;
             }
             public readonly Token name;
             public readonly Expr.Variable superclass;
             public readonly List<Stmt.Function> methods;
+            public readonly List<Stmt.Function> metaMethods;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
         public class Expression : Stmt

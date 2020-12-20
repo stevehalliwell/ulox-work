@@ -210,6 +210,7 @@ namespace ULox.Tests
             Indent();
             PrintLine();
             Print(stmt.methods);
+            Print(stmt.metaMethods);
             Dent();
         }
 

@@ -364,6 +364,14 @@ namespace ULox
                 currentEnvironment.Define("super", superclass);
             }
 
+            var classMethods = new Dictionary<string, Function>();
+            foreach (var method in stmt.metaMethods)
+            {
+                var func = new Function(method.name.Lexeme, method.function, currentEnvironment, false);
+                classMethods[method.name.Lexeme] = func;
+            }
+
+            var metaClass = new Class(null, stmt.name.Lexeme + "_meta", null, classMethods);
 
             var methods = new Dictionary<string, Function>();
             foreach (Stmt.Function method in stmt.methods)
@@ -377,7 +385,7 @@ namespace ULox
                 methods[method.name.Lexeme] = function;
             }
 
-            var @class = new Class(stmt.name.Lexeme, superclass, methods);
+            var @class = new Class(metaClass, stmt.name.Lexeme, superclass, methods);
             if (superclass != null)
             {
                 currentEnvironment = currentEnvironment.Enclosing;

@@ -83,14 +83,17 @@ namespace ULox
             Consume(TokenType.OPEN_BRACE, "Expect { befefore class body.");
 
             var methods = new List<Stmt.Function>();
+            var metaMethods = new List<Stmt.Function>();
             while (!Check(TokenType.CLOSE_BRACE) && !IsAtEnd())
             {
-                methods.Add(Function("Method"));
+                var isClassMethod = Match(TokenType.CLASS);
+
+                (isClassMethod ? metaMethods :methods).Add(Function("Method"));
             }
 
             Consume(TokenType.CLOSE_BRACE, "Expect } after class body.");
 
-            return new Stmt.Class(name, superclass, methods);
+            return new Stmt.Class(name, superclass, methods, metaMethods);
         }
 
         private Stmt.Function Function(string kind)

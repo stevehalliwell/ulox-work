@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ULox
 {
-    public class Class : ICallable
+    public class Class : Instance, ICallable
     {
         private string _name;
         private Dictionary<string, Function> _methods;
@@ -11,7 +11,12 @@ namespace ULox
 
         public string Name => _name;
 
-        public Class(string name, Class superclass, Dictionary<string, Function> methods)
+        public Class(
+            Class metaClass, 
+            string name, 
+            Class superclass, 
+            Dictionary<string, Function> methods)
+            :base(metaClass)
         {
             _name = name;
             _methods = methods;
