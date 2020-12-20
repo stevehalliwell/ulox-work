@@ -2,9 +2,9 @@
 {
     public enum TokenType
     {
-        OPEN_PAREN, 
-        CLOSE_PAREN, 
-        OPEN_BRACE, 
+        OPEN_PAREN,
+        CLOSE_PAREN,
+        OPEN_BRACE,
         CLOSE_BRACE,
         COMMA,
         DOT,
@@ -13,7 +13,7 @@
         END_STATEMENT,
         SLASH,
         STAR,
-        PERCENT,
+        //PERCENT,
 
         ASSIGN,
         BANG,
@@ -41,8 +41,10 @@
         ELSE,
         WHILE,
         FOR,
-        LOOP,
+
+        //LOOP,
         RETURN,
+
         BREAK,
         CONTINUE,
         TRUE,
@@ -53,6 +55,6 @@
 
         PRINT,
 
-        EOF,        
+        EOF,
     }
 }

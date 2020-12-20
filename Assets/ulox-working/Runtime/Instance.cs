@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace ULox
 {
     public class Instance
     {
-        public class InstanceException : TokenException
-        {
-            public InstanceException(Token name, string msg) : base(name, msg) { }
-        }
-
         private Class _class;
         private Dictionary<string, object> fields = new Dictionary<string, object>();
 

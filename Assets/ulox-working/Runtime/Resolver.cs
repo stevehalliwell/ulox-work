@@ -6,23 +6,24 @@ namespace ULox
 {
     //TODO resolver challenge 4,http://craftinginterpreters.com/resolving-and-binding.html https://github.com/munificent/craftinginterpreters/tree/master/note/answers/chapter11_resolving/4/com/craftinginterpreters
     public class Resolver : Expr.Visitor<Object>,
-                               Stmt.Visitor
+                                Stmt.Visitor
     {
-        public class ResolverException : TokenException 
-        {
-            public ResolverException(Token token, string msg) : base(token, msg) { }
-        }
-
         private class VariableUse
         {
             public Token name;
+
             public enum State { Declared, Defined, Read };
+
             public State state;
-            public VariableUse(Token Name, State _state) { name = Name; state = _state; }
+
+            public VariableUse(Token Name, State _state)
+            {
+                name = Name; state = _state;
+            }
         }
 
         private List<Dictionary<string, VariableUse>> scopes = new List<Dictionary<string, VariableUse>>();
-        private Interpreter _interpreter; 
+        private Interpreter _interpreter;
         private FunctionType currentFunction = FunctionType.NONE;
         private ClassType currentClass = ClassType.NONE;
         private List<ResolverWarning> resolverWarnings = new List<ResolverWarning>();
@@ -127,29 +128,29 @@ namespace ULox
         public object Visit(Expr.Variable expr)
         {
             if (scopes.Count > 0 &&
-                scopes.Last().TryGetValue(expr.name.Lexeme, out var existingFlag) && 
+                scopes.Last().TryGetValue(expr.name.Lexeme, out var existingFlag) &&
                 existingFlag.state == VariableUse.State.Declared)
             {
                 throw new ResolverException(expr.name, "Can't read local variable in its own initializer.");
             }
-            
+
             ResolveLocal(expr, expr.name, true);
             return null;
         }
 
         private void ResolveLocal(Expr expr, Token name, bool isRead)
         {
-            for (int i = scopes.Count-1; i >= 0 ; i--)
+            for (int i = scopes.Count - 1; i >= 0; i--)
             {
-                if(scopes[i].ContainsKey(name.Lexeme))
+                if (scopes[i].ContainsKey(name.Lexeme))
                 {
                     _interpreter.Resolve(expr, scopes.Count - 1 - i);
-                    
-                    if(isRead)
+
+                    if (isRead)
                     {
                         scopes[i][name.Lexeme].state = VariableUse.State.Read;
                     }
-                    
+
                     return;
                 }
             }
@@ -177,7 +178,7 @@ namespace ULox
                 }
             }
 
-            scopes.RemoveAt(scopes.Count-1);
+            scopes.RemoveAt(scopes.Count - 1);
         }
 
         private void Warning(Token name, string msg)
@@ -238,7 +239,7 @@ namespace ULox
 
         public void Visit(Stmt.Return stmt)
         {
-            if(currentFunction == FunctionType.NONE)
+            if (currentFunction == FunctionType.NONE)
             {
                 throw new ResolverException(stmt.keyword, "Cannot return outside of a function.");
             }
@@ -271,7 +272,7 @@ namespace ULox
                 throw new ResolverException(name, "Already a variable with this name in this scope.");
             }
 
-            scope.Add(name.Lexeme, new VariableUse(name,VariableUse.State.Declared));
+            scope.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared));
         }
 
         private void Define(Token name)

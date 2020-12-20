@@ -5,41 +5,36 @@ namespace ULox
 {
     public class Environment
     {
-        public class EnvironmentException : TokenException
-        {
-            public EnvironmentException(Token token, string msg)
-                 : base(token, msg)
-            { }
-        }
-
-        private Dictionary<string, Object> values = new Dictionary<string, Object>();
+        private Dictionary<string, object> values = new Dictionary<string, object>();
         private Environment enclosing;
 
         public Environment Enclosing => enclosing;
 
-        public Environment() { }
+        public Environment()
+        {
+        }
 
         public Environment(Environment enclosing)
         {
             this.enclosing = enclosing;
         }
 
-        public void Define(String name, Object value)
+        public void Define(String name, object value)
         {
             values.Add(name, value);
         }
 
-        public Object Get(Token name)
+        public object Get(Token name)
         {
-            if (values.TryGetValue(name.Lexeme, out Object retval))
+            if (values.TryGetValue(name.Lexeme, out object retval))
             {
                 return retval;
             }
 
-            if(enclosing != null) 
+            if (enclosing != null)
                 return enclosing.Get(name);
 
-            throw new EnvironmentException(name,$"Undefined variable {name.Lexeme}");
+            throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
         }
 
         public void Assign(Token name, object val)

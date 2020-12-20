@@ -192,7 +192,7 @@ var c = ""hello"";
         including this /*
 */
 
-var res = a * b + c - 1 / 2 % 9",
+var res = a * b + c - 1 / 2 9",
 new TokenType[]
             {
                 TokenType.VAR,
@@ -217,7 +217,7 @@ new TokenType[]
                 TokenType.INT,
                 TokenType.SLASH,
                 TokenType.INT,
-                TokenType.PERCENT,
+                //TokenType.PERCENT,
                 TokenType.INT,
                 TokenType.EOF,
             })

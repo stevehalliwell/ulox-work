@@ -1,20 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace ULox
 {
-
     //TODO see challenges
     //todo add tests
     public class Parser
     {
-        public class ParseException : TokenException
-        {
-            public ParseException(Token token, string msg)
-                 : base(token, msg)
-            { }
-        }
-
         private List<Token> _tokens;
         private int current = 0;
         public bool CatchAndSynch { get; set; } = true;
@@ -30,7 +21,6 @@ namespace ULox
                 {
                     statements.Add(Declaration());
                 }
-
             }
             catch (ParseException exception)
             {
@@ -41,6 +31,7 @@ namespace ULox
             }
             return statements;
         }
+
         private Stmt Declaration()
         {
             try
@@ -88,7 +79,7 @@ namespace ULox
             {
                 var isClassMethod = Match(TokenType.CLASS);
 
-                (isClassMethod ? metaMethods :methods).Add(Function("Method"));
+                (isClassMethod ? metaMethods : methods).Add(Function("Method"));
             }
 
             Consume(TokenType.CLOSE_BRACE, "Expect } after class body.");
@@ -103,10 +94,10 @@ namespace ULox
         }
 
         private Expr.Function FunctionBody(string kind)
-        { 
+        {
             List<Token> parameters = null;
 
-            if(kind != "Method" || Check(TokenType.OPEN_PAREN))
+            if (kind != "Method" || Check(TokenType.OPEN_PAREN))
             {
                 parameters = new List<Token>();
                 Consume(TokenType.OPEN_PAREN, "Expect '(' after " + kind + " name.");
@@ -542,7 +533,7 @@ namespace ULox
 
                 switch (Peek().TokenType)
                 {
-                case TokenType.CLASS:
+                    case TokenType.CLASS:
                 case TokenType.FUNCTION:
                 case TokenType.VAR:
                 case TokenType.FOR:

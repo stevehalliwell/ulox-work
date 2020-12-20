@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 
 namespace ULox
 {
@@ -10,12 +9,12 @@ namespace ULox
         private Resolver _resolver;
         private Interpreter _interpreter;
         private Action<string> _logger;
-        
+
         public LoxEngine(
-            Scanner scanner, 
+            Scanner scanner,
             Parser parser,
             Resolver resolver,
-            Interpreter interpreter, 
+            Interpreter interpreter,
             Action<string> logger)
         {
             _scanner = scanner;
@@ -35,11 +34,6 @@ namespace ULox
             _resolver.Reset();
             _resolver.Resolve(statements);
 
-
-            //// Stop if there was a syntax error.
-            //if (expression == null) return;
-
-            ////_logger(new ASTPrinter().Print(expression));
             _interpreter.Interpret(statements);
         }
     }

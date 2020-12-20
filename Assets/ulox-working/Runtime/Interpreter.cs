@@ -6,28 +6,21 @@ namespace ULox
     public class Interpreter : Expr.Visitor<Object>,
                                Stmt.Visitor
     {
-        public class RuntimeTypeException : TokenException
-        {
-            public RuntimeTypeException(Token token, string msg)
-                : base(token, msg)
-            { }
-        }
-
-        public class RuntimeCallException : RuntimeTypeException
-        {
-            public RuntimeCallException(Token token, string msg) : base(token, msg) { }
-        }
-
-        public class InterpreterControlException : Exception 
+        public class InterpreterControlException : Exception
         {
             public Token From { get; set; }
-            public InterpreterControlException(Token from) { From = from; }
+
+            public InterpreterControlException(Token from)
+            {
+                From = from;
+            }
         }
 
         public class Return : InterpreterControlException
         {
             public object Value { get; set; }
-            public Return(Token from, object val):base(from)
+
+            public Return(Token from, object val) : base(from)
             {
                 Value = val;
             }
@@ -35,12 +28,16 @@ namespace ULox
 
         public class Break : InterpreterControlException
         {
-            public Break(Token from) : base(from) { }
+            public Break(Token from) : base(from)
+            {
+            }
         }
 
         public class Continue : InterpreterControlException
         {
-            public Continue(Token from):base(from){}
+            public Continue(Token from) : base(from)
+            {
+            }
         }
 
         private Action<string> _logger;
@@ -93,33 +90,40 @@ namespace ULox
 
             switch (expr.op.TokenType)
             {
-            case TokenType.BANG_EQUAL:
-                return !IsEqual(left, right);
-            case TokenType.EQUALITY:
-                return IsEqual(left, right);
+                case TokenType.BANG_EQUAL:
+                    return !IsEqual(left, right);
 
-            case TokenType.GREATER:
-                CheckNumberOperands(expr.op, left, right);
-                return (double)left > (double)right;
-            case TokenType.GREATER_EQUAL:
-                CheckNumberOperands(expr.op, left, right);
-                return (double)left >= (double)right;
-            case TokenType.LESS:
-                CheckNumberOperands(expr.op, left, right);
-                return (double)left < (double)right;
-            case TokenType.LESS_EQUAL:
-                return (double)left <= (double)right;
+                case TokenType.EQUALITY:
+                    return IsEqual(left, right);
 
-            case TokenType.MINUS:
-                CheckNumberOperands(expr.op, left, right);
-                return (double)left - (double)right;
-            case TokenType.SLASH:
-                CheckNumberOperands(expr.op, left, right);
-                return (double)left / (double)right;
-            case TokenType.STAR:
-                CheckNumberOperands(expr.op, left, right);
-                return (double)left * (double)right;
-            case TokenType.PLUS:
+                case TokenType.GREATER:
+                    CheckNumberOperands(expr.op, left, right);
+                    return (double)left > (double)right;
+
+                case TokenType.GREATER_EQUAL:
+                    CheckNumberOperands(expr.op, left, right);
+                    return (double)left >= (double)right;
+
+                case TokenType.LESS:
+                    CheckNumberOperands(expr.op, left, right);
+                    return (double)left < (double)right;
+
+                case TokenType.LESS_EQUAL:
+                    return (double)left <= (double)right;
+
+                case TokenType.MINUS:
+                    CheckNumberOperands(expr.op, left, right);
+                    return (double)left - (double)right;
+
+                case TokenType.SLASH:
+                    CheckNumberOperands(expr.op, left, right);
+                    return (double)left / (double)right;
+
+                case TokenType.STAR:
+                    CheckNumberOperands(expr.op, left, right);
+                    return (double)left * (double)right;
+
+                case TokenType.PLUS:
                 {
                     //we want to concat with + but the starting var may be empty or null
                     if (left is null)
@@ -133,9 +137,8 @@ namespace ULox
                     {
                         if (right is string rightS)
                             return leftS + rightS;
-                        else 
+                        else
                             return leftS + right.ToString();
-                            
                     }
                     throw new RuntimeTypeException(expr.op, "Operands must be numbers or strings.");
                 }
@@ -155,10 +158,11 @@ namespace ULox
 
             switch (expr.op.TokenType)
             {
-            case TokenType.MINUS:
-                CheckNumberOperand(expr.op, right);
-                return -(double)right;
-            case TokenType.BANG:
+                case TokenType.MINUS:
+                    CheckNumberOperand(expr.op, right);
+                    return -(double)right;
+
+                case TokenType.BANG:
                 return !IsTruthy(right);
             }
 
@@ -218,7 +222,7 @@ namespace ULox
 
         private object LookUpVariable(Token name, Expr expr)
         {
-            if(localsSideTable.TryGetValue(expr, out int distance))
+            if (localsSideTable.TryGetValue(expr, out int distance))
             {
                 return currentEnvironment.GetAt(distance, name);
             }
@@ -230,7 +234,7 @@ namespace ULox
         {
             var val = Evaluate(expr.value);
 
-            if(localsSideTable.TryGetValue(expr, out int distance))
+            if (localsSideTable.TryGetValue(expr, out int distance))
             {
                 currentEnvironment.AssignAt(distance, expr.name, val);
             }
@@ -243,7 +247,6 @@ namespace ULox
         }
 
         public void Visit(Stmt.Block stmt) => ExecuteBlock(stmt.statements, new Environment(currentEnvironment));
-
 
         public void Visit(Stmt.If stmt)
         {
@@ -282,10 +285,10 @@ namespace ULox
                     return;
                 }
                 catch (Continue)
-                { 
+                {
                 }
 
-                if(stmt.increment != null) Execute(stmt.increment);
+                if (stmt.increment != null) Execute(stmt.increment);
             }
         }
 
@@ -350,7 +353,8 @@ namespace ULox
             if (stmt.superclass != null)
             {
                 superclass = Evaluate(stmt.superclass) as Class;
-                if (superclass == null) {
+                if (superclass == null)
+                {
                     throw new RuntimeTypeException(stmt.superclass.name,
                         "Superclass must be a class.");
                 }
@@ -378,7 +382,7 @@ namespace ULox
             {
                 var function = new Function(
                     method.name.Lexeme,
-                    method.function, 
+                    method.function,
                     currentEnvironment,
                     method.name.Lexeme == "init");
 
@@ -416,7 +420,7 @@ namespace ULox
         {
             var obj = Evaluate(expr.obj) as Instance;
 
-            if(obj == null)
+            if (obj == null)
             {
                 throw new RuntimeTypeException(expr.name, "Only instances have fields.");
             }
@@ -452,7 +456,7 @@ namespace ULox
         {
             if (IsTruthy(Evaluate(expr.condition)))
                 return Evaluate(expr.ifTrue);
-            else 
+            else
                 return Evaluate(expr.ifFalse);
         }
     }

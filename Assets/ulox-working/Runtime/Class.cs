@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace ULox
 {
@@ -14,11 +13,11 @@ namespace ULox
         public string Name => _name;
 
         public Class(
-            Class metaClass, 
-            string name, 
-            Class superclass, 
+            Class metaClass,
+            string name,
+            Class superclass,
             Dictionary<string, Function> methods)
-            :base(metaClass)
+            : base(metaClass)
         {
             _name = name;
             _methods = methods;
@@ -30,7 +29,7 @@ namespace ULox
         public object Call(Interpreter interpreter, List<object> args)
         {
             var instance = new Instance(this);
-            
+
             var initializer = FindMethod("init");
             if (initializer != null)
             {
@@ -42,7 +41,7 @@ namespace ULox
 
         public Function FindMethod(string lexeme)
         {
-            if(_methods.TryGetValue(lexeme, out Function func))
+            if (_methods.TryGetValue(lexeme, out Function func))
                 return func;
 
             if (_superclass != null)

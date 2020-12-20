@@ -11,8 +11,8 @@ namespace ULox
 
         public Function(
             string name,
-            Expr.Function declaration, 
-            Environment closure, 
+            Expr.Function declaration,
+            Environment closure,
             bool isInitializer)
         {
             _name = name;
@@ -61,7 +61,7 @@ namespace ULox
 
         public override string ToString()
         {
-            if(!string.IsNullOrEmpty(_name))
+            if (!string.IsNullOrEmpty(_name))
                 return $"<fn {_name}>";
             return "<fn>";
         }
