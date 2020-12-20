@@ -3,7 +3,8 @@
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",
-        "ulox-working"
+        "ulox-working",
+        "Unity.PerformanceTesting"
     ],
     "includePlatforms": [
         "Editor"
