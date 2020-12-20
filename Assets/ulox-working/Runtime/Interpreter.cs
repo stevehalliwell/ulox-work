@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace ULox
 {
-    //TODO see challenges
     public class Interpreter : Expr.Visitor<Object>,
                                Stmt.Visitor
     {
@@ -57,6 +56,7 @@ namespace ULox
             currentEnvironment = Globals;
 
             Globals.Define("clock", new NativeExpression(() => System.DateTime.Now.Ticks));
+            //todo arrays or lists a la https://github.com/munificent/craftinginterpreters/blob/master/note/answers/chapter13_inheritance/3.md
         }
 
         public void Interpret(List<Stmt> statements)
