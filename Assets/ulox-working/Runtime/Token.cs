@@ -25,5 +25,10 @@
         {
             return $"{Line}:{Character} - {TokenType} {Lexeme}";
         }
+
+        public Token Copy(TokenType newToken)
+        {
+            return new Token(newToken, Lexeme, Literal, Line, Character);
+        }
     }
 }

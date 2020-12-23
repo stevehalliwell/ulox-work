@@ -636,6 +636,36 @@ loop
                 .SetName("Loop");
 
             yield return new TestCaseData(
+@"//print ++5;
+//print --5;
+var a = 0;
+a = a + 1;
+a += 1;
+a *= 3;
+a -= 2;
+a /= 2;
+a %= 1;
+print a;
+
+class Test{init(){this.a = 0;}}
+var t = Test();
+t.a = t.a + 1;
+t.a += 1;
+t.a *= 3;
+t.a -= 2;
+t.a /= 2;
+t.a %= 1;
+print t.a;
+//a *=3;
+//print a;
+//a -= 1;
+//print a;
+//a /= 2;
+//print a;",
+@"00")
+                .SetName("AddedOperators");
+
+            yield return new TestCaseData(
 @"print 50 % 40 % 9;",
 @"1")
                 .SetName("Modulus");

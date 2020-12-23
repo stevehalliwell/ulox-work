@@ -155,6 +155,46 @@ while(a > 0) {a = a - 1;}",
 
 
             yield return new TestCaseData(
+@"
+var a = 0;
+a = a + 1;
+a += 1;
+a = a + 1 + 2;
+a += 1 + 2;
+a = a - 1;
+a -= 1;
+a = a - (1 + 2);
+a -= 1 + 2;
+a -= (1 + 2);",
+@"{ var 1:6 - IDENTIFIER a[ 0 ] }
+{ [ assign 2:1 - IDENTIFIER a[ 2:10 - PLUS + [ 2:7 - IDENTIFIER a ] [ 1 ] ] ] }
+{ [ assign 3:1 - IDENTIFIER a[ 3:5 - PLUS + [ 3:1 - IDENTIFIER a ] [ 1 ] ] ] }
+{ [ assign 4:1 - IDENTIFIER a[ 4:16 - PLUS + [ 4:10 - PLUS + [ 4:7 - IDENTIFIER a ] [ 1 ] ] [ 2 ] ] ] }
+{ [ assign 5:1 - IDENTIFIER a[ 5:5 - PLUS + [ 5:1 - IDENTIFIER a ] [ 5:11 - PLUS + [ 1 ] [ 2 ] ] ] ] }
+{ [ assign 6:1 - IDENTIFIER a[ 6:10 - MINUS - [ 6:7 - IDENTIFIER a ] [ 1 ] ] ] }
+{ [ assign 7:1 - IDENTIFIER a[ 7:5 - MINUS - [ 7:1 - IDENTIFIER a ] [ 1 ] ] ] }
+{ [ assign 8:1 - IDENTIFIER a[ 8:10 - MINUS - [ 8:7 - IDENTIFIER a ] [ [ 8:17 - PLUS + [ 1 ] [ 2 ] ] ] ] ] }
+{ [ assign 9:1 - IDENTIFIER a[ 9:5 - MINUS - [ 9:1 - IDENTIFIER a ] [ 9:11 - PLUS + [ 1 ] [ 2 ] ] ] ] }
+{ [ assign 10:1 - IDENTIFIER a[ 10:5 - MINUS - [ 10:1 - IDENTIFIER a ] [ [ 10:12 - PLUS + [ 1 ] [ 2 ] ] ] ] ] }")
+                .SetName("CompoundAssign");
+
+
+            yield return new TestCaseData(
+@"class Test{init(){this.a = 0;}}
+var t = Test();
+
+t.a = t.a + 1;
+t.a += 1;",
+@"{ class 0:11 - IDENTIFIER Test
+  fun 0:16 - IDENTIFIER init[ 
+    { [ [ 0:23 - THIS this ]0:25 - IDENTIFIER a[ 0 ] ] } ] }
+{ var 1:6 - IDENTIFIER t[ call [ 1:15 - IDENTIFIER Test ] ] }
+{ [ [ 3:1 - IDENTIFIER t ]3:3 - IDENTIFIER a[ 3:14 - PLUS + [ 3:11 - IDENTIFIER a[ 3:9 - IDENTIFIER t ] ] [ 1 ] ] ] }
+{ [ [ 4:1 - IDENTIFIER t ]4:3 - IDENTIFIER a[ 4:7 - PLUS + [ 4:3 - IDENTIFIER a[ 4:1 - IDENTIFIER t ] ] [ 1 ] ] ] }")
+                .SetName("CompoundAssignClasses");
+
+
+            yield return new TestCaseData(
 @"",
 @"")
                 .SetName("Empty");

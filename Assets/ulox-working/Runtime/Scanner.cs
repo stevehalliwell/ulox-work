@@ -73,11 +73,15 @@ namespace ULox
                         case '}': AddTokenSingle(TokenType.CLOSE_BRACE); break;
                         case ',': AddTokenSingle(TokenType.COMMA); break;
                         case '.': AddTokenSingle(TokenType.DOT); break;
-                        case '-': AddTokenSingle(TokenType.MINUS); break;
-                        case '+': AddTokenSingle(TokenType.PLUS); break;
                         case ';': AddTokenSingle(TokenType.END_STATEMENT); break;
-                        case '*': AddTokenSingle(TokenType.STAR); break;
-                        //case '%': AddTokenSingle(TokenType.PERCENT); break;
+                        case '-':
+                            AddTokenSingle(Match('=') ? TokenType.MINUS_EQUAL : 
+                                (Match('-') ? TokenType.DECRMENT : TokenType.MINUS)); break;
+                        case '+': 
+                            AddTokenSingle(Match('=') ? TokenType.PLUS_EQUAL : 
+                                (Match('+') ? TokenType.INCREMENT : TokenType.PLUS)); break;
+                        case '*': AddTokenSingle(Match('=') ? TokenType.STAR_EQUAL : TokenType.STAR); break;
+                        case '%': AddTokenSingle(Match('=') ? TokenType.PERCENT_EQUAL : TokenType.PERCENT); break;
                         case ':': AddTokenSingle(TokenType.COLON); break;
                         case '?': AddTokenSingle(TokenType.QUESTION); break;
 
@@ -99,7 +103,7 @@ namespace ULox
                                     }
                                     else
                                     {
-                                        AddTokenSingle(TokenType.SLASH);
+                                        AddTokenSingle(Match('=') ? TokenType.SLASH_EQUAL : TokenType.SLASH);
                                     }
                                 break;
                             }

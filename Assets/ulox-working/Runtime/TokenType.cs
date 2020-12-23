@@ -14,6 +14,11 @@
         SLASH,
         STAR,
         PERCENT,
+        MINUS_EQUAL,
+        PLUS_EQUAL,
+        SLASH_EQUAL,
+        STAR_EQUAL,
+        PERCENT_EQUAL,
 
         ASSIGN,
         BANG,

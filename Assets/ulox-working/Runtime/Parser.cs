@@ -301,7 +301,19 @@ namespace ULox
         {
             Expr expr = Or();
 
-            if (Match(TokenType.ASSIGN))
+            bool compound = false;
+
+            if (Match(
+                TokenType.MINUS_EQUAL,
+                TokenType.PLUS_EQUAL,
+                TokenType.STAR_EQUAL,
+                TokenType.SLASH_EQUAL,
+                TokenType.PERCENT_EQUAL))
+            {
+                compound = true;
+            }
+
+            if (Match(TokenType.ASSIGN) || compound)
             {
                 Token equals = Previous();
                 Expr value = Assignment();
@@ -309,11 +321,30 @@ namespace ULox
                 if (expr is Expr.Variable varExpr)
                 {
                     Token name = varExpr.name;
-                    return new Expr.Assign(name, value);
+                    switch(equals.TokenType)
+                    {
+                    case TokenType.MINUS_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value));
+                    case TokenType.PLUS_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value));
+                    case TokenType.STAR_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value));
+                    case TokenType.SLASH_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value));
+                    case TokenType.PERCENT_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value));
+                    case TokenType.ASSIGN: return new Expr.Assign(name, value);
+                    }
                 }
                 else if (expr is Expr.Get exprGet)
                 {
-                    return new Expr.Set(exprGet.obj, exprGet.name, value);
+                    Expr obj = exprGet.obj;
+                    Token name = exprGet.name;
+                    switch (equals.TokenType)
+                    {
+                    case TokenType.MINUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value));
+                    case TokenType.PLUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value));
+                    case TokenType.STAR_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value));
+                    case TokenType.SLASH_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value));
+                    case TokenType.PERCENT_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value));
+                    case TokenType.ASSIGN: return new Expr.Set(obj, name, value);
+                    }
+                    
                 }
 
                 throw new ParseException(equals, "Invalid assignment target.");
