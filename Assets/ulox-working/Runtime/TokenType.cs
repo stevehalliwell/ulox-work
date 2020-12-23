@@ -13,7 +13,7 @@
         END_STATEMENT,
         SLASH,
         STAR,
-        //PERCENT,
+        PERCENT,
 
         ASSIGN,
         BANG,
@@ -42,7 +42,7 @@
         WHILE,
         FOR,
 
-        //LOOP,
+        LOOP,
         RETURN,
 
         BREAK,

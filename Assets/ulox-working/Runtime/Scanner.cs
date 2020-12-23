@@ -26,7 +26,7 @@ namespace ULox
             { "else",   TokenType.ELSE},
             { "while",  TokenType.WHILE},
             { "for",    TokenType.FOR},
-             //todo { "loop",   TokenType.LOOP},
+            { "loop",   TokenType.LOOP},
             { "return", TokenType.RETURN},
             { "break",  TokenType.BREAK},
             { "continue", TokenType.CONTINUE},

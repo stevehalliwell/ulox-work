@@ -2,8 +2,6 @@
 
 namespace ULox
 {
-    //TODO see challenges
-    //todo add tests
     public class Parser
     {
         private List<Token> _tokens;
@@ -137,6 +135,7 @@ namespace ULox
 
         private Stmt Statement()
         {
+            if (Match(TokenType.LOOP)) return LoopStatement();
             if (Match(TokenType.FOR)) return ForStatement();
             if (Match(TokenType.IF)) return IfStatement();
             if (Match(TokenType.PRINT)) return PrintStatement();
@@ -238,6 +237,14 @@ namespace ULox
             Stmt body = Statement();
             _loopDepth--;
             return new Stmt.While(condition, body, null);
+        }
+
+        private Stmt LoopStatement()
+        {
+            _loopDepth++;
+            Stmt body = Statement();
+            _loopDepth--;
+            return new Stmt.While(new Expr.Literal(true), body, null);
         }
 
         private Stmt IfStatement()
@@ -375,7 +382,7 @@ namespace ULox
         {
             Expr expr = Factor();
 
-            while (Match(TokenType.MINUS, TokenType.PLUS))
+            while (Match(TokenType.MINUS, TokenType.PLUS, TokenType.PERCENT))
             {
                 Token op = Previous();
                 Expr right = Factor();

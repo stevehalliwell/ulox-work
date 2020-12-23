@@ -622,6 +622,25 @@ print Math.pi;",
                 .SetName("MetaClassFieldStorage");
 
             yield return new TestCaseData(
+@"var i = 0;
+loop
+{
+    i = i + 1;
+    print i;
+    if(i >= 9)
+    {
+        break;
+    }
+}",
+@"123456789")
+                .SetName("Loop");
+
+            yield return new TestCaseData(
+@"print 50 % 40 % 9;",
+@"1")
+                .SetName("Modulus");
+
+            yield return new TestCaseData(
 @"print """";",
 @"")
                 .SetName("Empty");
