@@ -64,7 +64,6 @@ namespace ULox
                 {
                     Advance();
 
-                    //TODO add basic logic symbols
                     switch (_currentChar)
                     {
                         case '(': AddTokenSingle(TokenType.OPEN_PAREN); break;
@@ -75,10 +74,10 @@ namespace ULox
                         case '.': AddTokenSingle(TokenType.DOT); break;
                         case ';': AddTokenSingle(TokenType.END_STATEMENT); break;
                         case '-':
-                            AddTokenSingle(Match('=') ? TokenType.MINUS_EQUAL : 
+                            AddTokenSingle(Match('=') ? TokenType.MINUS_EQUAL :
                                 (Match('-') ? TokenType.DECRMENT : TokenType.MINUS)); break;
-                        case '+': 
-                            AddTokenSingle(Match('=') ? TokenType.PLUS_EQUAL : 
+                        case '+':
+                            AddTokenSingle(Match('=') ? TokenType.PLUS_EQUAL :
                                 (Match('+') ? TokenType.INCREMENT : TokenType.PLUS)); break;
                         case '*': AddTokenSingle(Match('=') ? TokenType.STAR_EQUAL : TokenType.STAR); break;
                         case '%': AddTokenSingle(Match('=') ? TokenType.PERCENT_EQUAL : TokenType.PERCENT); break;

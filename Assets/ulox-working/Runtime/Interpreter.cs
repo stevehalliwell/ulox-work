@@ -51,9 +51,6 @@ namespace ULox
         {
             _logger = logger;
             currentEnvironment = Globals;
-
-            Globals.Define("clock", new NativeExpression(() => System.DateTime.Now.Ticks));
-            //todo arrays or lists a la https://github.com/munificent/craftinginterpreters/blob/master/note/answers/chapter13_inheritance/3.md
         }
 
         public void Interpret(List<Stmt> statements)
@@ -127,7 +124,7 @@ namespace ULox
                     CheckNumberOperands(expr.op, left, right);
                     return (double)left % (double)right;
 
-            case TokenType.PLUS:
+                case TokenType.PLUS:
                 {
                     //we want to concat with + but the starting var may be empty or null
                     if (left is null)
@@ -430,7 +427,7 @@ namespace ULox
             }
 
             var val = Evaluate(expr.val);
-            obj.Set(expr.name, val);
+            obj.Set(expr.name.Lexeme, val);
             return val;
         }
 

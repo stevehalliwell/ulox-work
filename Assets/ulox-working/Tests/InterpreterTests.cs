@@ -1,9 +1,5 @@
-﻿using System.Collections;
+﻿using NUnit.Framework;
 using System.Collections.Generic;
-using NUnit.Framework;
-using UnityEngine;
-using UnityEngine.TestTools;
-
 
 namespace ULox.Tests
 {
@@ -132,7 +128,7 @@ print bagel;",
                 .SetName("Class_Empty");
 
             yield return new TestCaseData(
-@"class PartialClass 
+@"class PartialClass
 {
 }
 
@@ -671,12 +667,28 @@ print t.a;
                 .SetName("Modulus");
 
             yield return new TestCaseData(
+@"var arr = Array(3);
+print arr;",
+@"<array [null,null,null,]>")
+                .SetName("ArrayEmpty");
+
+            yield return new TestCaseData(
+@"var arr = Array(5);
+for(var i = 0; i < arr.Count(); i += 1)
+{
+    arr.Set(i,i);
+}
+print arr;",
+@"<array [0,1,2,3,4,]>")
+                .SetName("ArrayCount");
+
+            yield return new TestCaseData(
 @"print """";",
 @"")
                 .SetName("Empty");
         }
 
-    [Test]
+        [Test]
         [TestCaseSource(nameof(Generator))]
         public void Interpreter_StringifiedResult_Matches(string testString, string requiredResult)
         {

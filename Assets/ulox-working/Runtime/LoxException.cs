@@ -61,4 +61,11 @@
         {
         }
     }
+
+    public class RuntimeAccessException : RuntimeTypeException
+    {
+        public RuntimeAccessException(Token token, string msg) : base(token, msg)
+        {
+        }
+    }
 }

@@ -22,6 +22,9 @@ namespace ULox
             _resolver = resolver;
             _interpreter = interpreter;
             _logger = logger;
+
+            _interpreter.Globals.Define("clock", new NativeExpression(() => System.DateTime.Now.Ticks));
+            _interpreter.Globals.Define("Array", new Callable(1, (inter, args) => new Array((int)(double)args[0])));
         }
 
         public void Run(string text)
