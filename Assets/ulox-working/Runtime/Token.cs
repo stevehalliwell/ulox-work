@@ -26,9 +26,9 @@
             return $"{Line}:{Character} - {TokenType} {Lexeme}";
         }
 
-        public Token Copy(TokenType newToken)
+        public Token Copy(TokenType newToken, string newLexeme = "")
         {
-            return new Token(newToken, Lexeme, Literal, Line, Character);
+            return new Token(newToken, string.IsNullOrEmpty(newLexeme) ? Lexeme : newLexeme, Literal, Line, Character);
         }
     }
 }

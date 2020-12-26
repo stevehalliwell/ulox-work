@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using UnityEngine;
 
+//TODO newline remove indent at end of func, see ManualClassGetSet
 namespace ULox.Tests
 {
     public class ASTPrinter : Expr.Visitor<Object>,

@@ -57,6 +57,9 @@
         NULL,
         THIS,
         SUPER,
+        GET,
+        SET,
+        GETSET,
 
         PRINT,
 

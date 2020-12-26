@@ -682,6 +682,43 @@ print arr;",
 @"<array [0,1,2,3,4,]>")
                 .SetName("ArrayCount");
 
+
+            yield return new TestCaseData(
+@"class Square
+{
+    getset Side;
+    Area {return this.Side * this.Side;}
+}
+var sq = Square();
+print sq.Side;
+sq.SetSide(2);
+print sq.Area;",
+@"null4")
+                .SetName("ClassGetSet");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    getset Side;
+    Area {return this.Side * this.Side;}
+}
+var sq = Square();
+print sq.Arae;",
+@"IDENTIFIER|6:14 Undefined property 'Arae'.")
+                .SetName("ClassGetSet_Typo_Error");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    var Side;
+    Area {return this.Side * this.Side;}
+}
+var sq = Square();
+print sq.Area;
+sq.Side = 2;
+print sq.Area;",
+@"STAR|3:35 Operands must be numbers.")
+                .SetName("ClassVars_nullfield");
             yield return new TestCaseData(
 @"print """";",
 @"")

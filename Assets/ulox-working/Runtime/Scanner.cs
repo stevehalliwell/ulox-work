@@ -39,6 +39,9 @@ namespace ULox
             { ".",  TokenType.DOT},
             { "this",  TokenType.THIS},
             { "super",  TokenType.SUPER},
+            { "get",  TokenType.GET},
+            { "set",  TokenType.SET},
+            { "getset",  TokenType.GETSET},
         };
 
         public Scanner()
@@ -144,7 +147,6 @@ namespace ULox
             }
         }
 
-        //TODO test this
         private void ConsumeBlockComment()
         {
             while (!IsAtEnd())
@@ -212,7 +214,6 @@ namespace ULox
 
         private void ConsumeString()
         {
-            //todo smarter
             var startingLine = _line;
             var startingChar = _characterNumber;
             workingSpaceStringBuilder.Clear();

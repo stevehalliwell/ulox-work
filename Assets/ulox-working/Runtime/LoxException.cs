@@ -68,4 +68,11 @@
         {
         }
     }
+
+    public class ClassException : TokenException
+    {
+        public ClassException(Token token, string msg) : base(token, msg)
+        {
+        }
+    }
 }

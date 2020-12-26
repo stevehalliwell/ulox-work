@@ -193,6 +193,46 @@ t.a += 1;",
 { [ [ 4:1 - IDENTIFIER t ]4:3 - IDENTIFIER a[ 4:7 - PLUS + [ 4:3 - IDENTIFIER a[ 4:1 - IDENTIFIER t ] ] [ 1 ] ] ] }")
                 .SetName("CompoundAssignClasses");
 
+            yield return new TestCaseData(
+@"class Test
+{
+    init(){this.a = 1;}
+    Geta(){return this.a;}
+    Seta(value){this.a = value;}
+}",
+@"{ class 0:11 - IDENTIFIER Test
+  fun 2:12 - IDENTIFIER init[ 
+    { [ [ 2:19 - THIS this ]2:21 - IDENTIFIER a[ 1 ] ] } ]fun 3:12 - IDENTIFIER Geta[ 
+    { return [ 3:29 - IDENTIFIER a[ 3:27 - THIS this ] ] } ]fun 4:12 - IDENTIFIER Seta[  ( 4:18 - IDENTIFIER value ) 
+    { [ [ 4:24 - THIS this ]4:26 - IDENTIFIER a[ 4:36 - IDENTIFIER value ] ] } ] }")
+                .SetName("ManualClassGetSet");
+
+            yield return new TestCaseData(
+@"class Test
+{
+    init(){this.a = 1;}
+    get a;
+    set a;
+}",
+@"{ class 0:11 - IDENTIFIER Test
+  fun 2:12 - IDENTIFIER init[ 
+    { [ [ 2:19 - THIS this ]2:21 - IDENTIFIER a[ 1 ] ] } ]fun 3:14 - IDENTIFIER Geta[ 
+    { return [ 3:14 - IDENTIFIER a[ 0:11 - THIS this ] ] } ]fun 4:14 - IDENTIFIER Seta[  ( 4:14 - IDENTIFIER value ) 
+    { [ [ 0:11 - THIS this ]4:14 - IDENTIFIER a[ 4:14 - IDENTIFIER value ] ] } ] }")
+                .SetName("AutoClassGetAndSet");
+
+            yield return new TestCaseData(
+@"class Test
+{
+    init(){this.a = 1;}
+    getset a;
+}",
+@"{ class 0:11 - IDENTIFIER Test
+  fun 2:12 - IDENTIFIER init[ 
+    { [ [ 2:19 - THIS this ]2:21 - IDENTIFIER a[ 1 ] ] } ]fun 3:17 - IDENTIFIER Geta[ 
+    { return [ 3:17 - IDENTIFIER a[ 0:11 - THIS this ] ] } ]fun 3:17 - IDENTIFIER Seta[  ( 3:17 - IDENTIFIER value ) 
+    { [ [ 0:11 - THIS this ]3:17 - IDENTIFIER a[ 3:17 - IDENTIFIER value ] ] } ] }")
+                .SetName("AutoClassGetSet");
 
             yield return new TestCaseData(
 @"",

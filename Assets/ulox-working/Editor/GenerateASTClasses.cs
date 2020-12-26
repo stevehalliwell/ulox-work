@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEditor;
-using UnityEngine;
 
 namespace ULox
 {
@@ -32,7 +31,9 @@ namespace ULox
             "Block      : List<Stmt> statements",
             "Class      : Token name, Expr.Variable superclass," +
                         " List<Stmt.Function> methods," +
-                        " List<Stmt.Function> metaMethods",
+                        " List<Stmt.Function> metaMethods," +
+                        " List<Token> fields," +
+                        " List<Token> metaFields",
             "Expression : Expr expression",
             "Function   : Token name, Expr.Function function",
             "If         : Expr condition, Stmt thenBranch," +

@@ -2,7 +2,6 @@
 
 namespace ULox
 {
-    //todo set properties
     //todo declare and/or define vars in class (init->this. sugar)
     public class Class : Instance, ICallable
     {
@@ -16,12 +15,14 @@ namespace ULox
             Class metaClass,
             string name,
             Class superclass,
-            Dictionary<string, Function> methods)
+            Dictionary<string, Function> methods,
+            List<Token> fields)
             : base(metaClass)
         {
             _name = name;
             _methods = methods;
             _superclass = superclass;
+            _fields = fields;
         }
 
         public int Arity => FindMethod("init")?.Arity ?? 0;
@@ -29,6 +30,11 @@ namespace ULox
         public object Call(Interpreter interpreter, List<object> args)
         {
             var instance = new Instance(this);
+
+            foreach (var item in _fields)
+            {
+                instance.Set(item.Lexeme, null);
+            }
 
             var initializer = FindMethod("init");
             if (initializer != null)
