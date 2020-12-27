@@ -19,6 +19,8 @@
         SLASH_EQUAL,
         STAR_EQUAL,
         PERCENT_EQUAL,
+        INCREMENT,
+        DECREMENT,
 
         ASSIGN,
         BANG,

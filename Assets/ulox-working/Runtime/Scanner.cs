@@ -78,7 +78,7 @@ namespace ULox
                         case ';': AddTokenSingle(TokenType.END_STATEMENT); break;
                         case '-':
                             AddTokenSingle(Match('=') ? TokenType.MINUS_EQUAL :
-                                (Match('-') ? TokenType.DECRMENT : TokenType.MINUS)); break;
+                                (Match('-') ? TokenType.DECREMENT : TokenType.MINUS)); break;
                         case '+':
                             AddTokenSingle(Match('=') ? TokenType.PLUS_EQUAL :
                                 (Match('+') ? TokenType.INCREMENT : TokenType.PLUS)); break;
