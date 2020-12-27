@@ -618,6 +618,18 @@ print Math.pi;",
                 .SetName("MetaClassFieldStorage");
 
             yield return new TestCaseData(
+@"class Math {
+    class var PI = 3.14;
+    class square(n) {
+        return n * n;
+    }
+}
+
+print Math.PI;",
+@"3.14")
+                .SetName("MetaClassVar");
+
+            yield return new TestCaseData(
 @"var i = 0;
 loop
 {
@@ -719,6 +731,18 @@ sq.Side = 2;
 print sq.Area;",
 @"STAR|3:35 Operands must be numbers.")
                 .SetName("ClassVars_nullfield");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    var Side = 2;
+    Area {return this.Side * this.Side;}
+}
+
+print Square().Area;",
+@"4")
+                .SetName("ClassVars_InitialValue");
+
             yield return new TestCaseData(
 @"print """";",
 @"")

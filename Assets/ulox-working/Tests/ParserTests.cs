@@ -33,9 +33,8 @@ var res = ComboMath(foo, bar, car);",
 @"{ var 0:8 - IDENTIFIER foo[ 1 ] }
 { var 1:8 - IDENTIFIER bar[ 2 ] }
 { var 2:8 - IDENTIFIER car[ 3 ] }
-{ fun 4:14 - IDENTIFIER ComboMath[  ( 4:16 - IDENTIFIER a | 4:18 - IDENTIFIER b | 4:20 - IDENTIFIER c ) 
-  { fun 6:16 - IDENTIFIER Mul[  ( 6:18 - IDENTIFIER l | 6:22 - IDENTIFIER r ) 
-    { return [ 6:36 - STAR * [ 6:35 - IDENTIFIER l ] [ 6:37 - IDENTIFIER r ] ] } ] }
+{ fun 4:14 - IDENTIFIER ComboMath[  ( 4:16 - IDENTIFIER a | 4:18 - IDENTIFIER b | 4:20 - IDENTIFIER c ) { 
+  fun 6:16 - IDENTIFIER Mul[  ( 6:18 - IDENTIFIER l | 6:22 - IDENTIFIER r ) { return [ 6:36 - STAR * [ 6:35 - IDENTIFIER l ] [ 6:37 - IDENTIFIER r ] ] } ] }
   { return [ 7:27 - SLASH / [ call [ 7:19 - IDENTIFIER Mul ]( [ 7:21 - IDENTIFIER a ][ 7:23 - IDENTIFIER b ] ) ] [ 7:30 - IDENTIFIER c ] ] } ] }
 { var 10:8 - IDENTIFIER res[ call [ 10:22 - IDENTIFIER ComboMath ]( [ 10:26 - IDENTIFIER foo ][ 10:32 - IDENTIFIER bar ][ 10:38 - IDENTIFIER car ] ) ] }")
                 .SetName("MathAndFunctions");
@@ -64,8 +63,8 @@ var inst = Foo();
 
 print inst.a;",
 @"{ class 0:10 - IDENTIFIER Foo
-  fun 2:12 - IDENTIFIER init[ 
-    { [ [ 4:4 - THIS this ]4:6 - IDENTIFIER a[ 1 ] ] } ] }
+   instance 
+  fun 2:12 - IDENTIFIER init[ { [ [ 4:4 - THIS this ]4:6 - IDENTIFIER a[ 1 ] ] } ] }
 { var 10:9 - IDENTIFIER inst[ call [ 10:17 - IDENTIFIER Foo ] ] }
 { print [ 12:13 - IDENTIFIER a[ 12:11 - IDENTIFIER inst ] ] }")
                 .SetName("Class");
@@ -91,11 +90,11 @@ var inst = Bar();
 
 print inst.a + inst.b;",
 @"{ class 0:10 - IDENTIFIER Foo
-  fun 2:12 - IDENTIFIER init[ 
-    { [ [ 4:4 - THIS this ]4:6 - IDENTIFIER a[ 1 ] ] } ] }
+   instance 
+  fun 2:12 - IDENTIFIER init[ { [ [ 4:4 - THIS this ]4:6 - IDENTIFIER a[ 1 ] ] } ] }
 { class 8:10 - IDENTIFIER Bar inherit [ 8:18 - IDENTIFIER Foo ]
-  fun 10:4 - IDENTIFIER init[ 
-    { [ call [ super 12:10 - IDENTIFIER init ] ] }
+   instance 
+  fun 10:4 - IDENTIFIER init[ { [ call [ super 12:10 - IDENTIFIER init ] ] }
     { [ [ 13:4 - THIS this ]13:6 - IDENTIFIER b[ 2 ] ] } ] }
 { var 17:9 - IDENTIFIER inst[ call [ 17:17 - IDENTIFIER Bar ] ] }
 { print [ 19:16 - PLUS + [ 19:13 - IDENTIFIER a[ 19:11 - IDENTIFIER inst ] ] [ 19:24 - IDENTIFIER b[ 19:22 - IDENTIFIER inst ] ] ] }")
@@ -117,8 +116,8 @@ var inst = WithInit(!logic,comparison,3);",
 @"{ var 0:10 - IDENTIFIER logic[ 0:35 - OR or [ 0:24 - AND and [ True ][ False ] ][ True ] ] }
 { var 1:15 - IDENTIFIER comparison[ 1:46 - OR or [ 1:32 - AND and [ 1:24 - LESS < [ 1 ] [ 2 ] ][ 1:39 - GREATER_EQUAL > [ 2 ] [ 3 ] ] ][ 1:60 - AND and [ 1:52 - GREATER > [ 1 ] [ 2 ] ][ 1:67 - LESS_EQUAL < [ 2 ] [ 3 ] ] ] ] }
 { class 3:15 - IDENTIFIER WithInit
-  fun 4:12 - IDENTIFIER init[  ( 4:14 - IDENTIFIER a | 4:16 - IDENTIFIER b | 4:18 - IDENTIFIER c ) 
-    { [ [ 6:20 - THIS this ]6:22 - IDENTIFIER a[ 6:28 - IDENTIFIER a ] ] }
+   instance 
+  fun 4:12 - IDENTIFIER init[  ( 4:14 - IDENTIFIER a | 4:16 - IDENTIFIER b | 4:18 - IDENTIFIER c ) { [ [ 6:20 - THIS this ]6:22 - IDENTIFIER a[ 6:28 - IDENTIFIER a ] ] }
     { [ [ 7:20 - THIS this ]7:22 - IDENTIFIER b[ 7:28 - IDENTIFIER b ] ] }
     { [ [ 8:20 - THIS this ]8:22 - IDENTIFIER c[ 8:28 - IDENTIFIER c ] ] } ] }
 { var 12:9 - IDENTIFIER inst[ call [ 12:22 - IDENTIFIER WithInit ]( [ 12:24 - BANG ![ 12:29 - IDENTIFIER logic ] ][ 12:40 - IDENTIFIER comparison ][ 3 ] ) ] }")
@@ -132,8 +131,7 @@ var inst = WithInit(!logic,comparison,3);",
 
 var s = Simple();
 s.a = 1;",
-@"{ class 0:13 - IDENTIFIER Simple
-   }
+@"{ class 0:13 - IDENTIFIER Simple }
 { var 4:6 - IDENTIFIER s[ call [ 4:17 - IDENTIFIER Simple ] ] }
 { [ [ 5:1 - IDENTIFIER s ]5:3 - IDENTIFIER a[ 1 ] ] }")
                 .SetName("SimpleClass");
@@ -186,8 +184,8 @@ var t = Test();
 t.a = t.a + 1;
 t.a += 1;",
 @"{ class 0:11 - IDENTIFIER Test
-  fun 0:16 - IDENTIFIER init[ 
-    { [ [ 0:23 - THIS this ]0:25 - IDENTIFIER a[ 0 ] ] } ] }
+   instance 
+  fun 0:16 - IDENTIFIER init[ { [ [ 0:23 - THIS this ]0:25 - IDENTIFIER a[ 0 ] ] } ] }
 { var 1:6 - IDENTIFIER t[ call [ 1:15 - IDENTIFIER Test ] ] }
 { [ [ 3:1 - IDENTIFIER t ]3:3 - IDENTIFIER a[ 3:14 - PLUS + [ 3:11 - IDENTIFIER a[ 3:9 - IDENTIFIER t ] ] [ 1 ] ] ] }
 { [ [ 4:1 - IDENTIFIER t ]4:3 - IDENTIFIER a[ 4:7 - PLUS + [ 4:3 - IDENTIFIER a[ 4:1 - IDENTIFIER t ] ] [ 1 ] ] ] }")
@@ -201,10 +199,10 @@ t.a += 1;",
     Seta(value){this.a = value;}
 }",
 @"{ class 0:11 - IDENTIFIER Test
-  fun 2:12 - IDENTIFIER init[ 
-    { [ [ 2:19 - THIS this ]2:21 - IDENTIFIER a[ 1 ] ] } ]fun 3:12 - IDENTIFIER Geta[ 
-    { return [ 3:29 - IDENTIFIER a[ 3:27 - THIS this ] ] } ]fun 4:12 - IDENTIFIER Seta[  ( 4:18 - IDENTIFIER value ) 
-    { [ [ 4:24 - THIS this ]4:26 - IDENTIFIER a[ 4:36 - IDENTIFIER value ] ] } ] }")
+   instance 
+  fun 2:12 - IDENTIFIER init[ { [ [ 2:19 - THIS this ]2:21 - IDENTIFIER a[ 1 ] ] } ]
+  fun 3:12 - IDENTIFIER Geta[ { return [ 3:29 - IDENTIFIER a[ 3:27 - THIS this ] ] } ]
+  fun 4:12 - IDENTIFIER Seta[  ( 4:18 - IDENTIFIER value ) { [ [ 4:24 - THIS this ]4:26 - IDENTIFIER a[ 4:36 - IDENTIFIER value ] ] } ] }")
                 .SetName("ManualClassGetSet");
 
             yield return new TestCaseData(
@@ -212,13 +210,14 @@ t.a += 1;",
 {
     init(){this.a = 1;}
     get a;
-    set a;
+    set b;
 }",
 @"{ class 0:11 - IDENTIFIER Test
-  fun 2:12 - IDENTIFIER init[ 
-    { [ [ 2:19 - THIS this ]2:21 - IDENTIFIER a[ 1 ] ] } ]fun 3:14 - IDENTIFIER Geta[ 
-    { return [ 3:14 - IDENTIFIER a[ 0:11 - THIS this ] ] } ]fun 4:14 - IDENTIFIER Seta[  ( 4:14 - IDENTIFIER value ) 
-    { [ [ 0:11 - THIS this ]4:14 - IDENTIFIER a[ 4:14 - IDENTIFIER value ] ] } ] }")
+   instance { var 3:14 - IDENTIFIER a }
+  { var 4:14 - IDENTIFIER b }
+  fun 2:12 - IDENTIFIER init[ { [ [ 2:19 - THIS this ]2:21 - IDENTIFIER a[ 1 ] ] } ]
+  fun 3:14 - IDENTIFIER Geta[ { return [ 3:14 - IDENTIFIER a[ 0:11 - THIS this ] ] } ]
+  fun 4:14 - IDENTIFIER Setb[  ( 4:14 - IDENTIFIER value ) { [ [ 0:11 - THIS this ]4:14 - IDENTIFIER b[ 4:14 - IDENTIFIER value ] ] } ] }")
                 .SetName("AutoClassGetAndSet");
 
             yield return new TestCaseData(
@@ -228,10 +227,10 @@ t.a += 1;",
     getset a;
 }",
 @"{ class 0:11 - IDENTIFIER Test
-  fun 2:12 - IDENTIFIER init[ 
-    { [ [ 2:19 - THIS this ]2:21 - IDENTIFIER a[ 1 ] ] } ]fun 3:17 - IDENTIFIER Geta[ 
-    { return [ 3:17 - IDENTIFIER a[ 0:11 - THIS this ] ] } ]fun 3:17 - IDENTIFIER Seta[  ( 3:17 - IDENTIFIER value ) 
-    { [ [ 0:11 - THIS this ]3:17 - IDENTIFIER a[ 3:17 - IDENTIFIER value ] ] } ] }")
+   instance { var 3:17 - IDENTIFIER a }
+  fun 2:12 - IDENTIFIER init[ { [ [ 2:19 - THIS this ]2:21 - IDENTIFIER a[ 1 ] ] } ]
+  fun 3:17 - IDENTIFIER Geta[ { return [ 3:17 - IDENTIFIER a[ 0:11 - THIS this ] ] } ]
+  fun 3:17 - IDENTIFIER Seta[  ( 3:17 - IDENTIFIER value ) { [ [ 0:11 - THIS this ]3:17 - IDENTIFIER a[ 3:17 - IDENTIFIER value ] ] } ] }")
                 .SetName("AutoClassGetSet");
 
             yield return new TestCaseData(

@@ -177,7 +177,7 @@ namespace ULox
             return true;
         }
 
-        private object Evaluate(Expr expression) => expression.Accept(this);
+        public object Evaluate(Expr expression) => expression?.Accept(this) ?? null;
 
         private static bool IsEqual(object left, object right)
         {
@@ -376,7 +376,7 @@ namespace ULox
                 classMethods[method.name.Lexeme] = func;
             }
 
-            var metaClass = new Class(null, stmt.name.Lexeme + "_meta", null, classMethods, stmt.metaFields);
+            var metaClass = new Class(null, stmt.name.Lexeme + "_meta", null, classMethods, null);
 
             var methods = new Dictionary<string, Function>();
             foreach (Stmt.Function method in stmt.methods)
@@ -390,11 +390,23 @@ namespace ULox
                 methods[method.name.Lexeme] = function;
             }
 
-            var @class = new Class(metaClass, stmt.name.Lexeme, superclass, methods, stmt.fields);
+            var @class = new Class(
+                metaClass, 
+                stmt.name.Lexeme, 
+                superclass, 
+                methods,
+                stmt.fields);
+
+            foreach (var item in stmt.metaFields)
+            {
+                @class.Set(item.name.Lexeme, Evaluate(item.initializer));
+            }
+
             if (superclass != null)
             {
                 currentEnvironment = currentEnvironment.Enclosing;
             }
+
             currentEnvironment.Assign(stmt.name, @class);
         }
 

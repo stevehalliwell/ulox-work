@@ -15,7 +15,7 @@ namespace ULox
         }
         public class Class : Stmt
         {
-            public Class( Token name, Expr.Variable superclass, List<Stmt.Function> methods, List<Stmt.Function> metaMethods, List<Token> fields, List<Token> metaFields)
+            public Class( Token name, Expr.Variable superclass, List<Stmt.Function> methods, List<Stmt.Function> metaMethods, List<Stmt.Var> fields, List<Stmt.Var> metaFields)
             {
                 this.name = name;
                 this.superclass = superclass;
@@ -28,8 +28,8 @@ namespace ULox
             public readonly Expr.Variable superclass;
             public readonly List<Stmt.Function> methods;
             public readonly List<Stmt.Function> metaMethods;
-            public readonly List<Token> fields;
-            public readonly List<Token> metaFields;
+            public readonly List<Stmt.Var> fields;
+            public readonly List<Stmt.Var> metaFields;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
         public class Expression : Stmt

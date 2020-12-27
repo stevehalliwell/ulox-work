@@ -19,7 +19,7 @@ namespace ULox
                 return obj;
             }
 
-            var method = _class.FindMethod(name.Lexeme);
+            var method = _class?.FindMethod(name.Lexeme);
             if (method != null) return method.Bind(this);
 
             throw new InstanceException(name, "Undefined property '" + name.Lexeme + "'.");

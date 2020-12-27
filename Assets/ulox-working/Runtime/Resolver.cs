@@ -288,6 +288,7 @@ namespace ULox
             if (stmt.increment != null) Resolve(stmt.increment);
         }
 
+        //todo add fields and meta fields
         public void Visit(Stmt.Class stmt)
         {
             var enclosingClass = currentClass;

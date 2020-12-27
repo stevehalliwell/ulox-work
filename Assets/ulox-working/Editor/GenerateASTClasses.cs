@@ -32,8 +32,8 @@ namespace ULox
             "Class      : Token name, Expr.Variable superclass," +
                         " List<Stmt.Function> methods," +
                         " List<Stmt.Function> metaMethods," +
-                        " List<Token> fields," +
-                        " List<Token> metaFields",
+                        " List<Stmt.Var> fields," +
+                        " List<Stmt.Var> metaFields",
             "Expression : Expr expression",
             "Function   : Token name, Expr.Function function",
             "If         : Expr condition, Stmt thenBranch," +

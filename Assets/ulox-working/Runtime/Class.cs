@@ -8,6 +8,7 @@ namespace ULox
         private string _name;
         private Dictionary<string, Function> _methods;
         private Class _superclass;
+        private List<Stmt.Var> _vars;
 
         public string Name => _name;
 
@@ -16,13 +17,13 @@ namespace ULox
             string name,
             Class superclass,
             Dictionary<string, Function> methods,
-            List<Token> fields)
+            List<Stmt.Var> fields)
             : base(metaClass)
         {
             _name = name;
             _methods = methods;
             _superclass = superclass;
-            _fields = fields;
+            _vars = fields;
         }
 
         public int Arity => FindMethod("init")?.Arity ?? 0;
@@ -31,9 +32,9 @@ namespace ULox
         {
             var instance = new Instance(this);
 
-            foreach (var item in _fields)
+            foreach (var item in _vars)
             {
-                instance.Set(item.Lexeme, null);
+                instance.Set(item.name.Lexeme, interpreter.Evaluate(item.initializer));
             }
 
             var initializer = FindMethod("init");

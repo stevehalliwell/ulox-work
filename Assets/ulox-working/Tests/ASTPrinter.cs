@@ -209,9 +209,20 @@ namespace ULox.Tests
                 Print(stmt.superclass);
             }
             Indent();
-            PrintLine();
-            Print(stmt.methods);
-            Print(stmt.metaMethods);
+            if (stmt.metaFields.Count > 0 || stmt.metaMethods.Count > 0)
+            {
+                PrintLine();
+                Print(" meta ");
+                Print(stmt.metaFields.ToList<Stmt>());
+                Print(stmt.metaMethods);
+            }
+            if (stmt.fields.Count > 0 || stmt.methods.Count > 0)
+            {
+                PrintLine();
+                Print(" instance ");
+                Print(stmt.fields.ToList<Stmt>());
+                Print(stmt.methods);
+            }
             Dent();
         }
 
@@ -222,6 +233,9 @@ namespace ULox.Tests
 
         public void Visit(Stmt.Function stmt)
         {
+            if (indent != 0)
+                PrintLine();
+
             Print("fun ");
             Print(stmt.name);
             Print(stmt.function);
@@ -232,8 +246,7 @@ namespace ULox.Tests
             if (expr.parameters?.Count > 0)
                 Print(expr.parameters);
             Indent();
-            PrintLine();
-            Print(expr.body);
+            Print(expr.body); 
             Dent();
             return null;
         }
