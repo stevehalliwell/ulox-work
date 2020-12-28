@@ -6,7 +6,7 @@ Don't expect this to be used (very much) in production. At least not in the stat
 
 ## Status 
 ![current code coverage](badge_linecoverage.png)
-- [insert tag] Core jlox equivilant plus many of the challanges from the book and additional sugar.
+- [Core jlox Challenges and sugar](../../tree/core_jlox_chall) Core jlox equivilant plus many of the challenges from the book and additional sugar.
 	-  Conditional operator.
 	-  More error reporting.
 	-  Many more tests.
@@ -18,8 +18,8 @@ Don't expect this to be used (very much) in production. At least not in the stat
 	-  MetaClasses and MetaMethods, using class keyword inside class declare is akin to static.
 	-  Added operator %, +=, -=, \*=, /=, %=.
 	-  Add Array type to engine.
-	-  Add sugar to class declarations: 'get','set','getset','var' keywords.[Class Sugar](#class-sugar)
-- [insert tag] Core jlox equivilant implemented in C# inside a Unity project using the TestRunner and Code Coverage to confirm correct behavior and error reporting.
+	-  Add sugar to class declarations: 'get','set','getset','var' keywords. [Class Sugar](#class-sugar)
+- [Core jlox](../../tree/core_jlox) Core jlox equivilant implemented in C# inside a Unity project using the TestRunner and Code Coverage to confirm correct behavior and error reporting.
 
 ## Pending
 - Add standard lib equivilant for interpreter.
