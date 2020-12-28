@@ -698,6 +698,13 @@ namespace ULox
                 throw new ParseException(Previous(), "Missing left-had operand.");
             }
 
+            if(Match(TokenType.GET,
+                TokenType.SET,
+                TokenType.GETSET))
+            {
+                throw new ParseException(Previous(), "Only expected withing class declaration.");
+            }
+
             throw new ParseException(Peek(), "Expect expression.");
         }
 

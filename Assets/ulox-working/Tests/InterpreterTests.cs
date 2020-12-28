@@ -923,6 +923,12 @@ World!")
                 .SetName("Print_EscapedChars");
 
             yield return new TestCaseData(
+@"var val = 1;
+get a(){print val;}",
+@"GET|1:3 Only expected withing class declaration.")
+                .SetName("Unexpected_get");
+
+            yield return new TestCaseData(
 @"print """";",
 @"")
                 .SetName("Empty");

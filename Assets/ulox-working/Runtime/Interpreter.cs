@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 namespace ULox
 {
+    //todo REPL
     public class Interpreter : Expr.Visitor<Object>,
                                Stmt.Visitor
     {
@@ -443,10 +444,7 @@ namespace ULox
             return val;
         }
 
-        public object Visit(Expr.This expr)
-        {
-            return LookUpVariable(expr.keyword, expr);
-        }
+        public object Visit(Expr.This expr) => LookUpVariable(expr.keyword, expr);
 
         public object Visit(Expr.Super expr)
         {

@@ -5,6 +5,9 @@ using System.Linq;
 namespace ULox
 {
     //TODO resolver challenge 4,http://craftinginterpreters.com/resolving-and-binding.html https://github.com/munificent/craftinginterpreters/tree/master/note/answers/chapter11_resolving/4/com/craftinginterpreters
+    //  this storing depth and slot is desired but not via multiple maps in the interpreter
+    //  a solution that stores the name, depth and slot in the expr/stmt is prefered and would
+    // allow for the interpreter to resolve at runtime where the resolver cannot.
     public class Resolver : Expr.Visitor<Object>,
                                 Stmt.Visitor
     {
