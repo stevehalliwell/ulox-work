@@ -48,7 +48,7 @@ class Square
 {
 	var width = 1;
 	var heigth = 1;
-	area { return this.side * this.side; }
+	area { return this.width * this.height; }
 }
 ```
 The 'get', 'set', and 'getset' assist with C# style auto properties. Here we'll show what the resulting class looks like internally.
