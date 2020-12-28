@@ -224,8 +224,7 @@ namespace ULox
 
                 if (_currentChar == '"')
                 {
-                    //TODO unescape characters
-                    AddToken(TokenType.STRING, workingSpaceStringBuilder.ToString());
+                    AddToken(TokenType.STRING, System.Text.RegularExpressions.Regex.Unescape(workingSpaceStringBuilder.ToString()));
                     return;
                 }
 

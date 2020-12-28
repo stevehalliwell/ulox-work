@@ -24,6 +24,7 @@ namespace ULox
             _logger = logger;
 
             _interpreter.Globals.Define("clock", new NativeExpression(() => System.DateTime.Now.Ticks));
+            _interpreter.Globals.Define("abort", new NativeStatement(() => throw new LoxException("abort")));
             _interpreter.Globals.Define("Array", new Callable(1, (inter, args) => new Array((int)(double)args[0])));
         }
 

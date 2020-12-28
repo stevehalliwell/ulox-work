@@ -2,7 +2,6 @@
 
 namespace ULox
 {
-    //todo declare and/or define vars in class (init->this. sugar)
     public class Class : Instance, ICallable
     {
         private string _name;

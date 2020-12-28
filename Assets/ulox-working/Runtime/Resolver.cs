@@ -288,7 +288,6 @@ namespace ULox
             if (stmt.increment != null) Resolve(stmt.increment);
         }
 
-        //todo add fields and meta fields
         public void Visit(Stmt.Class stmt)
         {
             var enclosingClass = currentClass;
@@ -310,6 +309,19 @@ namespace ULox
                 Resolve(stmt.superclass);
             }
 
+            foreach (var item in stmt.metaFields)
+            {
+                Resolve(item);
+            }
+
+            foreach (Stmt.Function method in stmt.metaMethods)
+            {
+                BeginScope();
+                scopes.Last()["this"] = new VariableUse(stmt.name, VariableUse.State.Read);
+                ResolveFunction(method.function, FunctionType.METHOD);
+                EndScope();
+            }
+
             if (stmt.superclass != null)
             {
                 BeginScope();
@@ -319,6 +331,11 @@ namespace ULox
             BeginScope();
             scopes.Last()["this"] = new VariableUse(stmt.name, VariableUse.State.Read);
 
+            foreach (var item in stmt.fields)
+            {
+                Resolve(item);
+            }
+
             foreach (Stmt.Function method in stmt.methods)
             {
                 FunctionType declaration = FunctionType.METHOD;
@@ -327,14 +344,6 @@ namespace ULox
                     declaration = FunctionType.INITIALIZER;
                 }
                 ResolveFunction(method.function, declaration);
-            }
-
-            foreach (Stmt.Function method in stmt.metaMethods)
-            {
-                BeginScope();
-                scopes.Last()["this"] = new VariableUse(stmt.name, VariableUse.State.Read);
-                ResolveFunction(method.function, FunctionType.METHOD);
-                EndScope();
             }
 
             EndScope();
@@ -347,6 +356,7 @@ namespace ULox
         public object Visit(Expr.Get expr)
         {
             Resolve(expr.obj);
+            ResolveLocal(expr, expr.name, true);
             return null;
         }
 

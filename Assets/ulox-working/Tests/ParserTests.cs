@@ -208,29 +208,22 @@ t.a += 1;",
             yield return new TestCaseData(
 @"class Test
 {
-    init(){this.a = 1;}
     get a;
-    set b;
 }",
 @"{ class 0:11 - IDENTIFIER Test
-   instance { var 3:14 - IDENTIFIER a }
-  { var 4:14 - IDENTIFIER b }
-  fun 2:12 - IDENTIFIER init[ { [ [ 2:19 - THIS this ]2:21 - IDENTIFIER a[ 1 ] ] } ]
-  fun 3:14 - IDENTIFIER Geta[ { return [ 3:14 - IDENTIFIER a[ 0:11 - THIS this ] ] } ]
-  fun 4:14 - IDENTIFIER Setb[  ( 4:14 - IDENTIFIER value ) { [ [ 0:11 - THIS this ]4:14 - IDENTIFIER b[ 4:14 - IDENTIFIER value ] ] } ] }")
+   instance { var 2:14 - IDENTIFIER _a }
+  fun 2:14 - IDENTIFIER a[ { return [ 2:14 - IDENTIFIER _a[ 0:11 - THIS this ] ] } ] }")
                 .SetName("AutoClassGetAndSet");
 
             yield return new TestCaseData(
 @"class Test
 {
-    init(){this.a = 1;}
     getset a;
 }",
 @"{ class 0:11 - IDENTIFIER Test
-   instance { var 3:17 - IDENTIFIER a }
-  fun 2:12 - IDENTIFIER init[ { [ [ 2:19 - THIS this ]2:21 - IDENTIFIER a[ 1 ] ] } ]
-  fun 3:17 - IDENTIFIER Geta[ { return [ 3:17 - IDENTIFIER a[ 0:11 - THIS this ] ] } ]
-  fun 3:17 - IDENTIFIER Seta[  ( 3:17 - IDENTIFIER value ) { [ [ 0:11 - THIS this ]3:17 - IDENTIFIER a[ 3:17 - IDENTIFIER value ] ] } ] }")
+   instance { var 2:17 - IDENTIFIER _a }
+  fun 2:17 - IDENTIFIER a[ { return [ 2:17 - IDENTIFIER _a[ 0:11 - THIS this ] ] } ]
+  fun 2:17 - IDENTIFIER Seta[  ( 2:17 - IDENTIFIER value ) { [ [ 0:11 - THIS this ]2:17 - IDENTIFIER _a[ 2:17 - IDENTIFIER value ] ] } ] }")
                 .SetName("AutoClassGetSet");
 
             yield return new TestCaseData(

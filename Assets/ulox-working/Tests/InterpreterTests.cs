@@ -694,6 +694,14 @@ print arr;",
 @"<array [0,1,2,3,4,]>")
                 .SetName("ArrayCount");
 
+            yield return new TestCaseData(
+@"var arr = Array(5);
+
+print arr.Get(6);",
+@"Index was out of range. Must be non-negative and less than the size of the collection.
+Parameter name: index")
+                .SetName("ArrayBoundsError");
+
 
             yield return new TestCaseData(
 @"class Square
@@ -742,6 +750,177 @@ print sq.Area;",
 print Square().Area;",
 @"4")
                 .SetName("ClassVars_InitialValue");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    get Side = 2;
+    Area {return this.Side * this.Side;}
+}
+var sq = Square();
+print sq.Side;
+print sq.Area;",
+@"24")
+                .SetName("ClassVars_GetInitialValue");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    set Side = 1;
+    Area {return this._Side * this._Side;}
+}
+var sq = Square();
+sq.SetSide(2);
+print sq.Area;",
+@"4")
+                .SetName("ClassVars_SetInitialValue");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    getset Side = 1;
+    Area {return this.Side * this.Side;}
+}
+var sq = Square();
+sq.SetSide(2);
+print sq.Side;
+print sq.Area;",
+@"24")
+                .SetName("ClassVars_GetSetInitialValue");
+
+            yield return new TestCaseData(
+@"var arr = Array(5);
+arr.a = 2;",
+@"NONE|-1:-1 Can't add properties to arrays.")
+                .SetName("Array_CannotSet");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    init() {this.side = 1;}
+    get Side {print this.side; return this.side;}
+    Area {return this.side * this.side;}
+}
+
+var sq = Square();
+sq.Side;
+print sq.Area;",
+@"11")
+                .SetName("Class_CustomGet");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    init() {this.side = 1;}
+    set Side {print value; this.side = value;}
+    Area {return this.side * this.side;}
+}
+
+var sq = Square();
+sq.Side(2);
+print sq.Area;",
+@"24")
+                .SetName("Class_CustomSet");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    init() {this.side = 1;}
+    get Side(a) {return this.side;}
+    Area {return this.side * this.side;}
+}",
+@"IDENTIFIER|0:13 Cannot have arguments to a Get.")
+                .SetName("Class_NoGetParams");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    init() {this.side = 1;}
+    set Side(a) {this.side = a;}
+    Area {return this.side * this.side;}
+}",
+@"IDENTIFIER|0:13 Cannot have arguments to a Set. A 'value' param is auto generated.")
+                .SetName("Class_NoSetParams");
+
+            yield return new TestCaseData(
+@"var klass = class Square
+{
+    init() {this.side = 1;}
+    set Side(a) {this.side = a;}
+    Area {return this.side * this.side;}
+}",
+@"CLASS|0:20 Expect expression.")
+                .SetName("CannotAssignVarToClass");
+
+            yield return new TestCaseData(
+@"var a1 = var a2 = 10;",
+@"VAR|0:15 Expect expression.")
+                .SetName("CannotAssignVarToVar");
+
+            yield return new TestCaseData(
+@"abort();",
+@"abort")
+                .SetName("Abort");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    get a;
+    set a;
+}",
+@"IDENTIFIER|2:14 Classes cannot have fields of identical names. Found more than 1 _a in class Square.")
+                .SetName("Class_DupFields");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    var a;
+    a(){}
+}",
+@"IDENTIFIER|3:9 Classes cannot have a field and a method of identical names. Found more than 1 a in class Square.")
+                .SetName("Class_DupFieldnMethod");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    class get a;
+    class set a;
+}",
+@"IDENTIFIER|2:21 Classes cannot have metaFields of identical names. Found more than 1 _a in class Square.")
+                .SetName("Class_Static_DupFields");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    class var a;
+    class a(){}
+}",
+@"IDENTIFIER|3:16 Classes cannot have a metaFields and a metaMethods of identical names. Found more than 1 a in class Square.")
+                .SetName("Class_Static_DupFieldnMethod");
+
+            yield return new TestCaseData(
+@"class Square
+{
+     a(){}
+    a(){}
+}",
+@"IDENTIFIER|2:11 Classes cannot have methods of identical names. Found more than 1 a in class Square.")
+                .SetName("Class_DupMethods");
+
+            yield return new TestCaseData(
+@"class Square
+{
+    class a(){}
+    class a(){}
+}",
+@"IDENTIFIER|2:16 Classes cannot have metaMethods of identical names. Found more than 1 a in class Square.")
+                .SetName("Class_Static_DupMethods");
+
+            yield return new TestCaseData(
+@"print ""Hello\r\nWorld!"";",
+@"Hello
+World!")
+                .SetName("Print_EscapedChars");
 
             yield return new TestCaseData(
 @"print """";",

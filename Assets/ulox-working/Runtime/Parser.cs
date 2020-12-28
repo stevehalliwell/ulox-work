@@ -63,10 +63,10 @@ namespace ULox
 
         private Stmt ClassDeclaration()
         {
-            var name = Consume(TokenType.IDENTIFIER, "Expect class name.");
+            var className = Consume(TokenType.IDENTIFIER, "Expect class name.");
 
             var previousClassToken = _currentClassToken;
-            _currentClassToken = name;
+            _currentClassToken = className;
 
             Expr.Variable superclass = null;
             if (Match(TokenType.LESS))
@@ -79,78 +79,68 @@ namespace ULox
 
             var methods = new List<Stmt.Function>();
             var metaMethods = new List<Stmt.Function>();
-            //todo condense field and metafield, so most detailed remains.
-            //todo support get sets with initialisers
             var fields = new List<Stmt.Var>();
             var metaFields = new List<Stmt.Var>();
             while (!Check(TokenType.CLOSE_BRACE) && !IsAtEnd())
             {
                 var funcType = FunctionType.Method;
-                var isClassMethod = Match(TokenType.CLASS);
+                var isClassMeta = Match(TokenType.CLASS);
                 Stmt.Function genFunc = null;
                 if (Match(TokenType.GET))
                 {
                     funcType = FunctionType.Get;
                     //check if its short hand and generate, if not then pass to function
-                    if (CheckNext(TokenType.END_STATEMENT))
+                    if (CheckNext(TokenType.END_STATEMENT) || CheckNext(TokenType.ASSIGN))
                     {
-                        var getName = Consume(TokenType.IDENTIFIER, $"Expect field name after short hand 'get'.");
-                        var getFuncName = getName.Copy(TokenType.IDENTIFIER, "Get" + getName.Lexeme);
-                        genFunc = CreateGetMethod(name, getName, getFuncName);
-                        Consume(TokenType.END_STATEMENT, "Expect ';' after short hand 'get'.");
-                        (isClassMethod ? metaMethods : methods).Add(genFunc);
-                        fields.Add(new Stmt.Var( getName, null));
+                        var origAssign = (Stmt.Var)VarDeclaration();
+                        var hiddenAssign = ToClassAutoVarDeclaration(origAssign);
+                        genFunc = CreateGetMethod(className, origAssign.name, hiddenAssign.name);
+                        (isClassMeta ? metaMethods : methods).Add(genFunc);
+                        (isClassMeta ? metaFields : fields).Add(hiddenAssign);
                     }
 
                     if (genFunc == null)
                     {
                         genFunc = Function(funcType);
-                        (isClassMethod ? metaMethods : methods).Add(genFunc);
+                        (isClassMeta ? metaMethods : methods).Add(genFunc);
                     }
                 }
                 else if (Match(TokenType.SET))
                 {
                     funcType = FunctionType.Set;
-                    if (CheckNext(TokenType.END_STATEMENT))
+                    if (CheckNext(TokenType.END_STATEMENT) || CheckNext(TokenType.ASSIGN))
                     {
-                        var setName = Consume(TokenType.IDENTIFIER, $"Expect field name after short hand 'set'.");
-                        var setFuncName = setName.Copy(TokenType.IDENTIFIER, "Set" + setName.Lexeme);
-                        var valueName = setName.Copy(TokenType.IDENTIFIER, "value");
-                        genFunc = CreateSetMethod(name, setName, setFuncName, valueName);
-                        Consume(TokenType.END_STATEMENT, "Expect ';' after short hand 'set'.");
-                        (isClassMethod ? metaMethods : methods).Add(genFunc);
-                        fields.Add(new Stmt.Var(setName, null));
+                        var origAssign = (Stmt.Var)VarDeclaration();
+                        var hiddenAssign = ToClassAutoVarDeclaration(origAssign);
+                        genFunc = CreateSetMethod(className, origAssign.name, hiddenAssign.name);
+                        (isClassMeta ? metaMethods : methods).Add(genFunc);
+                        (isClassMeta ? metaFields : fields).Add(hiddenAssign);
                     }
 
                     if (genFunc == null)
                     {
                         genFunc = Function(funcType);
-                        (isClassMethod ? metaMethods : methods).Add(genFunc);
+                        (isClassMeta ? metaMethods : methods).Add(genFunc);
                     }
                 }
                 else if (Match(TokenType.GETSET))
                 {
-                    //only allows short hand
-                    var propName = Consume(TokenType.IDENTIFIER, $"Expect field name after short hand 'getset'.");
-                    var getFuncName = propName.Copy(TokenType.IDENTIFIER, "Get" + propName.Lexeme);
-                    var setFuncName = propName.Copy(TokenType.IDENTIFIER, "Set" + propName.Lexeme);
-                    var valueName = propName.Copy(TokenType.IDENTIFIER, "value");
-                    var genGetFunc = CreateGetMethod(name, propName, getFuncName);
-                    var genSetFunc = CreateSetMethod(name, propName, setFuncName, valueName);
-                    Consume(TokenType.END_STATEMENT, "Expect ';' after short hand 'get'.");
-                    (isClassMethod ? metaMethods : methods).Add(genGetFunc);
-                    (isClassMethod ? metaMethods : methods).Add(genSetFunc);
-
-                    fields.Add(new Stmt.Var( propName, null));
+                    var origAssign = (Stmt.Var)VarDeclaration();
+                    var hiddenAssign = ToClassAutoVarDeclaration(origAssign);
+                    var genGetFunc = CreateGetMethod(className, origAssign.name, hiddenAssign.name);
+                    var genSetFunc = CreateSetMethod(className, origAssign.name, hiddenAssign.name);
+                    (isClassMeta ? metaMethods : methods).Add(genGetFunc);
+                    (isClassMeta ? metaMethods : methods).Add(genSetFunc);
+                    (isClassMeta ? metaFields : fields).Add(hiddenAssign);
                 }
                 else if (Match(TokenType.VAR))
                 {
                     var varStatement = (Stmt.Var)VarDeclaration();
-                    (isClassMethod? metaFields : fields).Add(varStatement);
+                    (isClassMeta? metaFields : fields).Add(varStatement);
                 }
                 else
                 {
-                    (isClassMethod ? metaMethods : methods).Add(Function(funcType));
+                    (isClassMeta ? metaMethods : methods).Add(Function(funcType));
                     //throw new ParseException(Peek(), "Unexpected token in class declaration.");
                 }
             }
@@ -160,41 +150,45 @@ namespace ULox
             {
                 if (methods.Count(x => x.name.Lexeme == method.name.Lexeme) > 1)
                     throw new ClassException(method.name, 
-                        $"Classes cannot have methods of identical names. Found more than 1 {method.name.Lexeme} in class {name.Lexeme}.");
+                        $"Classes cannot have methods of identical names. Found more than 1 {method.name.Lexeme} in class {className.Lexeme}.");
+
+                if (fields.Count(x => x.name.Lexeme == method.name.Lexeme) > 0)
+                    throw new ClassException(method.name,
+                        $"Classes cannot have a field and a method of identical names. Found more than 1 {method.name.Lexeme} in class {className.Lexeme}.");
+
             }
 
             foreach (var method in metaMethods)
             {
                 if (metaMethods.Count(x => x.name.Lexeme == method.name.Lexeme) > 1)
                     throw new ClassException(method.name,
-                        $"Classes cannot have metaMethods of identical names. Found more than 1 {method.name.Lexeme} in class {name.Lexeme}.");
+                        $"Classes cannot have metaMethods of identical names. Found more than 1 {method.name.Lexeme} in class {className.Lexeme}.");
+
+                if (metaFields.Count(x => x.name.Lexeme == method.name.Lexeme) > 0)
+                    throw new ClassException(method.name,
+                        $"Classes cannot have a metaFields and a metaMethods of identical names. Found more than 1 {method.name.Lexeme} in class {className.Lexeme}.");
             }
 
             foreach (var field in fields)
             {
                 if (fields.Count(x => x.name.Lexeme == field.name.Lexeme) > 1)
                     throw new ClassException(field.name,
-                        $"Classes cannot have fields of identical names. Found more than 1 {field.name.Lexeme} in class {name.Lexeme}.");
+                        $"Classes cannot have fields of identical names. Found more than 1 {field.name.Lexeme} in class {className.Lexeme}.");
             }
 
             foreach (var field in metaFields)
             {
                 if (metaFields.Count(x => x.name.Lexeme == field.name.Lexeme) > 1)
                     throw new ClassException(field.name,
-                        $"Classes cannot have metaFields of identical names. Found more than 1 {field.name.Lexeme} in class {name.Lexeme}.");
+                        $"Classes cannot have metaFields of identical names. Found more than 1 {field.name.Lexeme} in class {className.Lexeme}.");
             }
-
-
-
-            //TODO hold onto all get set var names add to an init method or __init or class ctor equiv
-            //  without it if user doesn't manually create in init and calls get it's undefinied var
 
             Consume(TokenType.CLOSE_BRACE, "Expect } after class body.");
 
             _currentClassToken = previousClassToken;
 
             return new Stmt.Class(
-                name, 
+                className, 
                 superclass, 
                 methods, 
                 metaMethods,
@@ -202,24 +196,26 @@ namespace ULox
                 metaFields);
         }
 
-        private static Stmt.Function CreateSetMethod(Token name, Token setName, Token setFuncName, Token valueName)
+        private static Stmt.Function CreateSetMethod(Token name, Token writtenFieldName, Token hiddenInternalFieldName)
         {
+            var setFuncName = writtenFieldName.Copy(TokenType.IDENTIFIER, "Set" + writtenFieldName.Lexeme);
+            var valueName = writtenFieldName.Copy(TokenType.IDENTIFIER, "value");
             return new Stmt.Function(setFuncName,
                 new Expr.Function(new List<Token>() { valueName },
                     new List<Stmt>() {
                         new Stmt.Expression(new Expr.Set(
                             new Expr.This(name.Copy(TokenType.THIS, "this")),
-                            setName,
+                            hiddenInternalFieldName,
                             new Expr.Variable(valueName)))}));
         }
 
-        private static Stmt.Function CreateGetMethod(Token name, Token getName, Token getFuncName)
+        private static Stmt.Function CreateGetMethod(Token className, Token writtenFieldName, Token hiddenInternalFieldName)
         {
-            return new Stmt.Function(getFuncName,
+            return new Stmt.Function(writtenFieldName,
                 new Expr.Function(null,
                     new List<Stmt>() {
-                        new Stmt.Return(name.Copy(TokenType.RETURN), new Expr.Get(
-                            new Expr.This(name.Copy(TokenType.THIS, "this")), getName))}));
+                        new Stmt.Return(className.Copy(TokenType.RETURN), new Expr.Get(
+                            new Expr.This(className.Copy(TokenType.THIS, "this")), hiddenInternalFieldName))}));
         }
 
         private Stmt.Function Function(FunctionType functionType)
@@ -251,25 +247,33 @@ namespace ULox
                 Consume(TokenType.CLOSE_PAREN, "Expect ')' after parameters.");
             }
 
-            if(functionType == FunctionType.Get && parameters?.Count != 0)
+            if(functionType == FunctionType.Get && 
+                (parameters != null && parameters.Count != 0))
             {
                 throw new ClassException(_currentClassToken, "Cannot have arguments to a Get.");
             }
 
-            if (functionType == FunctionType.Set && parameters?.Count != 0)
+            if (functionType == FunctionType.Set &&
+                (parameters != null && parameters.Count != 0))
             {
-                throw new ClassException(_currentClassToken, "Cannot have arguments to a Set. A value variable so auto generated");
+                throw new ClassException(_currentClassToken, "Cannot have arguments to a Set. A 'value' param is auto generated.");
             }
 
             if (functionType == FunctionType.Set)
             {
                 var createdValueParam = Previous().Copy(TokenType.IDENTIFIER, "value");
+                parameters = new List<Token>();
                 parameters.Add(createdValueParam);
             }
 
             Consume(TokenType.OPEN_BRACE, $"Expect '{{' before {functionType} body.");
             var body = Block();
             return new Expr.Function(parameters, body);
+        }
+
+        private static Stmt.Var ToClassAutoVarDeclaration(Stmt.Var inVar)
+        {
+            return new Stmt.Var(inVar.name.Copy(inVar.name.TokenType, "_" + inVar.name.Lexeme), inVar.initializer);
         }
 
         private Stmt VarDeclaration()

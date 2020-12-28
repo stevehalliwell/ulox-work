@@ -66,5 +66,7 @@
         PRINT,
 
         EOF,
+
+        NONE,
     }
 }
