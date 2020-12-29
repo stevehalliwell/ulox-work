@@ -1,6 +1,5 @@
 ﻿using System.Linq;
 
-
 namespace ULox
 {
     public class TestLoxEngine
@@ -10,7 +9,7 @@ namespace ULox
         private Resolver resolver;
         private Interpreter interpreter;
 
-        void SetResult(string str) => InterpreterResult += str;
+        private void SetResult(string str) => InterpreterResult += str;
 
         public TestLoxEngine()
         {
@@ -34,7 +33,7 @@ namespace ULox
                     string.Join(
                         "\n",
                         resolver.ResolverWarnings.Select(x => $"{x.Token} {x.Message}")
-                        ));
+                               ));
             }
             catch (System.Exception e)
             {

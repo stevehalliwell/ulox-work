@@ -37,6 +37,19 @@ namespace ULox
             throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
         }
 
+        public object Get(string tokenLexeme)
+        {
+            if (values.TryGetValue(tokenLexeme, out object retval))
+            {
+                return retval;
+            }
+
+            if (enclosing != null)
+                return enclosing.Get(tokenLexeme);
+
+            throw new LoxException($"Undefined variable {tokenLexeme}");
+        }
+
         public void Assign(Token name, object val)
         {
             if (values.ContainsKey(name.Lexeme))
@@ -52,6 +65,22 @@ namespace ULox
             }
 
             throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
+        }
+        public void Assign(string tokenLexeme, object val)
+        {
+            if (values.ContainsKey(tokenLexeme))
+            {
+                values[tokenLexeme] = val;
+                return;
+            }
+
+            if (enclosing != null)
+            {
+                enclosing.Assign(tokenLexeme, val);
+                return;
+            }
+
+            throw new LoxException($"Undefined variable {tokenLexeme}");
         }
 
         public object GetAt(int distance, Token name)

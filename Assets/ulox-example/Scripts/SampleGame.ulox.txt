@@ -1,0 +1,181 @@
+/*
+Code we expect from Unity's side;
+SetUIText(string)
+CreateGameObject(string):int - gameobject id
+DestroyGameObject(int) - gameobject id
+GetKey(string):bool
+SetGameObjectPosition(int, x, y) - gameobject id
+SetGameObjectVelocity(int, x, y) - gameobject id
+Reload - reload the current unity scene
+
+
+Unity will find and call: 
+- SetupGame in Start
+- Update in Update
+- OnCollision(id, id) - when both objects where created by script
+*/
+
+//functions and data
+var score = 0;
+var lives = 3;
+var dt = 0;
+
+var xStart = -9;
+var xStep = 1.5;
+var xBlocks = 13;
+var yStart = 1;
+var yStep = 1.25;
+var yBlocks = 4;
+
+var blocksRemaining = xBlocks * yBlocks;
+
+var blockName = "Cube";
+var ballName = "Ball";
+var paddleName = "Paddle";
+var pitName = "Pit";
+
+var pitID = -1;
+
+var paddleLimits = 9;
+var paddleYPos = -3;
+var paddleXPos = 0;
+var paddleID;
+var paddleSpeed = 10;
+
+var ballStartY = -2;
+var ballStartVelX = 5;
+var ballStartVelY = 11;
+var ballID = -1;
+
+fun LooseLife()
+{
+	DestroyGameObject(ballID);
+
+	if (lives > 0)
+	{
+		SetUIText("Life lost\n\nPress space to launch.");
+		currentUpdate = PreGameLoop;
+		lives -= 1;
+		ballID = -1;
+	}
+	else
+	{
+		SetUIText("Game Over");
+		currentUpdate = GameOver;
+	}
+}
+
+fun CreateBall()
+{
+	DestroyGameObject(ballID);
+	ballID = CreateGameObject(ballName);
+	SetGameObjectPosition(ballID, paddleXPos, ballStartY);
+	SetGameObjectVelocity(ballID, ballStartVelX, ballStartVelY);
+}
+
+fun SetupGame()
+{
+	print "Setting Up Game";
+	SetUIText("Welcome to uLox Breakout.\n\nPress space to begin.");
+
+	paddleID = CreateGameObject(paddleName);
+	SetGameObjectPosition(paddleID, paddleXPos, paddleYPos);
+	
+	//create grid of blocks
+	for(var x = 0; x < xBlocks; x += 1)
+	{
+		for(var y = 0; y < yBlocks; y += 1)
+		{
+			var objID = CreateGameObject(blockName);
+			SetGameObjectPosition(objID, xStart + x*xStep, yStart + y*yStep);
+		}
+	}
+
+	//create pit
+	pitID = CreateGameObject(pitName);
+
+	currentUpdate = PreGameLoop;
+}
+
+fun PrintScore()
+{
+	SetUIText("Score:" + score + "\nLives:" + lives + "\n\n\nBlocks left:" + blocksRemaining);
+}
+
+fun MovePaddle()
+{
+	if(GetKey("left"))
+	{
+		paddleXPos -= dt * paddleSpeed;
+	}
+
+	if(GetKey("right"))
+	{
+		paddleXPos += dt * paddleSpeed;
+	}
+
+	if(paddleXPos < -paddleLimits) {paddleXPos = -paddleLimits;}
+	if(paddleXPos > paddleLimits) {paddleXPos = paddleLimits;}
+
+	SetGameObjectPosition(paddleID, paddleXPos, paddleYPos);
+}
+
+fun UpdateGameLoop()
+{
+	MovePaddle();
+
+	PrintScore();
+}
+
+fun PreGameLoop()
+{
+	MovePaddle();
+
+	//wait for input to start game
+	if(GetKey("space"))
+	{
+		print "Game Started";
+		currentUpdate = UpdateGameLoop;
+
+		CreateBall();
+	}
+}
+
+var currentUpdate;
+
+fun Update()
+{
+	if(GetKey("escape")){Reload();}
+	currentUpdate();
+}
+
+fun OnCollision(id1, id2)
+{
+	if (id1 != ballID) {return;}
+
+	if (id2 == pitID) 
+	{
+		LooseLife();
+	}
+	else if (id2 == paddleID)
+	{
+	}
+	else
+	{
+		//is it one of ours, should be
+
+
+		//ok kill that block and give score
+		score += 10;
+		DestroyGameObject(id2);
+		blocksRemaining -= 1;
+		if(blocksRemaining == 0)
+		{
+			DestroyGameObject(ballID);
+			SetUIText("You Win!");
+			currentUpdate = GameOver;
+		}
+	}
+}
+
+fun GameOver(){}

@@ -702,7 +702,6 @@ print arr.Get(6);",
 Parameter name: index")
                 .SetName("ArrayBoundsError");
 
-
             yield return new TestCaseData(
 @"class Square
 {

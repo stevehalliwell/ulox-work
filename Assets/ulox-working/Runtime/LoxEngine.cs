@@ -2,6 +2,7 @@
 
 namespace ULox
 {
+    //todo easier user access to vars, funcs, and classes
     public class LoxEngine
     {
         private Scanner _scanner;

@@ -11,8 +11,15 @@ namespace ULox.Tests
         private StringBuilder stringBuilder = new StringBuilder();
         private int indent = 0;
 
-        private void Indent() { indent++; }
-        private void Dent() { indent--; }
+        private void Indent()
+        {
+            indent++;
+        }
+
+        private void Dent()
+        {
+            indent--;
+        }
 
         private void PrintLine()
         {
@@ -245,7 +252,7 @@ namespace ULox.Tests
             if (expr.parameters?.Count > 0)
                 Print(expr.parameters);
             Indent();
-            Print(expr.body); 
+            Print(expr.body);
             Dent();
             return null;
         }

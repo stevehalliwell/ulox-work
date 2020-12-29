@@ -4,6 +4,7 @@ using System.Collections.Generic;
 namespace ULox
 {
     //todo REPL
+    //todo Keep track of all classes so new instances can be made from user code
     public class Interpreter : Expr.Visitor<Object>,
                                Stmt.Visitor
     {
@@ -392,9 +393,9 @@ namespace ULox
             }
 
             var @class = new Class(
-                metaClass, 
-                stmt.name.Lexeme, 
-                superclass, 
+                metaClass,
+                stmt.name.Lexeme,
+                superclass,
                 methods,
                 stmt.fields);
 

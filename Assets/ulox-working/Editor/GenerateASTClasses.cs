@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEditor;
@@ -9,6 +8,7 @@ namespace ULox
     public static class GenerateASTClasses
     {
         private static string _outputLocation = "Assets\\ulox-working\\Runtime\\";
+
         private static string[] _requiredExprTypes = new string[]
         {
             "Assign   : Token name, Expr value",
@@ -26,6 +26,7 @@ namespace ULox
             "Conditional : Expr condition, Expr ifTrue, Expr ifFalse",
             "Function : List<Token> parameters, List<Stmt> body",
         };
+
         private static string[] _requiredStmtTypes = new string[]
         {
             "Block      : List<Stmt> statements",
@@ -56,7 +57,7 @@ namespace ULox
 
         private static void DefineAST(
             string outputLocation,
-            string rootTypeName, 
+            string rootTypeName,
             string[] requiredTypes,
             bool useVisitorT)
         {
@@ -64,13 +65,13 @@ namespace ULox
             string defineVisitorLine = null;
             string visitorReturnType = null;
 
-            if(useVisitorT)
+            if (useVisitorT)
             {
-                acceptVisitorLine =@"            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);";
+                acceptVisitorLine = @"            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);";
                 defineVisitorLine = @"
         public abstract T Accept<T>(Visitor<T> visitor);
 
-        public interface Visitor<T> 
+        public interface Visitor<T>
         {";
                 visitorReturnType = "T";
             }
@@ -80,7 +81,7 @@ namespace ULox
                 defineVisitorLine = @"
         public abstract void Accept(Visitor visitor);
 
-        public interface Visitor 
+        public interface Visitor
         {";
                 visitorReturnType = "void";
             }
@@ -122,12 +123,11 @@ namespace ULox
 
                 foreach (var fieldItem in fields)
                 {
-                    if(fieldItem.Length > 1)
+                    if (fieldItem.Length > 1)
                         sb.AppendLine($"            public readonly {fieldItem};");
                 }
                 sb.AppendLine(acceptVisitorLine);
                 sb.Append(@"        }");
-
             }
 
             sb.AppendLine();

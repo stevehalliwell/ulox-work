@@ -130,7 +130,6 @@ PI
 
         public static IEnumerable<TestCaseData> Generator()
         {
-
             yield return new TestCaseData(
 @"fun foo(p)
 {

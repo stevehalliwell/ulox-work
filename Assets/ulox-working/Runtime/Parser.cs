@@ -5,7 +5,8 @@ namespace ULox
 {
     public class Parser
     {
-        private enum FunctionType { None, Function, Method, Get, Set,}
+        private enum FunctionType { None, Function, Method, Get, Set, }
+
         private List<Token> _tokens;
         private int current = 0;
         public bool CatchAndSynch { get; set; } = true;
@@ -136,7 +137,7 @@ namespace ULox
                 else if (Match(TokenType.VAR))
                 {
                     var varStatement = (Stmt.Var)VarDeclaration();
-                    (isClassMeta? metaFields : fields).Add(varStatement);
+                    (isClassMeta ? metaFields : fields).Add(varStatement);
                 }
                 else
                 {
@@ -149,13 +150,12 @@ namespace ULox
             foreach (var method in methods)
             {
                 if (methods.Count(x => x.name.Lexeme == method.name.Lexeme) > 1)
-                    throw new ClassException(method.name, 
+                    throw new ClassException(method.name,
                         $"Classes cannot have methods of identical names. Found more than 1 {method.name.Lexeme} in class {className.Lexeme}.");
 
                 if (fields.Count(x => x.name.Lexeme == method.name.Lexeme) > 0)
                     throw new ClassException(method.name,
                         $"Classes cannot have a field and a method of identical names. Found more than 1 {method.name.Lexeme} in class {className.Lexeme}.");
-
             }
 
             foreach (var method in metaMethods)
@@ -188,9 +188,9 @@ namespace ULox
             _currentClassToken = previousClassToken;
 
             return new Stmt.Class(
-                className, 
-                superclass, 
-                methods, 
+                className,
+                superclass,
+                methods,
                 metaMethods,
                 fields,
                 metaFields);
@@ -202,7 +202,8 @@ namespace ULox
             var valueName = writtenFieldName.Copy(TokenType.IDENTIFIER, "value");
             return new Stmt.Function(setFuncName,
                 new Expr.Function(new List<Token>() { valueName },
-                    new List<Stmt>() {
+                    new List<Stmt>()
+                    {
                         new Stmt.Expression(new Expr.Set(
                             new Expr.This(name.Copy(TokenType.THIS, "this")),
                             hiddenInternalFieldName,
@@ -213,7 +214,8 @@ namespace ULox
         {
             return new Stmt.Function(writtenFieldName,
                 new Expr.Function(null,
-                    new List<Stmt>() {
+                    new List<Stmt>()
+                    {
                         new Stmt.Return(className.Copy(TokenType.RETURN), new Expr.Get(
                             new Expr.This(className.Copy(TokenType.THIS, "this")), hiddenInternalFieldName))}));
         }
@@ -247,7 +249,7 @@ namespace ULox
                 Consume(TokenType.CLOSE_PAREN, "Expect ')' after parameters.");
             }
 
-            if(functionType == FunctionType.Get && 
+            if (functionType == FunctionType.Get &&
                 (parameters != null && parameters.Count != 0))
             {
                 throw new ClassException(_currentClassToken, "Cannot have arguments to a Get.");
@@ -698,7 +700,7 @@ namespace ULox
                 throw new ParseException(Previous(), "Missing left-had operand.");
             }
 
-            if(Match(TokenType.GET,
+            if (Match(TokenType.GET,
                 TokenType.SET,
                 TokenType.GETSET))
             {
