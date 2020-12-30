@@ -1,11 +1,12 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 
 namespace ULox
 {
     public class TestLoxEngine
     {
         public string InterpreterResult { get; private set; }
-        private LoxEngine loxEngine;
+        public LoxEngine loxEngine;
         private Resolver resolver;
         private Interpreter interpreter;
 

@@ -14,13 +14,12 @@ namespace ULox.Demo
         private LoxEngine loxEngine;
         private Interpreter interpreter;
         private Resolver resolver;
-        private Function gameUpdateFunction;
-        private Function collisionFunction;
+        private ICallable gameUpdateFunction;
+        private ICallable collisionFunction;
         public List<GameObject> availablePrefabs;
         private Dictionary<int, GameObject> createdObjects = new Dictionary<int, GameObject>();
         private int createdCount = 0;
 
-        // Start is called before the first frame update
         private void Start()
         {
             interpreter = new Interpreter(Debug.Log);
@@ -32,47 +31,33 @@ namespace ULox.Demo
                 interpreter,
                 Debug.Log);
 
-            //todo callable helpers
-            interpreter.Globals.Define("SetUIText", new Callable(1, (interp, args) => text.text = (string)args[0]));
-            interpreter.Globals.Define("GetKey", new Callable(1, (interp, args) => Input.GetKey((string)args[0])));
-            interpreter.Globals.Define("CreateGameObject", new Callable(1, (interp, args) => CreateGameObject((string)args[0])));
-            interpreter.Globals.Define("SetGameObjectPosition",
-                new Callable(3, (interp, args) =>
-                {
-                    SetGameObjectPosition(Convert.ToInt32(args[0]), Convert.ToSingle(args[1]), Convert.ToSingle(args[2]));
-                    return null;
-                }));
-            interpreter.Globals.Define("Reload", new NativeStatement(() => SceneManager.LoadScene(SceneManager.GetActiveScene().name)));
-            interpreter.Globals.Define("SetGameObjectVelocity",
-                new Callable(3, (interp, args) =>
-                {
-                    SetGameObjectVelocity(Convert.ToInt32(args[0]), Convert.ToSingle(args[1]), Convert.ToSingle(args[2]));
-                    return null;
-                }));
-            interpreter.Globals.Define("DestroyGameObject", 
-                new Callable(1, (interp, args) => 
-                {
-                    DestroyGameObject(Convert.ToInt32(args[0]));
-                    return null;
-                }));
+            loxEngine.SetValue("SetUIText", 
+                new Callable(1, (args) => text.text = (string)args[0]));
+            loxEngine.SetValue("GetKey", 
+                new Callable(1, (args) => Input.GetKey((string)args[0])));
+            loxEngine.SetValue("CreateGameObject", 
+                new Callable(1, (args) => CreateGameObject((string)args[0])));
+            loxEngine.SetValue("SetGameObjectPosition",
+                new Callable(3, (args) => SetGameObjectPosition(Convert.ToInt32(args[0]), Convert.ToSingle(args[1]), Convert.ToSingle(args[2]))));
+            loxEngine.SetValue("Reload", 
+                new Callable(() => SceneManager.LoadScene(SceneManager.GetActiveScene().name)));
+            loxEngine.SetValue("SetGameObjectVelocity",
+                new Callable(3, (args) => SetGameObjectVelocity(Convert.ToInt32(args[0]), Convert.ToSingle(args[1]), Convert.ToSingle(args[2]))));
+            loxEngine.SetValue("DestroyGameObject", 
+                new Callable(1, (args) => DestroyGameObject(Convert.ToInt32(args[0]))));
 
 
             loxEngine.Run(script.text);
 
-            //todo messy and requires tests
-            var setupGameFunc = interpreter.Globals.Get("SetupGame") as Function;
-            setupGameFunc.Call(interpreter, null);
-
-            gameUpdateFunction = interpreter.Globals.Get("Update") as Function;
-
-            collisionFunction = interpreter.Globals.Get("OnCollision") as Function;
+            loxEngine.CallFunction("SetupGame");
+            gameUpdateFunction = loxEngine.GetValue("Update") as ICallable;
+            collisionFunction = loxEngine.GetValue("OnCollision") as ICallable;
         }
 
         private void Update()
         {
-            //todo remembering to force to double is a pain
-            interpreter.Globals.Assign("dt", (double)Time.deltaTime);
-            gameUpdateFunction.Call(interpreter, null);
+            loxEngine.SetValue("dt", Time.deltaTime);
+            loxEngine.CallFunction(gameUpdateFunction);
         }
 
         private double CreateGameObject(string name)
@@ -102,8 +87,7 @@ namespace ULox.Demo
 
             if (arg1ID != -1 && arg2ID != -1)
             {
-                //todo clumbsy
-                collisionFunction.Call(interpreter, new List<object>() { (double)arg1ID, (double)arg2ID });
+                loxEngine.CallFunction(collisionFunction, arg1ID, arg2ID);
             }
         }
 

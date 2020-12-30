@@ -25,7 +25,7 @@ namespace ULox
 
         public bool IsGetter => _declaration.parameters == null;
 
-        public object Call(Interpreter interpreter, List<object> args)
+        public object Call(Interpreter interpreter, object[] args)
         {
             var environment = new Environment(_closure);
             if (_declaration.parameters != null)

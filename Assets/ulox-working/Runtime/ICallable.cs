@@ -5,7 +5,7 @@ namespace ULox
 {
     public interface ICallable
     {
-        Object Call(Interpreter interpreter, List<Object> args);
+        Object Call(Interpreter interpreter, Object[] args);
 
         int Arity { get; }
     }

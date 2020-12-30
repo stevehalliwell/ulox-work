@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace ULox.Tests
 {
-    public partial class InterpreterTests
+    public class InterpreterTests
     {
         public static IEnumerable<TestCaseData> Generator()
         {

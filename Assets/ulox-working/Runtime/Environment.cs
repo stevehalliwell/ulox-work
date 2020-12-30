@@ -37,6 +37,11 @@ namespace ULox
             throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
         }
 
+        public bool Exists(string address)
+        {
+            return values.ContainsKey(address);
+        }
+
         public object Get(string tokenLexeme)
         {
             if (values.TryGetValue(tokenLexeme, out object retval))

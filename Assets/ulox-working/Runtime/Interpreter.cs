@@ -308,17 +308,19 @@ namespace ULox
         public object Visit(Expr.Call expr)
         {
             var callee = Evaluate(expr.callee);
-            var args = new List<Object>();
+            var args = new object[expr.arguments.Count];
+            var i = 0;
             foreach (var item in expr.arguments)
             {
-                args.Add(Evaluate(item));
+                args[i] = Evaluate(item);
+                i++;
             }
 
             if (callee is ICallable calleeCallable)
             {
-                if (args.Count != calleeCallable.Arity)
+                if (args.Length != calleeCallable.Arity)
                     throw new RuntimeCallException(expr.paren,
-                        $"Expected { calleeCallable.Arity} args but got { args.Count }");
+                        $"Expected { calleeCallable.Arity} args but got { args.Length }");
 
                 return calleeCallable.Call(this, args);
             }

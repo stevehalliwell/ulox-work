@@ -27,7 +27,7 @@ namespace ULox
 
         public int Arity => FindMethod("init")?.Arity ?? 0;
 
-        public object Call(Interpreter interpreter, List<object> args)
+        public object Call(Interpreter interpreter, object[] args)
         {
             var instance = new Instance(this);
 
