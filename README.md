@@ -14,11 +14,11 @@ Don't expect this to be used (very much) in production. At least not in the stat
 	-  Keywords 'loop'(while(true)), 'break', and 'continue'.
 	-  Lambdas.
 	-  Resolver Warnings for unused variables.
-	-  Class call-less properties, they're class methods that do not declare or store any param list.
+	-  Class call-less properties, they're methods that do not declare or store a param list.
 	-  MetaClasses and MetaMethods, using class keyword inside class declare is akin to static.
 	-  Added operator %, +=, -=, \*=, /=, %=.
 	-  Add Array type to engine.
-	-  Add sugar to class declarations: 'get','set','getset','var' keywords. [Class Sugar](#class-sugar)
+	-  Add sugar to class declarations: 'get', 'set', 'getset', 'var' keywords. [Class Sugar](#class-sugar)
 - [Core jlox](../../tree/core_jlox) Core jlox equivilant implemented in C# inside a Unity project using the TestRunner and Code Coverage to confirm correct behavior and error reporting.
 
 ## Pending
@@ -80,4 +80,5 @@ class Foo
 }
 ```
 This is done by generating the AST nodes in the parser. 
-Note: the backing fields, are always named \_VAR_NAME and setup by the interperter before the classes init is called, so they can be used directly in the init function itself.
+
+Note: the backing fields, are always named \_VAR_NAME (prepended with an underscore). These backing fields are set up by the interperter before the class init is called, this allows the backing fields to be used directly in the init function itself.
