@@ -349,7 +349,10 @@ namespace ULox
 
         public void Resolve(Expr expr, int depth)
         {
-            localsSideTable.Add(expr, depth);
+            if (!localsSideTable.ContainsKey(expr))
+                localsSideTable.Add(expr, depth);
+            else if (localsSideTable[expr] != depth)
+                throw new LoxException("Found identical expr requesting differing side table depths.");
         }
 
         public void Visit(Stmt.Class stmt)
@@ -472,6 +475,13 @@ namespace ULox
                 return Evaluate(expr.ifTrue);
             else
                 return Evaluate(expr.ifFalse);
+        }
+
+        public static object SantizeObject(object o)
+        {
+            if (o is int || o is float || o is long)
+                return Convert.ToDouble(o);
+            return o;
         }
     }
 }

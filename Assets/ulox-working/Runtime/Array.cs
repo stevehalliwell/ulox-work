@@ -15,9 +15,12 @@ namespace ULox
                 objs.Add(null);
             }
 
-            base.Set("Get", new Callable(1, (inter, args) => objs[(int)(double)args[0]]));
-            base.Set("Set", new Callable(2, (inter, args) => objs[(int)(double)args[0]] = args[1]));
-            base.Set("Count", new Callable(0, (inter, args) => (double)objs.Count));
+            base.Set("Get", new Callable(1, (args) => objs[(int)(double)args[0]]));
+            base.Set("Set", new Callable(2, (args) => objs[(int)(double)args[0]] = args[1]));
+            base.Set("Count", new Callable(() => (double)objs.Count));
+            base.Set("Add", new Callable(1, (args) => objs.Add(args[0])));
+            base.Set("Remove", new Callable(1, (args) => objs.Remove(args[0])));
+            base.Set("RemoveAt", new Callable(1, (args) => objs.RemoveAt((int)(double)args[0])));
         }
 
         public override void Set(string name, object val)

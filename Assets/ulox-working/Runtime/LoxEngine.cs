@@ -2,7 +2,9 @@
 
 namespace ULox
 {
-    //todo easier user access to vars, funcs, and classes
+    //todo easier user access to classes
+    //  resolve address to containing environment/closure
+    //  pre parse binding and post parse binding
     public class LoxEngine
     {
         private Scanner _scanner;
@@ -12,7 +14,7 @@ namespace ULox
 
         public void SetValue(string address, object value)
         {
-            value = SantizeObject(value);
+            value = Interpreter.SantizeObject(value);
 
             if (_interpreter.Globals.Exists(address))
                 _interpreter.Globals.Assign(address, value);
@@ -36,17 +38,10 @@ namespace ULox
         {
             for (int i = 0; i < objs.Length; i++)
             {
-                objs[i] = SantizeObject(objs[i]);
+                objs[i] = Interpreter.SantizeObject(objs[i]);
             }
             
             return callable.Call(_interpreter, objs);
-        }
-
-        public object SantizeObject(object o)
-        {
-            if (o is int || o is float)
-                return Convert.ToDouble(o);
-            return o;
         }
 
         private Action<string> _logger;
@@ -64,9 +59,12 @@ namespace ULox
             _interpreter = interpreter;
             _logger = logger;
 
-            _interpreter.Globals.Define("clock", new Callable(0, (inter, args) => System.DateTime.Now.Ticks));
-            _interpreter.Globals.Define("abort", new Callable(0, (inter, args) => throw new LoxException("abort")));
-            _interpreter.Globals.Define("Array", new Callable(1, (inter, args) => new Array((int)(double)args[0])));
+            _interpreter.Globals.Define("clock", new Callable(() => System.DateTime.Now.Ticks));
+            _interpreter.Globals.Define("abort", new Callable(() => { throw new LoxException("abort"); }));
+            _interpreter.Globals.Define("Array", new Callable(1, (args) => new Array((int)(double)args[0])));
+            _interpreter.Globals.Define("List", new Callable(() => new Array(0)));
+            _interpreter.Globals.Define("Rand", new Callable(() => UnityEngine.Random.value));
+            _interpreter.Globals.Define("RandRange", new Callable(2,(args) => UnityEngine.Random.Range((float)(double)args[0], (float)(double)args[1])));
         }
 
         public void Run(string text)

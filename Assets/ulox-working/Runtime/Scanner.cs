@@ -52,7 +52,7 @@ namespace ULox
         public void Reset()
         {
             Tokens = new List<Token>();
-            _line = 0;
+            _line = 1;
             _characterNumber = 0;
             if (_stringReader != null)
                 _stringReader.Dispose();
@@ -220,7 +220,7 @@ namespace ULox
             Advance();//skip leading "
             while (!IsAtEnd())
             {
-                if (_currentChar == '\n') _line++;
+                if (_currentChar == '\n') { _line++; _characterNumber = 0; }
 
                 if (_currentChar == '"')
                 {

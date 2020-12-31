@@ -7,7 +7,11 @@ using UnityEngine.UI;
 
 namespace ULox.Demo
 {
-    public class SampleGameBeh : MonoBehaviour
+    /// <summary>
+    /// This demo uses Unity physics for interactions and routes calls back to the script for responses. It also uses explicit
+    /// ids to communicate between the harnes and the scripting environment.
+    /// </summary>
+    public class BreakoutSampleGameBehaviour : MonoBehaviour
     {
         public TextAsset script;
         public Text text;

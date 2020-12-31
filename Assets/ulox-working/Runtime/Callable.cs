@@ -33,9 +33,15 @@ namespace ULox
             _func = (interp, args) => { func(); return null; };
         }
 
+        public Callable(Func<object> func)
+        {
+            _arity = 0;
+            _func = (interp, args) => func();
+        }
+
         public object Call(Interpreter interpreter, object[] args)
         {
-            return _func?.Invoke(interpreter, args);
+            return Interpreter.SantizeObject(_func?.Invoke(interpreter, args));
         }
     }
 }

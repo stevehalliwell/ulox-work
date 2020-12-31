@@ -225,12 +225,12 @@ print a;",
 
             yield return new TestCaseData(
 @"print ""hello incomplete string;",
-@"IDENTIFIER|0:32 Unterminated String")
+@"IDENTIFIER|1:32 Unterminated String")
                 .SetName("IncompleteStringDeclare");
 
             yield return new TestCaseData(
 @"@",
-@"IDENTIFIER|0:1 Unexpected character '@'")
+@"IDENTIFIER|1:1 Unexpected character '@'")
                 .SetName("UnexpectedChar");
 
             yield return new TestCaseData(
@@ -257,13 +257,13 @@ else
 
             yield return new TestCaseData(
 @"print a;",
-@"IDENTIFIER|0:8 Undefined variable a")
+@"IDENTIFIER|1:8 Undefined variable a")
                 .SetName("UndefinedVar");
 
             yield return new TestCaseData(
 @"var Func = 6;
 print Func();",
-@"CLOSE_PAREN|1:13 Can only call function types")
+@"CLOSE_PAREN|2:13 Can only call function types")
                 .SetName("NotAFunc");
 
             yield return new TestCaseData(
@@ -272,12 +272,12 @@ print Func();",
 }
 
 print Undef().a;",
-@"IDENTIFIER|4:16 Undefined property 'a'.")
+@"IDENTIFIER|5:16 Undefined property 'a'.")
                 .SetName("UndefinedProperty");
 
             yield return new TestCaseData(
 @"var a = 1 + a;",
-@"IDENTIFIER|0:18 Undefined variable a")
+@"IDENTIFIER|1:18 Undefined variable a")
                 .SetName("CannotReadDuringInitGlobal");
 
             yield return new TestCaseData(
@@ -285,13 +285,13 @@ print Undef().a;",
 {
     var a = 1 + a;
 }",
-@"IDENTIFIER|2:26 Can't read local variable in its own initializer.")
+@"IDENTIFIER|3:26 Can't read local variable in its own initializer.")
                 .SetName("CannotReadDuringInitLocal");
 
             yield return new TestCaseData(
 @"var a = 1;
 return a;",
-@"RETURN|1:6 Cannot return outside of a function.")
+@"RETURN|2:6 Cannot return outside of a function.")
                 .SetName("CannotReturnWhenNotWithinAFunc");
 
             yield return new TestCaseData(
@@ -303,7 +303,7 @@ return a;",
         return this.a;
     }
 }",
-@"RETURN|5:22 Cannot return a value from an initializer")
+@"RETURN|6:22 Cannot return a value from an initializer")
                 .SetName("CannotReturnValueFromInit");
 
             yield return new TestCaseData(
@@ -318,13 +318,13 @@ var a = 2;",
     var a = 1;
     var a = 2;
 }",
-@"IDENTIFIER|3:14 Already a variable with this name in this scope.")
+@"IDENTIFIER|4:14 Already a variable with this name in this scope.")
                 .SetName("CannotHaveDuplicateLocals");
 
             yield return new TestCaseData(
 @"class Base {}
 class Child < Child {}",
-@"IDENTIFIER|1:22 A class can't inherit from itself.")
+@"IDENTIFIER|2:22 A class can't inherit from itself.")
                 .SetName("CannotSuperSelf");
 
             yield return new TestCaseData(
@@ -332,7 +332,7 @@ class Child < Child {}",
 {
     this.a = 5;
 }",
-@"THIS|2:12 Cannot use 'this' outside of a class.")
+@"THIS|3:12 Cannot use 'this' outside of a class.")
                 .SetName("CannotUseThisOutsideMethods");
 
             yield return new TestCaseData(
@@ -343,7 +343,7 @@ class Child {
         super.init();
     }
 }",
-@"SUPER|4:21 Cannot use 'super' in a class with no superclass.")
+@"SUPER|5:21 Cannot use 'super' in a class with no superclass.")
                 .SetName("CannotSuperWithoutBase");
 
             yield return new TestCaseData(
@@ -352,12 +352,12 @@ class Child {
     super.init();
 }
 ",
-@"SUPER|2:13 Cannot use 'super' outside of a class.")
+@"SUPER|3:13 Cannot use 'super' outside of a class.")
                 .SetName("CannotSuperOutsideClass");
 
             yield return new TestCaseData(
 @"var a = print 7;",
-@"PRINT|0:16 Expect expression.")
+@"PRINT|1:16 Expect expression.")
                 .SetName("CannotRValueStatementsInAssign");
 
             yield return new TestCaseData(
@@ -395,7 +395,7 @@ print (a+b)+c+d;",
 fun B(){}
 
 var res = A+B;",
-@"PLUS|3:15 Operands must be numbers or strings.")
+@"PLUS|4:15 Operands must be numbers or strings.")
                 .SetName("CannotPlusFunctions");
 
             yield return new TestCaseData(
@@ -410,39 +410,39 @@ print b;",
 @"var a = ""hello"";
 var b = 6;
 var c = a - b;",
-@"MINUS|2:15 Operands must be numbers.")
+@"MINUS|3:15 Operands must be numbers.")
                 .SetName("CannotSubtractNonNumbers");
 
             yield return new TestCaseData(
 @"fun Func(){}
 var a = -Func;",
-@"MINUS|1:12 Operands must be numbers.")
+@"MINUS|2:12 Operands must be numbers.")
                 .SetName("CannotNegateNonNumbers");
 
             yield return new TestCaseData(
 @"fun Func(a,b){}
 Func(7);",
-@"CLOSE_PAREN|1:7 Expected 2 args but got 1")
+@"CLOSE_PAREN|2:7 Expected 2 args but got 1")
                 .SetName("CannotCallFunctionWithIncorrectParamCount");
 
             yield return new TestCaseData(
 @"fun Func(a,b){}
 class Klass < Func{}",
-@"IDENTIFIER|1:21 Superclass must be a class.")
+@"IDENTIFIER|2:21 Superclass must be a class.")
                 .SetName("SuperMustBeClass");
 
             yield return new TestCaseData(
 @"fun Func(a,b){}
 
 print Func.a;",
-@"IDENTIFIER|2:13 Only instances have properties.")
+@"IDENTIFIER|3:13 Only instances have properties.")
                 .SetName("OnlyInstHasGet");
 
             yield return new TestCaseData(
 @"fun Func(a,b){}
 
 Func.a = 67;",
-@"IDENTIFIER|2:6 Only instances have fields.")
+@"IDENTIFIER|3:6 Only instances have fields.")
                 .SetName("OnlyInstHasSet");
 
             yield return new TestCaseData(
@@ -460,7 +460,7 @@ class BostonCream < Doughnut {
 }
 
 BostonCream().cook();",
-@"IDENTIFIER|8:21 Undefined property 'Missing'.")
+@"IDENTIFIER|9:21 Undefined property 'Missing'.")
                 .SetName("Class_SuperMissingMethod");
 
             yield return new TestCaseData(
@@ -487,7 +487,7 @@ print a;",
 
             yield return new TestCaseData(
 @"print + 5;",
-@"PLUS|0:8 Missing left-had operand.")
+@"PLUS|1:8 Missing left-had operand.")
                 .SetName("MissingLHS");
 
             yield return new TestCaseData(
@@ -556,7 +556,7 @@ thrice(fun(a) {
     var a = 1;
     break;
 }",
-@"BREAK|3:13 Cannot break when not within a loop.")
+@"BREAK|4:13 Cannot break when not within a loop.")
                 .SetName("CannotBreakHere");
 
             yield return new TestCaseData(
@@ -565,7 +565,7 @@ thrice(fun(a) {
     var a = 1;
     continue;
 }",
-@"CONTINUE|3:16 Cannot continue when not within a loop.")
+@"CONTINUE|4:16 Cannot continue when not within a loop.")
                 .SetName("CannotContinueHere");
 
             yield return new TestCaseData(
@@ -575,7 +575,7 @@ thrice(fun(a) {
     var b = 2;
     print b;
 }",
-@"2:14 - IDENTIFIER a Local variable is never read.")
+@"3:14 - IDENTIFIER a Local variable is never read.")
                 .SetName("UnusedLocals");
 
             yield return new TestCaseData(
@@ -723,7 +723,7 @@ print sq.Area;",
 }
 var sq = Square();
 print sq.Arae;",
-@"IDENTIFIER|6:14 Undefined property 'Arae'.")
+@"IDENTIFIER|7:14 Undefined property 'Arae'.")
                 .SetName("ClassGetSet_Typo_Error");
 
             yield return new TestCaseData(
@@ -736,7 +736,7 @@ var sq = Square();
 print sq.Area;
 sq.Side = 2;
 print sq.Area;",
-@"STAR|3:35 Operands must be numbers.")
+@"STAR|4:35 Operands must be numbers.")
                 .SetName("ClassVars_nullfield");
 
             yield return new TestCaseData(
@@ -828,7 +828,7 @@ print sq.Area;",
     get Side(a) {return this.side;}
     Area {return this.side * this.side;}
 }",
-@"IDENTIFIER|0:13 Cannot have arguments to a Get.")
+@"IDENTIFIER|1:13 Cannot have arguments to a Get.")
                 .SetName("Class_NoGetParams");
 
             yield return new TestCaseData(
@@ -838,7 +838,7 @@ print sq.Area;",
     set Side(a) {this.side = a;}
     Area {return this.side * this.side;}
 }",
-@"IDENTIFIER|0:13 Cannot have arguments to a Set. A 'value' param is auto generated.")
+@"IDENTIFIER|1:13 Cannot have arguments to a Set. A 'value' param is auto generated.")
                 .SetName("Class_NoSetParams");
 
             yield return new TestCaseData(
@@ -848,12 +848,12 @@ print sq.Area;",
     set Side(a) {this.side = a;}
     Area {return this.side * this.side;}
 }",
-@"CLASS|0:20 Expect expression.")
+@"CLASS|1:20 Expect expression.")
                 .SetName("CannotAssignVarToClass");
 
             yield return new TestCaseData(
 @"var a1 = var a2 = 10;",
-@"VAR|0:15 Expect expression.")
+@"VAR|1:15 Expect expression.")
                 .SetName("CannotAssignVarToVar");
 
             yield return new TestCaseData(
@@ -867,7 +867,7 @@ print sq.Area;",
     get a;
     set a;
 }",
-@"IDENTIFIER|2:14 Classes cannot have fields of identical names. Found more than 1 _a in class Square.")
+@"IDENTIFIER|3:14 Classes cannot have fields of identical names. Found more than 1 _a in class Square.")
                 .SetName("Class_DupFields");
 
             yield return new TestCaseData(
@@ -876,7 +876,7 @@ print sq.Area;",
     var a;
     a(){}
 }",
-@"IDENTIFIER|3:9 Classes cannot have a field and a method of identical names. Found more than 1 a in class Square.")
+@"IDENTIFIER|4:9 Classes cannot have a field and a method of identical names. Found more than 1 a in class Square.")
                 .SetName("Class_DupFieldnMethod");
 
             yield return new TestCaseData(
@@ -885,7 +885,7 @@ print sq.Area;",
     class get a;
     class set a;
 }",
-@"IDENTIFIER|2:21 Classes cannot have metaFields of identical names. Found more than 1 _a in class Square.")
+@"IDENTIFIER|3:21 Classes cannot have metaFields of identical names. Found more than 1 _a in class Square.")
                 .SetName("Class_Static_DupFields");
 
             yield return new TestCaseData(
@@ -894,7 +894,7 @@ print sq.Area;",
     class var a;
     class a(){}
 }",
-@"IDENTIFIER|3:16 Classes cannot have a metaFields and a metaMethods of identical names. Found more than 1 a in class Square.")
+@"IDENTIFIER|4:16 Classes cannot have a metaFields and a metaMethods of identical names. Found more than 1 a in class Square.")
                 .SetName("Class_Static_DupFieldnMethod");
 
             yield return new TestCaseData(
@@ -903,7 +903,7 @@ print sq.Area;",
      a(){}
     a(){}
 }",
-@"IDENTIFIER|2:11 Classes cannot have methods of identical names. Found more than 1 a in class Square.")
+@"IDENTIFIER|3:11 Classes cannot have methods of identical names. Found more than 1 a in class Square.")
                 .SetName("Class_DupMethods");
 
             yield return new TestCaseData(
@@ -912,7 +912,7 @@ print sq.Area;",
     class a(){}
     class a(){}
 }",
-@"IDENTIFIER|2:16 Classes cannot have metaMethods of identical names. Found more than 1 a in class Square.")
+@"IDENTIFIER|3:16 Classes cannot have metaMethods of identical names. Found more than 1 a in class Square.")
                 .SetName("Class_Static_DupMethods");
 
             yield return new TestCaseData(
@@ -924,7 +924,7 @@ World!")
             yield return new TestCaseData(
 @"var val = 1;
 get a(){print val;}",
-@"GET|1:3 Only expected withing class declaration.")
+@"GET|2:3 Only expected withing class declaration.")
                 .SetName("Unexpected_get");
 
             yield return new TestCaseData(
