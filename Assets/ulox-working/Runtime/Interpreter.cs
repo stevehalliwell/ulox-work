@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ULox
 {
@@ -35,6 +36,20 @@ namespace ULox
             }
         }
 
+        public IEnvironment AddressToEnvironment(string address, out string lastTokenLexeme)
+        {
+            var parts = address.Split('.');
+            lastTokenLexeme = parts.Last();
+            IEnvironment returnEnvironment = Globals;
+
+            for (int i = 0; i < parts.Length - 1 && returnEnvironment != null; i++)
+            {
+                returnEnvironment = returnEnvironment.GetChildEnvironment(parts[i]);
+            }
+
+            return returnEnvironment;
+        }
+
         public class Continue : InterpreterControlException
         {
             public Continue(Token from) : base(from)
@@ -44,7 +59,7 @@ namespace ULox
 
         private Action<string> _logger;
         private Environment _globals = new Environment();
-        private Environment currentEnvironment;
+        private IEnvironment currentEnvironment;
         private Dictionary<Expr, int> localsSideTable = new Dictionary<Expr, int>();
 
         public Environment Globals => _globals;
@@ -227,10 +242,10 @@ namespace ULox
         {
             if (localsSideTable.TryGetValue(expr, out int distance))
             {
-                return currentEnvironment.GetAt(distance, name);
+                return currentEnvironment.FetchAncestor(distance, name);
             }
 
-            return Globals.Get(name);
+            return Globals.Fetch(name, true);
         }
 
         public object Visit(Expr.Assign expr)
@@ -243,7 +258,7 @@ namespace ULox
             }
             else
             {
-                Globals.Assign(expr.name, val);
+                Globals.Assign(expr.name, val, true);
             }
 
             return val;
@@ -414,7 +429,7 @@ namespace ULox
                 currentEnvironment = currentEnvironment.Enclosing;
             }
 
-            currentEnvironment.Assign(stmt.name, @class);
+            currentEnvironment.Assign(stmt.name, @class, false);
         }
 
         public object Visit(Expr.Get expr)
@@ -455,9 +470,9 @@ namespace ULox
         public object Visit(Expr.Super expr)
         {
             int distance = localsSideTable[expr];
-            var superclass = (Class)currentEnvironment.GetAtDirect(distance, "super");
+            var superclass = (Class)currentEnvironment.FetchAncestor(distance, "super");
 
-            var inst = (Instance)currentEnvironment.GetAtDirect(distance - 1, "this");
+            var inst = (Instance)currentEnvironment.FetchAncestor(distance - 1, "this");
 
             var method = superclass.FindMethod(expr.method.Lexeme);
 

@@ -679,30 +679,6 @@ print t.a;
                 .SetName("Modulus");
 
             yield return new TestCaseData(
-@"var arr = Array(3);
-print arr;",
-@"<array [null,null,null,]>")
-                .SetName("ArrayEmpty");
-
-            yield return new TestCaseData(
-@"var arr = Array(5);
-for(var i = 0; i < arr.Count(); i += 1)
-{
-    arr.Set(i,i);
-}
-print arr;",
-@"<array [0,1,2,3,4,]>")
-                .SetName("ArrayCount");
-
-            yield return new TestCaseData(
-@"var arr = Array(5);
-
-print arr.Get(6);",
-@"Index was out of range. Must be non-negative and less than the size of the collection.
-Parameter name: index")
-                .SetName("ArrayBoundsError");
-
-            yield return new TestCaseData(
 @"class Square
 {
     getset Side;
@@ -788,12 +764,6 @@ print sq.Area;",
                 .SetName("ClassVars_GetSetInitialValue");
 
             yield return new TestCaseData(
-@"var arr = Array(5);
-arr.a = 2;",
-@"NONE|-1:-1 Can't add properties to arrays.")
-                .SetName("Array_CannotSet");
-
-            yield return new TestCaseData(
 @"class Square
 {
     init() {this.side = 1;}
@@ -855,11 +825,6 @@ print sq.Area;",
 @"var a1 = var a2 = 10;",
 @"VAR|1:15 Expect expression.")
                 .SetName("CannotAssignVarToVar");
-
-            yield return new TestCaseData(
-@"abort();",
-@"abort")
-                .SetName("Abort");
 
             yield return new TestCaseData(
 @"class Square

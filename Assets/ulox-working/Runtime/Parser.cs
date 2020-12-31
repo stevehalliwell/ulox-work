@@ -3,6 +3,7 @@ using System.Linq;
 
 namespace ULox
 {
+    //todo single statement blocks, for single statement ifs and loops etc.
     public class Parser
     {
         private enum FunctionType { None, Function, Method, Get, Set, }

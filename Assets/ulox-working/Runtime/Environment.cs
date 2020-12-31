@@ -3,59 +3,23 @@ using System.Collections.Generic;
 
 namespace ULox
 {
-    public class Environment
+    //todo store list of objects and dict of name to index
+    //  users then ask for depth and index if they have name, and store that for reuse
+    public class Environment : IEnvironment
     {
+        private IEnvironment _enclosing;
         private Dictionary<string, object> values = new Dictionary<string, object>();
-        private Environment enclosing;
-
-        public Environment Enclosing => enclosing;
-
         public Environment()
         {
         }
 
-        public Environment(Environment enclosing)
+        public Environment(IEnvironment enclosing)
         {
-            this.enclosing = enclosing;
+            _enclosing = enclosing;
         }
 
-        public void Define(String name, object value)
-        {
-            values.Add(name, value);
-        }
-
-        public object Get(Token name)
-        {
-            if (values.TryGetValue(name.Lexeme, out object retval))
-            {
-                return retval;
-            }
-
-            if (enclosing != null)
-                return enclosing.Get(name);
-
-            throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
-        }
-
-        public bool Exists(string address)
-        {
-            return values.ContainsKey(address);
-        }
-
-        public object Get(string tokenLexeme)
-        {
-            if (values.TryGetValue(tokenLexeme, out object retval))
-            {
-                return retval;
-            }
-
-            if (enclosing != null)
-                return enclosing.Get(tokenLexeme);
-
-            throw new LoxException($"Undefined variable {tokenLexeme}");
-        }
-
-        public void Assign(Token name, object val)
+        public IEnvironment Enclosing => _enclosing;
+        public void Assign(Token name, object val, bool checkEnclosing)
         {
             if (values.ContainsKey(name.Lexeme))
             {
@@ -63,15 +27,16 @@ namespace ULox
                 return;
             }
 
-            if (enclosing != null)
+            if (checkEnclosing && _enclosing != null)
             {
-                enclosing.Assign(name, val);
+                _enclosing.Assign(name, val, true);
                 return;
             }
 
             throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
         }
-        public void Assign(string tokenLexeme, object val)
+
+        public void Assign(string tokenLexeme, object val, bool checkEnclosing)
         {
             if (values.ContainsKey(tokenLexeme))
             {
@@ -79,42 +44,48 @@ namespace ULox
                 return;
             }
 
-            if (enclosing != null)
+            if (checkEnclosing && _enclosing != null)
             {
-                enclosing.Assign(tokenLexeme, val);
+                _enclosing.Assign(tokenLexeme, val, true);
                 return;
             }
 
             throw new LoxException($"Undefined variable {tokenLexeme}");
         }
 
-        public object GetAt(int distance, Token name)
+        public void Define(String name, object value)
         {
-            if (Ancestor(distance).values.TryGetValue(name.Lexeme, out object retval))
+            values.Add(name, value);
+        }
+
+        public bool Exists(string address)
+        {
+            return values.ContainsKey(address);
+        }
+
+        public object Fetch(Token name, bool checkEnclosing)
+        {
+            if (values.TryGetValue(name.Lexeme, out object retval))
+            {
                 return retval;
+            }
+
+            if (checkEnclosing && _enclosing != null)
+                return _enclosing.Fetch(name, true);
 
             throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
         }
-
-        public object GetAtDirect(int distance, string nameLexeme)
+        public object Fetch(string tokenLexeme, bool checkEnclosing)
         {
-            return Ancestor(distance).values[nameLexeme];
-        }
-
-        public Environment Ancestor(int distnace)
-        {
-            var ret = this;
-            for (int i = 0; i < distnace; i++)
+            if (values.TryGetValue(tokenLexeme, out object retval))
             {
-                ret = ret.enclosing;
+                return retval;
             }
 
-            return ret;
-        }
+            if (checkEnclosing && _enclosing != null)
+                return _enclosing.Fetch(tokenLexeme, true);
 
-        public void AssignAt(int distance, Token name, object val)
-        {
-            Ancestor(distance).values[name.Lexeme] = val;
+            throw new LoxException($"Undefined variable {tokenLexeme}");
         }
     }
 }

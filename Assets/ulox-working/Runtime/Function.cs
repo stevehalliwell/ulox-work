@@ -6,13 +6,13 @@ namespace ULox
     {
         private string _name;
         private Expr.Function _declaration;
-        private Environment _closure;
+        private IEnvironment _closure;
         private bool _isInitializer;
 
         public Function(
             string name,
             Expr.Function declaration,
-            Environment closure,
+            IEnvironment closure,
             bool isInitializer)
         {
             _name = name;
@@ -42,12 +42,12 @@ namespace ULox
             }
             catch (Interpreter.Return exp)
             {
-                if (_isInitializer) return _closure.GetAtDirect(0, "this");
+                if (_isInitializer) return _closure.FetchAncestor(0, "this");
 
                 return exp.Value;
             }
 
-            if (_isInitializer) return _closure.GetAtDirect(0, "this");
+            if (_isInitializer) return _closure.FetchAncestor(0, "this");
 
             return null;
         }

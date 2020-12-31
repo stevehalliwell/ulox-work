@@ -3,6 +3,7 @@
 namespace ULox
 {
     //todo easier user access to classes
+    //  address string to support . heirarchy
     //  resolve address to containing environment/closure
     //  pre parse binding and post parse binding
     public class LoxEngine
@@ -17,14 +18,16 @@ namespace ULox
             value = Interpreter.SantizeObject(value);
 
             if (_interpreter.Globals.Exists(address))
-                _interpreter.Globals.Assign(address, value);
+                _interpreter.Globals.Assign(address, value, false);
             else
                 _interpreter.Globals.Define(address, value);
         }
 
         public object GetValue(string address)
         {
-            return _interpreter.Globals.Get(address);
+            var containingEnvironment = _interpreter.AddressToEnvironment(address, out var endToken);
+
+            return containingEnvironment?.FetchAncestor(0,endToken);
         }
 
         public object CallFunction(string address, params object[] objs)
@@ -60,11 +63,14 @@ namespace ULox
             _logger = logger;
 
             _interpreter.Globals.Define("clock", new Callable(() => System.DateTime.Now.Ticks));
+            _interpreter.Globals.Define("sleep", new Callable(1, (args) => System.Threading.Thread.Sleep((int)(double)args[0])));
             _interpreter.Globals.Define("abort", new Callable(() => { throw new LoxException("abort"); }));
             _interpreter.Globals.Define("Array", new Callable(1, (args) => new Array((int)(double)args[0])));
             _interpreter.Globals.Define("List", new Callable(() => new Array(0)));
             _interpreter.Globals.Define("Rand", new Callable(() => UnityEngine.Random.value));
             _interpreter.Globals.Define("RandRange", new Callable(2,(args) => UnityEngine.Random.Range((float)(double)args[0], (float)(double)args[1])));
+            _interpreter.Globals.Define("POD", new Class(null, "POD", null, null, null));
+
         }
 
         public void Run(string text)

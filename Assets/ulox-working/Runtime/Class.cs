@@ -31,9 +31,12 @@ namespace ULox
         {
             var instance = new Instance(this);
 
-            foreach (var item in _vars)
+            if (_vars != null)
             {
-                instance.Set(item.name.Lexeme, interpreter.Evaluate(item.initializer));
+                foreach (var item in _vars)
+                {
+                    instance.Set(item.name.Lexeme, interpreter.Evaluate(item.initializer));
+                }
             }
 
             var initializer = FindMethod("init");
@@ -47,6 +50,8 @@ namespace ULox
 
         public Function FindMethod(string lexeme)
         {
+            if (_methods == null) return null;
+
             if (_methods.TryGetValue(lexeme, out Function func))
                 return func;
 

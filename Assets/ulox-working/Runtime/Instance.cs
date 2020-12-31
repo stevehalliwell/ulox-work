@@ -2,7 +2,7 @@
 
 namespace ULox
 {
-    public class Instance
+    public class Instance// : IEnvironment
     {
         private Class _class;
         private Dictionary<string, object> fields = new Dictionary<string, object>();
