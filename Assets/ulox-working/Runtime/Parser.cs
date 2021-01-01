@@ -4,7 +4,6 @@ using System.Linq;
 namespace ULox
 {
     //todo single statement blocks, for single statement ifs and loops etc.
-    //todo var multi declare. var a,b = 1,c; should also allow getset a,b = 1,c; etc.
     public class Parser
     {
         private enum FunctionType { None, Function, Method, Get, Set, }
@@ -84,62 +83,75 @@ namespace ULox
             var metaMethods = new List<Stmt.Function>();
             var fields = new List<Stmt.Var>();
             var metaFields = new List<Stmt.Var>();
+
             while (!Check(TokenType.CLOSE_BRACE) && !IsAtEnd())
             {
                 var funcType = FunctionType.Method;
                 var isClassMeta = Match(TokenType.CLASS);
-                Stmt.Function genFunc = null;
                 if (Match(TokenType.GET))
                 {
-                    funcType = FunctionType.Get;
                     //check if its short hand and generate, if not then pass to function
-                    if (CheckNext(TokenType.END_STATEMENT) || CheckNext(TokenType.ASSIGN))
+                    if (CheckNext(TokenType.END_STATEMENT, 
+                        TokenType.ASSIGN,
+                        TokenType.COMMA))
                     {
-                        var origAssign = (Stmt.Var)VarDeclaration();
-                        var hiddenAssign = ToClassAutoVarDeclaration(origAssign);
-                        genFunc = CreateGetMethod(className, origAssign.name, hiddenAssign.name);
-                        (isClassMeta ? metaMethods : methods).Add(genFunc);
-                        (isClassMeta ? metaFields : fields).Add(hiddenAssign);
+                        HandleGetSetGeneration(
+                            className, 
+                            methods, 
+                            metaMethods, 
+                            fields, 
+                            metaFields, 
+                            isClassMeta,
+                            true, 
+                            false);
                     }
-
-                    if (genFunc == null)
+                    else
                     {
-                        genFunc = Function(funcType);
+                        var genFunc = Function(FunctionType.Get);
                         (isClassMeta ? metaMethods : methods).Add(genFunc);
                     }
                 }
                 else if (Match(TokenType.SET))
                 {
-                    funcType = FunctionType.Set;
-                    if (CheckNext(TokenType.END_STATEMENT) || CheckNext(TokenType.ASSIGN))
+                    if (CheckNext(TokenType.END_STATEMENT,
+                       TokenType.ASSIGN,
+                       TokenType.COMMA))
                     {
-                        var origAssign = (Stmt.Var)VarDeclaration();
-                        var hiddenAssign = ToClassAutoVarDeclaration(origAssign);
-                        genFunc = CreateSetMethod(className, origAssign.name, hiddenAssign.name);
-                        (isClassMeta ? metaMethods : methods).Add(genFunc);
-                        (isClassMeta ? metaFields : fields).Add(hiddenAssign);
+                        HandleGetSetGeneration(
+                            className,
+                            methods,
+                            metaMethods,
+                            fields,
+                            metaFields,
+                            isClassMeta,
+                            false,
+                            true);
                     }
-
-                    if (genFunc == null)
+                    else
                     {
-                        genFunc = Function(funcType);
+                        var genFunc = Function(FunctionType.Set);
                         (isClassMeta ? metaMethods : methods).Add(genFunc);
                     }
                 }
                 else if (Match(TokenType.GETSET))
                 {
-                    var origAssign = (Stmt.Var)VarDeclaration();
-                    var hiddenAssign = ToClassAutoVarDeclaration(origAssign);
-                    var genGetFunc = CreateGetMethod(className, origAssign.name, hiddenAssign.name);
-                    var genSetFunc = CreateSetMethod(className, origAssign.name, hiddenAssign.name);
-                    (isClassMeta ? metaMethods : methods).Add(genGetFunc);
-                    (isClassMeta ? metaMethods : methods).Add(genSetFunc);
-                    (isClassMeta ? metaFields : fields).Add(hiddenAssign);
+                    HandleGetSetGeneration(
+                            className,
+                            methods,
+                            metaMethods,
+                            fields,
+                            metaFields,
+                            isClassMeta,
+                            true,
+                            true);
                 }
                 else if (Match(TokenType.VAR))
                 {
-                    var varStatement = (Stmt.Var)VarDeclaration();
-                    (isClassMeta ? metaFields : fields).Add(varStatement);
+                    var varStatements = FlattenChainOfVars(VarDeclaration());
+                    foreach (var varStatement in varStatements)
+                    {
+                        (isClassMeta ? metaFields : fields).Add(varStatement);
+                    }
                 }
                 else
                 {
@@ -196,6 +208,56 @@ namespace ULox
                 metaMethods,
                 fields,
                 metaFields);
+        }
+
+        private void HandleGetSetGeneration(
+            Token className, 
+            List<Stmt.Function> methods, 
+            List<Stmt.Function> metaMethods, 
+            List<Stmt.Var> fields, 
+            List<Stmt.Var> metaFields, 
+            bool isClassMeta,
+            bool doGet,
+            bool doSet)
+        {
+            var origAssigns = FlattenChainOfVars(VarDeclaration());
+            foreach (var origAssign in origAssigns)
+            {
+                var hiddenAssign = ToClassAutoVarDeclaration(origAssign);
+                if (doGet)
+                {
+                    var genFunc = CreateGetMethod(className, origAssign.name, hiddenAssign.name);
+                    (isClassMeta ? metaMethods : methods).Add(genFunc);
+                }
+                if(doSet)
+                {
+                    var genFunc = CreateSetMethod(className, origAssign.name, hiddenAssign.name);
+                    (isClassMeta ? metaMethods : methods).Add(genFunc);
+                }
+                (isClassMeta ? metaFields : fields).Add(hiddenAssign);
+            }
+        }
+
+        private List<Stmt.Var> FlattenChainOfVars(Stmt stmt)
+        {
+            var res = new List<Stmt.Var>();
+
+            FlattenChainOfVars(stmt, res);
+
+            return res;
+        }
+
+        private void FlattenChainOfVars(Stmt stmt, List<Stmt.Var> res)
+        {
+            if(stmt is Stmt.Var isVar)
+            {
+                res.Add(isVar);
+            }
+            else if (stmt is Stmt.Chain isChain)
+            {
+                FlattenChainOfVars(isChain.left, res);
+                FlattenChainOfVars(isChain.right, res);
+            }
         }
 
         private static Stmt.Function CreateSetMethod(Token name, Token writtenFieldName, Token hiddenInternalFieldName)
@@ -289,9 +351,18 @@ namespace ULox
             {
                 initializer = Expression();
             }
-
-            Consume(TokenType.END_STATEMENT, "Expect end of statement after variable declaration.");
-            return new Stmt.Var(name, initializer);
+            
+            if (Match(TokenType.COMMA))
+            {
+                return new Stmt.Chain(
+                    new Stmt.Var(name, initializer),
+                    VarDeclaration());
+            }
+            else
+            {
+                Consume(TokenType.END_STATEMENT, "Expect end of statement after variable declaration.");
+                return new Stmt.Var(name, initializer);
+            }
         }
 
         private Stmt Statement()
@@ -773,10 +844,15 @@ namespace ULox
             return false;
         }
 
-        private bool CheckNext(TokenType type)
+        private bool CheckNext(params TokenType[] list)
         {
             if (IsAtEnd()) return false;
-            return _tokens[current + 1].TokenType == type;
+            foreach (var type in list)
+            {
+                if (_tokens[current + 1].TokenType == type)
+                    return true;
+            }
+            return false;
         }
 
         private bool Check(TokenType type)

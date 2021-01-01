@@ -163,7 +163,7 @@ namespace ULox
 
         public abstract T Accept<T>(Visitor<T> visitor);
 
-        public interface Visitor<T> 
+        public interface Visitor<T>
         {
             T Visit(Assign expr);
             T Visit(Binary expr);

@@ -13,6 +13,17 @@ namespace ULox
             public readonly List<Stmt> statements;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
+        public class Chain : Stmt
+        {
+            public Chain( Stmt left, Stmt right)
+            {
+                this.left = left;
+                this.right = right;
+            }
+            public readonly Stmt left;
+            public readonly Stmt right;
+            public override void Accept(Visitor visitor) => visitor.Visit(this);
+        }
         public class Class : Stmt
         {
             public Class( Token name, Expr.Variable superclass, List<Stmt.Function> methods, List<Stmt.Function> metaMethods, List<Stmt.Var> fields, List<Stmt.Var> metaFields)
@@ -130,9 +141,10 @@ namespace ULox
 
         public abstract void Accept(Visitor visitor);
 
-        public interface Visitor 
+        public interface Visitor
         {
             void Visit(Block stmt);
+            void Visit(Chain stmt);
             void Visit(Class stmt);
             void Visit(Expression stmt);
             void Visit(Function stmt);

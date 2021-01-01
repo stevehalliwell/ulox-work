@@ -893,6 +893,32 @@ get a(){print val;}",
                 .SetName("Unexpected_get");
 
             yield return new TestCaseData(
+@"var a = ""Why "", b = ""Hello "", c = ""There"";
+print a + b + c;",
+@"Why Hello There")
+                .SetName("MultiVariablePrintMatch");
+
+            yield return new TestCaseData(
+@"class TestClass
+{
+    var a = ""Why "", b = ""Hello "", c = ""There"";
+    Say() { print this.a + this.b + this.c; }
+}
+TestClass().Say();",
+@"Why Hello There")
+                .SetName("MultiVarFieldPrintMatch");
+
+            yield return new TestCaseData(
+@"class TestClass
+{
+    getset a = ""Why "", b = ""Hello "", c = ""There"";
+    Say() { print this.a + this.b + this.c; }
+}
+TestClass().Say();",
+@"Why Hello There")
+                .SetName("MultiGetSetFieldPrintMatch");
+
+            yield return new TestCaseData(
 @"print """";",
 @"")
                 .SetName("Empty");

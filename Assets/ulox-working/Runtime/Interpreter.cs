@@ -421,9 +421,12 @@ namespace ULox
                 stmt.fields,
                 _currentEnvironment);
 
-            foreach (var item in stmt.metaFields)
+            if (stmt.metaFields != null)
             {
-                @class.Set(item.name.Lexeme, Evaluate(item.initializer));
+                foreach (var item in stmt.metaFields)
+                {
+                    @class.Set(item.name.Lexeme, Evaluate(item.initializer));
+                }
             }
 
             if (superclass != null)
@@ -508,5 +511,11 @@ namespace ULox
                 objs[i] = SantizeObject(objs[i]);
             }
         }
-}
+
+        public void Visit(Stmt.Chain stmt)
+        {
+            Execute(stmt.left);
+            Execute(stmt.right);
+        }
+    }
 }

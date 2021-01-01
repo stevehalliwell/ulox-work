@@ -227,6 +227,22 @@ t.a += 1;",
                 .SetName("AutoClassGetSet");
 
             yield return new TestCaseData(
+@"var a,b,c;",
+@"{ { var 1:6 - IDENTIFIER a }{ { var 1:8 - IDENTIFIER b }{ var 1:10 - IDENTIFIER c } } }")
+                .SetName("MultiVariableDeclare");
+
+            yield return new TestCaseData(
+@"var a = 1,b = true,c = ""three"";",
+@"{ { var 1:6 - IDENTIFIER a[ 1 ] }{ { var 1:14 - IDENTIFIER b[ True ] }{ var 1:25 - IDENTIFIER c[ three ] } } }")
+                .SetName("MultiVariableDeclareAndInit");
+
+            yield return new TestCaseData(
+@"class Test{var a,b,c;}",
+@"{ class 1:11 - IDENTIFIER Test
+   instance { var 1:18 - IDENTIFIER a }{ var 1:20 - IDENTIFIER b }{ var 1:22 - IDENTIFIER c } }")
+                .SetName("MultiFieldDeclare");
+
+            yield return new TestCaseData(
 @"",
 @"")
                 .SetName("Empty");

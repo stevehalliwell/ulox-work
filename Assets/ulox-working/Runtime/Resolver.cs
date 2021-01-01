@@ -405,5 +405,11 @@ namespace ULox
         public void Visit(Stmt.Continue stmt)
         {
         }
+
+        public void Visit(Stmt.Chain stmt)
+        {
+            Resolve(stmt.left);
+            Resolve(stmt.right);
+        }
     }
 }

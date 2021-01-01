@@ -30,6 +30,7 @@ namespace ULox
         private static string[] _requiredStmtTypes = new string[]
         {
             "Block      : List<Stmt> statements",
+            "Chain      : Stmt left, Stmt right",
             "Class      : Token name, Expr.Variable superclass," +
                         " List<Stmt.Function> methods," +
                         " List<Stmt.Function> metaMethods," +

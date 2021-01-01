@@ -219,14 +219,20 @@ namespace ULox.Tests
             {
                 PrintLine();
                 Print(" meta ");
-                Print(stmt.metaFields.ToList<Stmt>());
+                foreach (var item in stmt.metaFields)
+                {
+                    Print(item);
+                }
                 Print(stmt.metaMethods);
             }
             if (stmt.fields.Count > 0 || stmt.methods.Count > 0)
             {
                 PrintLine();
                 Print(" instance ");
-                Print(stmt.fields.ToList<Stmt>());
+                foreach (var item in stmt.fields)
+                {
+                    Print(item);
+                }
                 Print(stmt.methods);
             }
             Dent();
@@ -324,6 +330,12 @@ namespace ULox.Tests
         public void Visit(Stmt.Continue stmt)
         {
             Print("continue ");
+        }
+
+        public void Visit(Stmt.Chain stmt)
+        {
+            Print(stmt.left);
+            Print(stmt.right);
         }
     }
 }
