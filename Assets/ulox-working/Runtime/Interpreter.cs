@@ -59,7 +59,6 @@ namespace ULox
         private Action<string> _logger;
         private Environment _globals = new Environment(null);
         private IEnvironment _currentEnvironment;
-        private Dictionary<Expr, int> localsSideTable = new Dictionary<Expr, int>();
 
         public Environment Globals => _globals;
 
@@ -241,26 +240,16 @@ namespace ULox
 
         private object LookUpVariable(Token name, Expr expr)
         {
-            if (localsSideTable.TryGetValue(expr, out int distance))
-            {
-                return _currentEnvironment.FetchAncestor(distance, name);
-            }
+                return _currentEnvironment.FetchT(name, true);
 
-            return Globals.Fetch(name, true);
+         //   return Globals.FetchT(name, true);
         }
 
         public object Visit(Expr.Assign expr)
         {
             var val = Evaluate(expr.value);
-
-            if (localsSideTable.TryGetValue(expr, out int distance))
-            {
-                _currentEnvironment.AssignAt(distance, expr.name, val);
-            }
-            else
-            {
-                Globals.Assign(expr.name, val, true);
-            }
+                _currentEnvironment.AssignT(expr.name, val, true);
+           
 
             return val;
         }
@@ -363,14 +352,6 @@ namespace ULox
             throw new Return(stmt.keyword, val);
         }
 
-        public void Resolve(Expr expr, int depth)
-        {
-            if (!localsSideTable.ContainsKey(expr))
-                localsSideTable.Add(expr, depth);
-            else if (localsSideTable[expr] != depth)
-                throw new LoxException("Found identical expr requesting differing side table depths.");
-        }
-
         public void Visit(Stmt.Class stmt)
         {
             Class superclass = null;
@@ -434,7 +415,7 @@ namespace ULox
                 _currentEnvironment = _currentEnvironment.Enclosing;
             }
 
-            _currentEnvironment.Assign(stmt.name, @class, false);
+            _currentEnvironment.AssignT(stmt.name, @class, false);
         }
 
         public object Visit(Expr.Get expr)
@@ -474,10 +455,9 @@ namespace ULox
 
         public object Visit(Expr.Super expr)
         {
-            int distance = localsSideTable[expr];
-            var superclass = (Class)_currentEnvironment.FetchAncestor(distance, "super");
+            var superclass = (Class)_currentEnvironment.Fetch("super", true);
 
-            var inst = (Instance)_currentEnvironment.FetchAncestor(distance - 1, "this");
+            var inst = (Instance)_currentEnvironment.Fetch("this", true);
 
             var method = superclass.FindMethod(expr.method.Lexeme);
 

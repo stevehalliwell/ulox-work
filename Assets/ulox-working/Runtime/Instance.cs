@@ -12,9 +12,9 @@
 
         public virtual object Get(Token name)
         {
-            if (values.TryGetValue(name.Lexeme, out object obj))
+            if (valueIndicies.TryGetValue(name.Lexeme, out int index))
             {
-                return obj;
+                return objectList[index];
             }
 
             var method = _class?.FindMethod(name.Lexeme);
@@ -23,7 +23,17 @@
             throw new InstanceException(name, "Undefined property '" + name.Lexeme + "'.");
         }
 
-        public virtual void Set(string name, object val) => values[name] = val;
+        public virtual void Set(string name, object val)
+        {
+            if (valueIndicies.TryGetValue(name, out var index))
+            {
+                objectList[index] = val;
+            }
+            else
+            {
+                Define(name, val);
+            }
+        }
 
         public override string ToString() => $"<inst {_class.Name}>";
     }

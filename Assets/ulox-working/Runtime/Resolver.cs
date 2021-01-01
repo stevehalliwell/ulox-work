@@ -18,10 +18,13 @@ namespace ULox
             public enum State { Declared, Defined, Read };
 
             public State state;
+            public int index;
 
-            public VariableUse(Token Name, State _state)
+            public VariableUse(Token Name, State _state, int _index)
             {
-                name = Name; state = _state;
+                name = Name; 
+                state = _state;
+                index = _index;
             }
         }
 
@@ -147,8 +150,6 @@ namespace ULox
             {
                 if (scopes[i].ContainsKey(name.Lexeme))
                 {
-                    _interpreter.Resolve(expr, scopes.Count - 1 - i);
-
                     if (isRead)
                     {
                         scopes[i][name.Lexeme].state = VariableUse.State.Read;
@@ -275,12 +276,13 @@ namespace ULox
                 throw new ResolverException(name, "Already a variable with this name in this scope.");
             }
 
-            scope.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared));
+            scope.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared, scope.Count));
         }
 
         private void Define(Token name)
         {
             if (scopes.Count == 0) return;
+            var count = scopes.Last().Count;
             scopes.Last()[name.Lexeme].state = VariableUse.State.Defined;
         }
 
@@ -320,7 +322,7 @@ namespace ULox
             foreach (Stmt.Function method in stmt.metaMethods)
             {
                 BeginScope();
-                scopes.Last()["this"] = new VariableUse(stmt.name, VariableUse.State.Read);
+                scopes.Last()["this"] = new VariableUse(stmt.name, VariableUse.State.Read, scopes.Last().Count);
                 ResolveFunction(method.function, FunctionType.METHOD);
                 EndScope();
             }
@@ -328,11 +330,11 @@ namespace ULox
             if (stmt.superclass != null)
             {
                 BeginScope();
-                scopes.Last()["super"] = new VariableUse(stmt.name, VariableUse.State.Read);
+                scopes.Last()["super"] = new VariableUse(stmt.name, VariableUse.State.Read, scopes.Last().Count);
             }
 
             BeginScope();
-            scopes.Last()["this"] = new VariableUse(stmt.name, VariableUse.State.Read);
+            scopes.Last()["this"] = new VariableUse(stmt.name, VariableUse.State.Read, scopes.Last().Count);
 
             foreach (var item in stmt.fields)
             {

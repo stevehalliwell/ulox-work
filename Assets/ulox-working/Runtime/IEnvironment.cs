@@ -3,12 +3,14 @@
     public interface IEnvironment
     {
         IEnvironment Enclosing { get; }
-        void Assign(string tokenLexeme, object val, bool checkEnclosing);
-        void Assign(Token name, object val, bool checkEnclosing);
-        void Define(string name, object value);
-        bool Exists(string address);
+        int Assign(string tokenLexeme, object val, bool checkEnclosing);
+        void AssignIndex(int index, object val);
+        int AssignT(Token name, object val, bool checkEnclosing);
+        int Define(string name, object value);
+        int FetchIndex(string name);
         object Fetch(string tokenLexeme, bool checkEnclosing);
-        object Fetch(Token name, bool checkEnclosing);
+        object FetchT(Token name, bool checkEnclosing);
+        object FetchIndex(int index);
     }
 
     public static class IEnvironmentExt
@@ -21,14 +23,14 @@
             return environment;
         }
 
-        public static void AssignAt(this IEnvironment environment, int distance, Token name, object val)
+        public static int AssignAt(this IEnvironment environment, int distance, Token name, object val)
         {
-            environment.Ancestor(distance).Assign(name, val, false);
+            return environment.Ancestor(distance).AssignT(name, val, false);
         }
 
         public static object FetchAncestor(this IEnvironment environment, int distance, Token name)
         {
-            return environment.Ancestor(distance).Fetch(name, false);
+            return environment.Ancestor(distance).FetchT(name, false);
         }
 
         public static object FetchAncestor(this IEnvironment environment, int distance, string nameLexeme)

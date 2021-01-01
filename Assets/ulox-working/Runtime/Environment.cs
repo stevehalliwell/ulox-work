@@ -3,12 +3,12 @@ using System.Collections.Generic;
 
 namespace ULox
 {
-    //todo store list of objects and dict of name to index
-    //  users then ask for depth and index if they have name, and store that for reuse
+    //todo users then ask for depth and index if they have name, and store that for reuse
     public class Environment : IEnvironment
     {
         private IEnvironment _enclosing;
-        protected Dictionary<string, object> values = new Dictionary<string, object>();
+        protected Dictionary<string, int> valueIndicies = new Dictionary<string, int>();
+        protected List<object> objectList = new List<object>();
 
         public Environment(IEnvironment enclosing)
         {
@@ -17,68 +17,81 @@ namespace ULox
 
         public IEnvironment Enclosing => _enclosing;
 
-        public void Assign(Token name, object val, bool checkEnclosing)
+        public void AssignIndex(int index, object val)
         {
-            if (values.ContainsKey(name.Lexeme))
+            objectList[index] = val;
+        }
+
+        public object FetchIndex(int index)
+        {
+            return objectList[index];
+        }
+
+        public int AssignT(Token name, object val, bool checkEnclosing)
+        {
+            if (valueIndicies.TryGetValue(name.Lexeme, out var index))
             {
-                values[name.Lexeme] = val;
-                return;
+                objectList[index] = val;
+                return index;
             }
 
             if (checkEnclosing && _enclosing != null)
             {
-                _enclosing.Assign(name, val, true);
-                return;
+                return _enclosing.AssignT(name, val, true);
             }
 
             throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
         }
 
-        public void Assign(string tokenLexeme, object val, bool checkEnclosing)
+        public int Assign(string tokenLexeme, object val, bool checkEnclosing)
         {
-            if (values.ContainsKey(tokenLexeme))
+            if (valueIndicies.TryGetValue(tokenLexeme, out var index))
             {
-                values[tokenLexeme] = val;
-                return;
+                objectList[index] = val;
+                return index;
             }
 
             if (checkEnclosing && _enclosing != null)
             {
-                _enclosing.Assign(tokenLexeme, val, true);
-                return;
+                return _enclosing.Assign(tokenLexeme, val, true);
             }
 
             throw new LoxException($"Undefined variable {tokenLexeme}");
         }
 
-        public void Define(String name, object value)
+        public int Define(String name, object value)
         {
-            values.Add(name, value);
+            var ind = objectList.Count;
+            valueIndicies.Add(name, ind);
+            objectList.Add(value);
+            return ind;
         }
 
-        public bool Exists(string address)
+        public int FetchIndex(string name)
         {
-            return values.ContainsKey(address);
+            if (valueIndicies.TryGetValue(name, out var ind))
+                return ind;
+            return -1;
         }
 
-        public object Fetch(Token name, bool checkEnclosing)
+        public object FetchT(Token name, bool checkEnclosing)
         {
-            if (values.TryGetValue(name.Lexeme, out object retval))
+            if (valueIndicies.TryGetValue(name.Lexeme, out int index))
             {
-                return retval;
+                return objectList[index];
             }
 
             if (checkEnclosing && _enclosing != null)
-                return _enclosing.Fetch(name, true);
+                return _enclosing.FetchT(name, true);
 
             throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
         }
 
         public object Fetch(string tokenLexeme, bool checkEnclosing)
         {
-            if (values.TryGetValue(tokenLexeme, out object retval))
+            if (valueIndicies.TryGetValue(tokenLexeme, out int index))
             {
-                return retval;
+                return objectList[index];
             }
 
             if (checkEnclosing && _enclosing != null)

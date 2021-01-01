@@ -19,9 +19,10 @@ namespace ULox
 
             if (containingEnvironment != null)
             {
-                if (containingEnvironment.Exists(endToken))
+                var existingIndex = containingEnvironment.FetchIndex(endToken);
+                if (existingIndex >= 0)
                 {
-                    containingEnvironment.Assign(endToken, value, false);
+                    containingEnvironment.AssignIndex(existingIndex, value);
                 }
                 else
                 {
