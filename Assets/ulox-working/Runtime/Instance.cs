@@ -1,20 +1,18 @@
-﻿using System.Collections.Generic;
-
-namespace ULox
+﻿namespace ULox
 {
-    public class Instance// : IEnvironment
+    public class Instance : Environment
     {
         private Class _class;
-        private Dictionary<string, object> fields = new Dictionary<string, object>();
 
-        public Instance(Class @class)
+        public Instance(Class @class, IEnvironment enclosing)
+            : base(enclosing)
         {
             _class = @class;
         }
 
         public virtual object Get(Token name)
         {
-            if (fields.TryGetValue(name.Lexeme, out object obj))
+            if (values.TryGetValue(name.Lexeme, out object obj))
             {
                 return obj;
             }
@@ -25,7 +23,7 @@ namespace ULox
             throw new InstanceException(name, "Undefined property '" + name.Lexeme + "'.");
         }
 
-        public virtual void Set(string name, object val) => fields[name] = val;
+        public virtual void Set(string name, object val) => values[name] = val;
 
         public override string ToString() => $"<inst {_class.Name}>";
     }

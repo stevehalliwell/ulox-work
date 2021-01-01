@@ -35,21 +35,20 @@ namespace ULox.Demo
                 interpreter,
                 Debug.Log);
 
-            loxEngine.SetValue("SetUIText", 
+            loxEngine.SetValue("SetUIText",
                 new Callable(1, (args) => text.text = (string)args[0]));
-            loxEngine.SetValue("GetKey", 
+            loxEngine.SetValue("GetKey",
                 new Callable(1, (args) => Input.GetKey((string)args[0])));
-            loxEngine.SetValue("CreateGameObject", 
+            loxEngine.SetValue("CreateGameObject",
                 new Callable(1, (args) => CreateGameObject((string)args[0])));
             loxEngine.SetValue("SetGameObjectPosition",
                 new Callable(3, (args) => SetGameObjectPosition(Convert.ToInt32(args[0]), Convert.ToSingle(args[1]), Convert.ToSingle(args[2]))));
-            loxEngine.SetValue("Reload", 
+            loxEngine.SetValue("Reload",
                 new Callable(() => SceneManager.LoadScene(SceneManager.GetActiveScene().name)));
             loxEngine.SetValue("SetGameObjectVelocity",
                 new Callable(3, (args) => SetGameObjectVelocity(Convert.ToInt32(args[0]), Convert.ToSingle(args[1]), Convert.ToSingle(args[2]))));
-            loxEngine.SetValue("DestroyGameObject", 
+            loxEngine.SetValue("DestroyGameObject",
                 new Callable(1, (args) => DestroyGameObject(Convert.ToInt32(args[0]))));
-
 
             loxEngine.Run(script.text);
 
@@ -100,7 +99,7 @@ namespace ULox.Demo
             if (createdObjects.TryGetValue(id, out var go))
             {
                 //delay to ensure it lives the rest of game loop, remove so the script already thinks it's gone
-                Destroy(go,0.1f);
+                Destroy(go, 0.1f);
                 createdObjects.Remove(id);
             }
         }
@@ -109,9 +108,10 @@ namespace ULox.Demo
         {
             if (createdObjects.TryGetValue(id, out var go))
             {
-                go.transform.position = new Vector2(x,y);
+                go.transform.position = new Vector2(x, y);
             }
         }
+
         private void SetGameObjectVelocity(int id, float x, float y)
         {
             if (createdObjects.TryGetValue(id, out var go))

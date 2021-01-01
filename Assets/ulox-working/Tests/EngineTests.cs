@@ -1,10 +1,8 @@
 ﻿using NUnit.Framework;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ULox.Tests
 {
-
     public class EngineTests
     {
         [Test]
@@ -63,7 +61,7 @@ namespace ULox.Tests
         public void ExternalUpdateValue_EngineRead_Matches()
         {
             var test = new TestLoxEngine();
-            var initialTestString = 
+            var initialTestString =
 @"var v = true;
 print v;";
 
@@ -112,7 +110,6 @@ print v;";
             Assert.AreEqual("1", test.InterpreterResult);
         }
 
-
         [Test]
         public void ExternalCall_WithParam_EngineFunc_Matches()
         {
@@ -120,7 +117,7 @@ print v;";
 
             test.Run(@"fun Foo(v){print v;}", true);
 
-            var funcRes = test.loxEngine.CallFunction("Foo","hello");
+            var funcRes = test.loxEngine.CallFunction("Foo", "hello");
 
             Assert.AreEqual("hello", test.InterpreterResult);
         }
@@ -156,7 +153,7 @@ print v;";
             var test = new TestLoxEngine();
             object res = false;
 
-            test.loxEngine.SetValue("Func", new Callable(1,(args) => { res = args[0]; }));
+            test.loxEngine.SetValue("Func", new Callable(1, (args) => { res = args[0]; }));
 
             test.Run(@"Func(true);", true);
 
@@ -168,7 +165,7 @@ print v;";
         {
             var test = new TestLoxEngine();
 
-            test.loxEngine.SetValue("Func", new Callable(2, (args) => args[0].ToString() + args[1].ToString() ));
+            test.loxEngine.SetValue("Func", new Callable(2, (args) => args[0].ToString() + args[1].ToString()));
 
             test.Run(@"print Func(1,2);", true);
 
@@ -187,7 +184,76 @@ outter.inner.a = 10;", true);
 
             Assert.AreEqual(10, test.loxEngine.GetValue("outter.inner.a"));
         }
-        
+
+        [Test]
+        public void ExternalSet_PODNested_Fetch_Validate()
+        {
+            var test = new TestLoxEngine();
+            var testValue = "10";
+
+            //prefered method for multiple creates
+            var podClass = test.loxEngine.GetClass("POD");
+            test.loxEngine.SetValue("outter", test.loxEngine.CreateInstance(podClass));
+
+            //convenient method for single shot
+            test.loxEngine.SetValue("outter.inner", test.loxEngine.CreateInstance("POD"));
+
+            test.loxEngine.SetValue("outter.inner.a", testValue);
+
+            test.Run(@"print outter.inner.a;", true);
+
+            Assert.AreEqual(testValue, test.InterpreterResult);
+        }
+
+        [Test]
+        public void ExternalCreate_ScriptDeclaredClass_Validate()
+        {
+            var test = new TestLoxEngine(); 
+            test.Run(
+ @"class TestClass{var val = 1;}", true, false);
+
+            //create
+            test.loxEngine.SetValue("testInstance", test.loxEngine.CreateInstance("TestClass"));
+
+            //use
+            test.Run(
+ @"print testInstance.val;", true, false);
+
+            Assert.AreEqual("1", test.InterpreterResult);
+        }
+
+        [Test]
+        public void CallableAction_Validate()
+        {
+            var test = new TestLoxEngine();
+            var res = 0;
+
+            test.loxEngine.SetValue("TestAction", new Callable(()=> { res = 1; }));
+
+            test.Run("TestAction();",true);
+
+            Assert.AreEqual(1,res);
+        }
+
+        [Test]
+        public void CallableFullFunc_Validate()
+        {
+            var test = new TestLoxEngine();
+            Interpreter interpreter = null;
+            object[] arguments = null;
+
+            test.loxEngine.SetValue("TestAction", new Callable(1,(interp, args) => 
+            {
+                interpreter = interp;
+                arguments = args;
+                return (string)args[0] + "World!";
+            }));
+
+            test.Run(@"print TestAction(""Hello "");", true);
+
+            Assert.AreEqual(interpreter, test.Interpreter);
+            Assert.AreEqual("Hello World!", test.InterpreterResult);
+        }
 
         public static IEnumerable<TestCaseData> Generator()
         {
@@ -196,13 +262,11 @@ outter.inner.a = 10;", true);
 @"abort")
                 .SetName("Abort");
 
-
             yield return new TestCaseData(
 @"var arr = Array(3);
 print arr;",
 @"<array [null,null,null,]>")
                 .SetName("ArrayEmpty");
-
 
             yield return new TestCaseData(
 @"var arr = Array(3);
@@ -218,7 +282,7 @@ for(var i = 0; i < arr.Count(); i += 1)
 }
 print arr;",
 @"<array [0,1,2,3,4,]>")
-                .SetName("ArrayCount");
+                .SetName("ArrayPrint");
 
             yield return new TestCaseData(
 @"var arr = Array(5);
@@ -262,8 +326,10 @@ list.RemoveAt(4);
 list.Remove(0);
 
 for(var i = 0; i < list.Count(); i += 1) { print list.Get(i); }
+
+print list;
 ",
-@"12356789")
+@"12356789<list [1,2,3,5,6,7,8,9,]>")
                 .SetName("List_Fill_Validate");
 
             yield return new TestCaseData(

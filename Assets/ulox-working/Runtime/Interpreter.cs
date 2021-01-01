@@ -5,7 +5,6 @@ using System.Linq;
 namespace ULox
 {
     //todo REPL
-    //todo Keep track of all classes so new instances can be made from user code
     public class Interpreter : Expr.Visitor<Object>,
                                Stmt.Visitor
     {
@@ -58,16 +57,18 @@ namespace ULox
         }
 
         private Action<string> _logger;
-        private Environment _globals = new Environment();
-        private IEnvironment currentEnvironment;
+        private Environment _globals = new Environment(null);
+        private IEnvironment _currentEnvironment;
         private Dictionary<Expr, int> localsSideTable = new Dictionary<Expr, int>();
 
         public Environment Globals => _globals;
 
+        public IEnvironment CurrentEnvironment => _currentEnvironment;
+
         public Interpreter(Action<string> logger)
         {
             _logger = logger;
-            currentEnvironment = Globals;
+            _currentEnvironment = Globals;
         }
 
         public void Interpret(List<Stmt> statements)
@@ -80,10 +81,10 @@ namespace ULox
 
         public void ExecuteBlock(List<Stmt> statements, Environment environment)
         {
-            var prevEnv = this.currentEnvironment;
+            var prevEnv = this._currentEnvironment;
             try
             {
-                this.currentEnvironment = environment;
+                this._currentEnvironment = environment;
                 foreach (var stmt in statements)
                 {
                     Execute(stmt);
@@ -91,7 +92,7 @@ namespace ULox
             }
             finally
             {
-                this.currentEnvironment = prevEnv;
+                this._currentEnvironment = prevEnv;
             }
         }
 
@@ -233,7 +234,7 @@ namespace ULox
                 value = Evaluate(stmt.initializer);
             }
 
-            currentEnvironment.Define(stmt.name.Lexeme, value);
+            _currentEnvironment.Define(stmt.name.Lexeme, value);
         }
 
         public object Visit(Expr.Variable expr) => LookUpVariable(expr.name, expr);
@@ -242,7 +243,7 @@ namespace ULox
         {
             if (localsSideTable.TryGetValue(expr, out int distance))
             {
-                return currentEnvironment.FetchAncestor(distance, name);
+                return _currentEnvironment.FetchAncestor(distance, name);
             }
 
             return Globals.Fetch(name, true);
@@ -254,7 +255,7 @@ namespace ULox
 
             if (localsSideTable.TryGetValue(expr, out int distance))
             {
-                currentEnvironment.AssignAt(distance, expr.name, val);
+                _currentEnvironment.AssignAt(distance, expr.name, val);
             }
             else
             {
@@ -264,7 +265,7 @@ namespace ULox
             return val;
         }
 
-        public void Visit(Stmt.Block stmt) => ExecuteBlock(stmt.statements, new Environment(currentEnvironment));
+        public void Visit(Stmt.Block stmt) => ExecuteBlock(stmt.statements, new Environment(_currentEnvironment));
 
         public void Visit(Stmt.If stmt)
         {
@@ -345,13 +346,13 @@ namespace ULox
 
         public void Visit(Stmt.Function stmt)
         {
-            var func = new Function(stmt.name.Lexeme, stmt.function, currentEnvironment, false);
-            currentEnvironment.Define(stmt.name.Lexeme, func);
+            var func = new Function(stmt.name.Lexeme, stmt.function, _currentEnvironment, false);
+            _currentEnvironment.Define(stmt.name.Lexeme, func);
         }
 
         public object Visit(Expr.Function expr)
         {
-            return new Function(null, expr, currentEnvironment, false);
+            return new Function(null, expr, _currentEnvironment, false);
         }
 
         public void Visit(Stmt.Return stmt)
@@ -383,22 +384,22 @@ namespace ULox
                 }
             }
 
-            currentEnvironment.Define(stmt.name.Lexeme, null);
+            _currentEnvironment.Define(stmt.name.Lexeme, null);
 
             if (stmt.superclass != null)
             {
-                currentEnvironment = new Environment(currentEnvironment);
-                currentEnvironment.Define("super", superclass);
+                _currentEnvironment = new Environment(_currentEnvironment);
+                _currentEnvironment.Define("super", superclass);
             }
 
             var classMethods = new Dictionary<string, Function>();
             foreach (var method in stmt.metaMethods)
             {
-                var func = new Function(method.name.Lexeme, method.function, currentEnvironment, false);
+                var func = new Function(method.name.Lexeme, method.function, _currentEnvironment, false);
                 classMethods[method.name.Lexeme] = func;
             }
 
-            var metaClass = new Class(null, stmt.name.Lexeme + "_meta", null, classMethods, null);
+            var metaClass = new Class(null, stmt.name.Lexeme + "_meta", null, classMethods, null, null);
 
             var methods = new Dictionary<string, Function>();
             foreach (Stmt.Function method in stmt.methods)
@@ -406,7 +407,7 @@ namespace ULox
                 var function = new Function(
                     method.name.Lexeme,
                     method.function,
-                    currentEnvironment,
+                    _currentEnvironment,
                     method.name.Lexeme == "init");
 
                 methods[method.name.Lexeme] = function;
@@ -417,7 +418,8 @@ namespace ULox
                 stmt.name.Lexeme,
                 superclass,
                 methods,
-                stmt.fields);
+                stmt.fields,
+                _currentEnvironment);
 
             foreach (var item in stmt.metaFields)
             {
@@ -426,10 +428,10 @@ namespace ULox
 
             if (superclass != null)
             {
-                currentEnvironment = currentEnvironment.Enclosing;
+                _currentEnvironment = _currentEnvironment.Enclosing;
             }
 
-            currentEnvironment.Assign(stmt.name, @class, false);
+            _currentEnvironment.Assign(stmt.name, @class, false);
         }
 
         public object Visit(Expr.Get expr)
@@ -470,9 +472,9 @@ namespace ULox
         public object Visit(Expr.Super expr)
         {
             int distance = localsSideTable[expr];
-            var superclass = (Class)currentEnvironment.FetchAncestor(distance, "super");
+            var superclass = (Class)_currentEnvironment.FetchAncestor(distance, "super");
 
-            var inst = (Instance)currentEnvironment.FetchAncestor(distance - 1, "this");
+            var inst = (Instance)_currentEnvironment.FetchAncestor(distance - 1, "this");
 
             var method = superclass.FindMethod(expr.method.Lexeme);
 
@@ -498,5 +500,13 @@ namespace ULox
                 return Convert.ToDouble(o);
             return o;
         }
-    }
+
+        public static void SantizeObjects(object[] objs)
+        {
+            for (int i = 0; i < objs.Length; i++)
+            {
+                objs[i] = SantizeObject(objs[i]);
+            }
+        }
+}
 }

@@ -16,8 +16,9 @@ namespace ULox
             string name,
             Class superclass,
             Dictionary<string, Function> methods,
-            List<Stmt.Var> fields)
-            : base(metaClass)
+            List<Stmt.Var> fields,
+            IEnvironment enclosing)
+            : base(metaClass, enclosing)
         {
             _name = name;
             _methods = methods;
@@ -25,11 +26,11 @@ namespace ULox
             _vars = fields;
         }
 
-        public int Arity => FindMethod("init")?.Arity ?? 0;
+        public virtual int Arity => FindMethod("init")?.Arity ?? 0;
 
-        public object Call(Interpreter interpreter, object[] args)
+        public virtual object Call(Interpreter interpreter, object[] args)
         {
-            var instance = new Instance(this);
+            var instance = new Instance(this, interpreter.CurrentEnvironment);
 
             if (_vars != null)
             {
@@ -48,7 +49,7 @@ namespace ULox
             return instance;
         }
 
-        public Function FindMethod(string lexeme)
+        public virtual Function FindMethod(string lexeme)
         {
             if (_methods == null) return null;
 

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace ULox
+﻿namespace ULox
 {
     public class Function : ICallable
     {

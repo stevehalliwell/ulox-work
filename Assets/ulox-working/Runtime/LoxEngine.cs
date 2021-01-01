@@ -2,10 +2,8 @@
 
 namespace ULox
 {
-    //todo easier user access to classes
-    //  address string to support . heirarchy
-    //  resolve address to containing environment/closure
-    //  pre parse binding and post parse binding
+    //todo  pre parse binding and post parse binding
+    //  call function locally or globally
     public class LoxEngine
     {
         private Scanner _scanner;
@@ -15,19 +13,28 @@ namespace ULox
 
         public void SetValue(string address, object value)
         {
+            var containingEnvironment = _interpreter.AddressToEnvironment(address, out var endToken);
+
             value = Interpreter.SantizeObject(value);
 
-            if (_interpreter.Globals.Exists(address))
-                _interpreter.Globals.Assign(address, value, false);
-            else
-                _interpreter.Globals.Define(address, value);
+            if (containingEnvironment != null)
+            {
+                if (containingEnvironment.Exists(endToken))
+                {
+                    containingEnvironment.Assign(endToken, value, false);
+                }
+                else
+                {
+                    containingEnvironment.Define(endToken, value);
+                }
+            }
         }
 
         public object GetValue(string address)
         {
             var containingEnvironment = _interpreter.AddressToEnvironment(address, out var endToken);
 
-            return containingEnvironment?.FetchAncestor(0,endToken);
+            return containingEnvironment?.Fetch(endToken, false);
         }
 
         public object CallFunction(string address, params object[] objs)
@@ -39,12 +46,24 @@ namespace ULox
 
         public object CallFunction(ICallable callable, params object[] objs)
         {
-            for (int i = 0; i < objs.Length; i++)
-            {
-                objs[i] = Interpreter.SantizeObject(objs[i]);
-            }
-            
+            Interpreter.SantizeObjects(objs);
             return callable.Call(_interpreter, objs);
+        }
+
+        public Class GetClass(string className)
+        {
+            return GetValue(className) as Class;
+        }
+
+        public Instance CreateInstance(string className, params object[] objs)
+        {
+            return CreateInstance(GetClass(className), objs);
+        }
+
+        public Instance CreateInstance(Class @class, params object[] objs)
+        {
+            Interpreter.SantizeObjects(objs);
+            return @class?.Call(_interpreter, objs) as Instance;
         }
 
         private Action<string> _logger;
@@ -62,15 +81,15 @@ namespace ULox
             _interpreter = interpreter;
             _logger = logger;
 
-            _interpreter.Globals.Define("clock", new Callable(() => System.DateTime.Now.Ticks));
-            _interpreter.Globals.Define("sleep", new Callable(1, (args) => System.Threading.Thread.Sleep((int)(double)args[0])));
-            _interpreter.Globals.Define("abort", new Callable(() => { throw new LoxException("abort"); }));
-            _interpreter.Globals.Define("Array", new Callable(1, (args) => new Array((int)(double)args[0])));
-            _interpreter.Globals.Define("List", new Callable(() => new Array(0)));
-            _interpreter.Globals.Define("Rand", new Callable(() => UnityEngine.Random.value));
-            _interpreter.Globals.Define("RandRange", new Callable(2,(args) => UnityEngine.Random.Range((float)(double)args[0], (float)(double)args[1])));
-            _interpreter.Globals.Define("POD", new Class(null, "POD", null, null, null));
+            SetValue("clock", new Callable(() => System.DateTime.Now.Ticks));
+            SetValue("sleep", new Callable(1, (args) => System.Threading.Thread.Sleep((int)(double)args[0])));
+            SetValue("abort", new Callable(() => throw new LoxException("abort")));
+            SetValue("Rand", new Callable(() => UnityEngine.Random.value));
+            SetValue("RandRange", new Callable(2, (args) => UnityEngine.Random.Range((float)(double)args[0], (float)(double)args[1])));
 
+            SetValue("POD", new PODClass(null));
+            SetValue("Array", new ArrayClass(null));
+            SetValue("List", new ListClass(null));
         }
 
         public void Run(string text)

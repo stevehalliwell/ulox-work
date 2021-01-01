@@ -8,10 +8,7 @@ namespace ULox
     public class Environment : IEnvironment
     {
         private IEnvironment _enclosing;
-        private Dictionary<string, object> values = new Dictionary<string, object>();
-        public Environment()
-        {
-        }
+        protected Dictionary<string, object> values = new Dictionary<string, object>();
 
         public Environment(IEnvironment enclosing)
         {
@@ -19,6 +16,7 @@ namespace ULox
         }
 
         public IEnvironment Enclosing => _enclosing;
+
         public void Assign(Token name, object val, bool checkEnclosing)
         {
             if (values.ContainsKey(name.Lexeme))
@@ -75,6 +73,7 @@ namespace ULox
 
             throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
         }
+
         public object Fetch(string tokenLexeme, bool checkEnclosing)
         {
             if (values.TryGetValue(tokenLexeme, out object retval))
