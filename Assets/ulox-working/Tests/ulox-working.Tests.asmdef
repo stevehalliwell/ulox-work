@@ -1,5 +1,5 @@
 {
-    "name": "Tests",
+    "name": "ulox-working.Tests",
     "references": [
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner",

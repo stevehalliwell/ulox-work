@@ -6,6 +6,20 @@ Don't expect this to be used (very much) in production. At least not in the stat
 
 ## Status 
 ![current code coverage](badge_linecoverage.png)
+- [Unity demos and some QOL improvements] ()
+	- More tests.
+	- Bouncing Balls 
+		- Unity runs script start and update.
+		- Script bounces objects around.
+	- Breakout style game
+		- Unity runs script start, update, and collisions.
+		- Script creates objects, moves paddle, and handles game mode and lives.
+	- Add List and POD types to engine.
+	- Add QOL functions to engine, allowing embedding application to be less aware of the inner workings.
+	- Fixes and changes: 
+		- Allow multiple requests to interpreter resolve with the same data.
+		- Line and Character numbering corrected
+		- Instance is now an Environment, allowing external code to ask for objects by heirarchy path.
 - [Core jlox Challenges and sugar](../../tree/core_jlox_chall) Core jlox equivilant plus many of the challenges from the book and additional sugar.
 	-  Conditional operator.
 	-  More error reporting.
@@ -27,6 +41,11 @@ Don't expect this to be used (very much) in production. At least not in the stat
 - Add REPL support.
 - Add Performance tests.
 - Increment and Decrement (maybe).
+
+## Differences
+- null instead of nil.
+- [Class Sugar](#class-sugar).
+- An Instance is an Environment.
 
 ## Class Sugar
 The added keywords in class declarations minimise the amount of plumbing required to do basic things.
@@ -81,3 +100,4 @@ class Foo
 ```
 This is done by generating the AST nodes in the parser. 
 Note: the backing fields, are always named \_VAR_NAME and setup by the interperter before the classes init is called, so they can be used directly in the init function itself.
+

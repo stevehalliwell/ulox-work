@@ -6,20 +6,22 @@ using UnityEngine.UI;
 
 namespace ULox.Demo
 {
+    /// <summary>
+    /// This demo uses lox to move objects, unity just draws things.
+    /// This demo also uses direct gameobject referenes in script rather than ids.
+    /// </summary>
     public class BouncingBallsBehaviour : MonoBehaviour
     {
         public TextAsset script;
         public Text text;
         private LoxEngine loxEngine;
-        private Interpreter interpreter;
-        private Resolver resolver;
         private ICallable gameUpdateFunction;
         public List<GameObject> availablePrefabs;
 
         private void Start()
         {
-            interpreter = new Interpreter(Debug.Log);
-            resolver = new Resolver(interpreter);
+            var interpreter = new Interpreter(Debug.Log);
+            var resolver = new Resolver(interpreter);
             loxEngine = new LoxEngine(
                 new Scanner(),
                 new Parser() { CatchAndSynch = false },

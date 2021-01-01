@@ -4,6 +4,7 @@ using System.Linq;
 namespace ULox
 {
     //todo single statement blocks, for single statement ifs and loops etc.
+    //todo var multi declare. var a,b = 1,c; should also allow getset a,b = 1,c; etc.
     public class Parser
     {
         private enum FunctionType { None, Function, Method, Get, Set, }

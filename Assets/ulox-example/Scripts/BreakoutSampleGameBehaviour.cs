@@ -16,8 +16,6 @@ namespace ULox.Demo
         public TextAsset script;
         public Text text;
         private LoxEngine loxEngine;
-        private Interpreter interpreter;
-        private Resolver resolver;
         private ICallable gameUpdateFunction;
         private ICallable collisionFunction;
         public List<GameObject> availablePrefabs;
@@ -26,8 +24,8 @@ namespace ULox.Demo
 
         private void Start()
         {
-            interpreter = new Interpreter(Debug.Log);
-            resolver = new Resolver(interpreter);
+            var interpreter = new Interpreter(Debug.Log);
+            var resolver = new Resolver(interpreter);
             loxEngine = new LoxEngine(
                 new Scanner(),
                 new Parser() { CatchAndSynch = false },

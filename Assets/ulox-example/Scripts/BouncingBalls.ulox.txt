@@ -1,3 +1,17 @@
+/*
+Code we expect from Unity's side;
+SetUIText(string)
+CreateGameObject(string):GameObject (returns a GameObject reference that we'll pass back to unity)
+GetKey(string):bool
+SetGameObjectPosition(GameObject, x, y)
+Reload - reload the current unity scene
+
+
+Unity will find and call: 
+- SetupGame in Start
+- Update in Update
+*/
+
 //functions and data
 var dt = 0;
 var limit = 5;
@@ -14,6 +28,11 @@ class Ball
 	var vy = RandRange(-3,3);
 	var go;
 
+	init() 
+	{
+		this.go = CreateGameObject(ballName);
+	}
+
 	Tick()
 	{
 		this.x += this.vx * dt;
@@ -29,20 +48,13 @@ class Ball
 	}
 }
 
-fun CreateBall()
-{
-	var b = Ball();
-	b.go = CreateGameObject(ballName);
-	balls.Add(b);
-}
-
 fun SetupGame()
 {
 	print "Setting Up Game";
 
 	for(var i = 0; i < numBallsToSpawn; i += 1)
 	{
-		CreateBall();
+		balls.Add(Ball());
 	}
 }
 
@@ -56,17 +68,3 @@ fun Update()
 		balls.Get(i).Tick();
 	}
 }
-
-/*
-Code we expect from Unity's side;
-SetUIText(string)
-CreateGameObject(string):GameObject
-GetKey(string):bool
-SetGameObjectPosition(int, x, y) - gameobject id
-Reload - reload the current unity scene
-
-
-Unity will find and call: 
-- SetupGame in Start
-- Update in Update
-*/
