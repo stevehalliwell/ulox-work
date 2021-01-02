@@ -19,10 +19,10 @@ namespace ULox
 
             if (containingEnvironment != null)
             {
-                var existingIndex = containingEnvironment.FetchIndex(endToken);
+                var existingIndex = containingEnvironment.FindSlot(endToken);
                 if (existingIndex >= 0)
                 {
-                    containingEnvironment.AssignIndex(existingIndex, value);
+                    containingEnvironment.AssignSlot(existingIndex, value);
                 }
                 else
                 {
@@ -35,7 +35,12 @@ namespace ULox
         {
             var containingEnvironment = _interpreter.AddressToEnvironment(address, out var endToken);
 
-            return containingEnvironment?.Fetch(endToken, false);
+            if(containingEnvironment != null)
+            {
+                return containingEnvironment.FetchObject(containingEnvironment.FindSlot(endToken));
+            }
+
+            return null;
         }
 
         public object CallFunction(string address, params object[] objs)

@@ -144,6 +144,7 @@ namespace ULox
             return null;
         }
 
+        //todo take reference for index and distance
         private void ResolveLocal(Expr expr, Token name, bool isRead)
         {
             for (int i = scopes.Count - 1; i >= 0; i--)

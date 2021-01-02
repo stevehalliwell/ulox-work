@@ -43,7 +43,7 @@ namespace ULox
 
             for (int i = 0; i < parts.Length - 1 && returnEnvironment != null; i++)
             {
-                returnEnvironment = returnEnvironment.GetChildEnvironment(parts[i]);
+                returnEnvironment = returnEnvironment.FetchObject(returnEnvironment.FindSlot(parts[i])) as IEnvironment;
             }
 
             return returnEnvironment;
@@ -240,17 +240,13 @@ namespace ULox
 
         private object LookUpVariable(Token name, Expr expr)
         {
-                return _currentEnvironment.FetchT(name, true);
-
-         //   return Globals.FetchT(name, true);
+            return _currentEnvironment.Fetch(_currentEnvironment.FindLocation(name));
         }
 
         public object Visit(Expr.Assign expr)
         {
             var val = Evaluate(expr.value);
-                _currentEnvironment.AssignT(expr.name, val, true);
-           
-
+            _currentEnvironment.Assign(expr.name, val);
             return val;
         }
 
@@ -365,7 +361,7 @@ namespace ULox
                 }
             }
 
-            _currentEnvironment.Define(stmt.name.Lexeme, null);
+            var classSlot = _currentEnvironment.Define(stmt.name.Lexeme, null);
 
             if (stmt.superclass != null)
             {
@@ -415,7 +411,7 @@ namespace ULox
                 _currentEnvironment = _currentEnvironment.Enclosing;
             }
 
-            _currentEnvironment.AssignT(stmt.name, @class, false);
+            _currentEnvironment.AssignSlot(classSlot, @class);
         }
 
         public object Visit(Expr.Get expr)
@@ -455,9 +451,9 @@ namespace ULox
 
         public object Visit(Expr.Super expr)
         {
-            var superclass = (Class)_currentEnvironment.Fetch("super", true);
+            var superclass = (Class)_currentEnvironment.Fetch(_currentEnvironment.FindLocation("super"));
 
-            var inst = (Instance)_currentEnvironment.Fetch("this", true);
+            var inst = (Instance)_currentEnvironment.Fetch(_currentEnvironment.FindLocation("this"));
 
             var method = superclass.FindMethod(expr.method.Lexeme);
 

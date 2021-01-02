@@ -7,7 +7,7 @@ namespace ULox
     public class Environment : IEnvironment
     {
         private IEnvironment _enclosing;
-        protected Dictionary<string, int> valueIndicies = new Dictionary<string, int>();
+        protected Dictionary<string, short> valueIndicies = new Dictionary<string, short>();
         protected List<object> objectList = new List<object>();
 
         public Environment(IEnvironment enclosing)
@@ -17,87 +17,37 @@ namespace ULox
 
         public IEnvironment Enclosing => _enclosing;
 
-        public void AssignIndex(int index, object val)
+        public void AssignSlot(short slot, object val)
         {
-            objectList[index] = val;
+            objectList[slot] = val;
         }
 
-        public object FetchIndex(int index)
+        public object FetchObject(short slot)
         {
-            return objectList[index];
+            return objectList[slot];
         }
 
-        public int AssignT(Token name, object val, bool checkEnclosing)
+        public short Define(string name, object value)
         {
-            if (valueIndicies.TryGetValue(name.Lexeme, out var index))
-            {
-                objectList[index] = val;
-                return index;
-            }
-
-            if (checkEnclosing && _enclosing != null)
-            {
-                return _enclosing.AssignT(name, val, true);
-            }
-
-            throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
-        }
-
-        public int Assign(string tokenLexeme, object val, bool checkEnclosing)
-        {
-            if (valueIndicies.TryGetValue(tokenLexeme, out var index))
-            {
-                objectList[index] = val;
-                return index;
-            }
-
-            if (checkEnclosing && _enclosing != null)
-            {
-                return _enclosing.Assign(tokenLexeme, val, true);
-            }
-
-            throw new LoxException($"Undefined variable {tokenLexeme}");
-        }
-
-        public int Define(String name, object value)
-        {
-            var ind = objectList.Count;
+            //todo add error
+            short ind = (short)objectList.Count;
             valueIndicies.Add(name, ind);
             objectList.Add(value);
             return ind;
         }
 
-        public int FetchIndex(string name)
+        public short FindSlot(string name)
         {
-            if (valueIndicies.TryGetValue(name, out var ind))
+            if (valueIndicies.TryGetValue(name, out short ind))
                 return ind;
             return -1;
         }
 
-        public object FetchT(Token name, bool checkEnclosing)
+        public short FindSlot(Token name)
         {
-            if (valueIndicies.TryGetValue(name.Lexeme, out int index))
-            {
-                return objectList[index];
-            }
-
-            if (checkEnclosing && _enclosing != null)
-                return _enclosing.FetchT(name, true);
-
+            if (valueIndicies.TryGetValue(name.Lexeme, out short ind))
+                return ind;
             throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
-        }
-
-        public object Fetch(string tokenLexeme, bool checkEnclosing)
-        {
-            if (valueIndicies.TryGetValue(tokenLexeme, out int index))
-            {
-                return objectList[index];
-            }
-
-            if (checkEnclosing && _enclosing != null)
-                return _enclosing.Fetch(tokenLexeme, true);
-
-            throw new LoxException($"Undefined variable {tokenLexeme}");
         }
     }
 }

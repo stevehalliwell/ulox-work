@@ -40,12 +40,12 @@
             }
             catch (Interpreter.Return exp)
             {
-                if (_isInitializer) return _closure.FetchAncestor(0, "this");
+                if (_isInitializer) return _closure.FetchObject(_closure.FindSlot("this"));
 
                 return exp.Value;
             }
 
-            if (_isInitializer) return _closure.FetchAncestor(0, "this");
+            if (_isInitializer) return _closure.FetchObject(_closure.FindSlot("this"));
 
             return null;
         }

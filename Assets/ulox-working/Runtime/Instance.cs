@@ -12,7 +12,7 @@
 
         public virtual object Get(Token name)
         {
-            if (valueIndicies.TryGetValue(name.Lexeme, out int index))
+            if (valueIndicies.TryGetValue(name.Lexeme, out short index))
             {
                 return objectList[index];
             }

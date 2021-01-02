@@ -1,46 +1,80 @@
 ﻿namespace ULox
 {
+    public struct EnvironmentVariableLocation
+    {
+        public ushort depth;
+        public short slot;
+    }
+
     public interface IEnvironment
     {
         IEnvironment Enclosing { get; }
-        int Assign(string tokenLexeme, object val, bool checkEnclosing);
-        void AssignIndex(int index, object val);
-        int AssignT(Token name, object val, bool checkEnclosing);
-        int Define(string name, object value);
-        int FetchIndex(string name);
-        object Fetch(string tokenLexeme, bool checkEnclosing);
-        object FetchT(Token name, bool checkEnclosing);
-        object FetchIndex(int index);
+        void AssignSlot(short slot, object val);
+        short Define(string name, object value);
+        short FindSlot(string name);
+        short FindSlot(Token name);
+        object FetchObject(short slot);
     }
 
     public static class IEnvironmentExt
     {
-        public static IEnvironment Ancestor(this IEnvironment environment, int distance)
+        public static IEnvironment Ancestor(this IEnvironment env, ushort depth)
         {
-            for (int i = 0; i < distance; i++)
-                environment = environment.Enclosing;
+            while (depth > 0) { env = env.Enclosing; depth--; }
 
-            return environment;
+            return env;
         }
 
-        public static int AssignAt(this IEnvironment environment, int distance, Token name, object val)
+        public static object Fetch(this IEnvironment env, EnvironmentVariableLocation loc)
         {
-            return environment.Ancestor(distance).AssignT(name, val, false);
+            return env.Ancestor(loc.depth).FetchObject(loc.slot);
         }
 
-        public static object FetchAncestor(this IEnvironment environment, int distance, Token name)
+        public static void Assign(this IEnvironment env, Token name, object val)
         {
-            return environment.Ancestor(distance).FetchT(name, false);
+            var loc = env.FindLocation(name);
+            env.Ancestor(loc.depth).AssignSlot(loc.slot, val);
+        }
+        public static EnvironmentVariableLocation FindLocation(this IEnvironment env, string name)
+        {
+            short slot = -1;
+            ushort depth = 0;
+            while (env != null)
+            {
+                slot = env.FindSlot(name);
+                if (slot != -1)
+                    return new EnvironmentVariableLocation()
+                    {
+                        depth = depth,
+                        slot = slot,
+                    };
+
+                env = env.Enclosing;
+                depth++;
+            }
+
+            throw new LoxException($"Undefined variable {name}");
         }
 
-        public static object FetchAncestor(this IEnvironment environment, int distance, string nameLexeme)
+        public static EnvironmentVariableLocation FindLocation(this IEnvironment env, Token name)
         {
-            return environment.Ancestor(distance).Fetch(nameLexeme, false);
-        }
+            short slot = -1;
+            ushort depth = 0;
+            while (env != null)
+            {
+                slot = env.FindSlot(name.Lexeme);
+                if (slot != -1)
+                    return new EnvironmentVariableLocation()
+                    {
+                        depth = depth,
+                        slot = slot,
+                    };
 
-        public static IEnvironment GetChildEnvironment(this IEnvironment environment, string name)
-        {
-            return environment.Fetch(name, false) as IEnvironment;
+                env = env.Enclosing;
+                depth++;
+            }
+
+            throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
         }
     }
 }
