@@ -74,7 +74,7 @@ namespace ULox
             if (Match(TokenType.LESS))
             {
                 Consume(TokenType.IDENTIFIER, "Expect superclass name.");
-                superclass = new Expr.Variable(Previous());
+                superclass = new Expr.Variable(Previous(),EnvironmentVariableLocation.Invalid);
             }
 
             Consume(TokenType.OPEN_BRACE, "Expect { befefore class body.");
@@ -269,9 +269,9 @@ namespace ULox
                     new List<Stmt>()
                     {
                         new Stmt.Expression(new Expr.Set(
-                            new Expr.This(name.Copy(TokenType.THIS, "this")),
+                            new Expr.This(name.Copy(TokenType.THIS, "this"), EnvironmentVariableLocation.Invalid),
                             hiddenInternalFieldName,
-                            new Expr.Variable(valueName)))}));
+                            new Expr.Variable(valueName, EnvironmentVariableLocation.Invalid)))}));
         }
 
         private static Stmt.Function CreateGetMethod(Token className, Token writtenFieldName, Token hiddenInternalFieldName)
@@ -281,7 +281,7 @@ namespace ULox
                     new List<Stmt>()
                     {
                         new Stmt.Return(className.Copy(TokenType.RETURN), new Expr.Get(
-                            new Expr.This(className.Copy(TokenType.THIS, "this")), hiddenInternalFieldName))}));
+                            new Expr.This(className.Copy(TokenType.THIS, "this"), EnvironmentVariableLocation.Invalid), hiddenInternalFieldName))}));
         }
 
         private Stmt.Function Function(FunctionType functionType)
@@ -555,12 +555,12 @@ namespace ULox
                     Token name = varExpr.name;
                     switch (equals.TokenType)
                     {
-                        case TokenType.MINUS_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value));
-                        case TokenType.PLUS_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value));
-                        case TokenType.STAR_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value));
-                        case TokenType.SLASH_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value));
-                        case TokenType.PERCENT_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value));
-                        case TokenType.ASSIGN: return new Expr.Assign(name, value);
+                        case TokenType.MINUS_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value), EnvironmentVariableLocation.Invalid);
+                        case TokenType.PLUS_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value), EnvironmentVariableLocation.Invalid);
+                        case TokenType.STAR_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value), EnvironmentVariableLocation.Invalid);
+                        case TokenType.SLASH_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value), EnvironmentVariableLocation.Invalid);
+                        case TokenType.PERCENT_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value), EnvironmentVariableLocation.Invalid);
+                        case TokenType.ASSIGN: return new Expr.Assign(name, value, EnvironmentVariableLocation.Invalid);
                     }
                 }
                 else if (expr is Expr.Get exprGet)
@@ -743,14 +743,14 @@ namespace ULox
                 Consume(TokenType.DOT, "Expect '.' after 'super'.");
                 Token method = Consume(TokenType.IDENTIFIER,
                     "Expect superclass method name.");
-                return new Expr.Super(keyword, method);
+                return new Expr.Super(keyword, method, EnvironmentVariableLocation.Invalid, EnvironmentVariableLocation.Invalid);
             }
 
-            if (Match(TokenType.THIS)) return new Expr.This(Previous());
+            if (Match(TokenType.THIS)) return new Expr.This(Previous(), EnvironmentVariableLocation.Invalid);
 
             if (Match(TokenType.IDENTIFIER))
             {
-                return new Expr.Variable(Previous());
+                return new Expr.Variable(Previous(), EnvironmentVariableLocation.Invalid);
             }
 
             if (Match(TokenType.OPEN_PAREN))

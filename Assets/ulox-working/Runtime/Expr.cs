@@ -6,13 +6,15 @@ namespace ULox
     {
         public class Assign : Expr
         {
-            public Assign( Token name, Expr value)
+            public Assign( Token name, Expr value, EnvironmentVariableLocation varLoc)
             {
                 this.name = name;
                 this.value = value;
+                this.varLoc = varLoc;
             }
             public readonly Token name;
             public readonly Expr value;
+            public EnvironmentVariableLocation varLoc;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
         public class Binary : Expr
@@ -98,22 +100,28 @@ namespace ULox
         }
         public class Super : Expr
         {
-            public Super( Token keyword, Token method)
+            public Super( Token keyword, Token method, EnvironmentVariableLocation superVarLoc, EnvironmentVariableLocation thisVarLoc)
             {
                 this.keyword = keyword;
                 this.method = method;
+                this.superVarLoc = superVarLoc;
+                this.thisVarLoc = thisVarLoc;
             }
             public readonly Token keyword;
             public readonly Token method;
+            public EnvironmentVariableLocation superVarLoc;
+            public EnvironmentVariableLocation thisVarLoc;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
         public class This : Expr
         {
-            public This( Token keyword)
+            public This( Token keyword, EnvironmentVariableLocation varLoc)
             {
                 this.keyword = keyword;
+                this.varLoc = varLoc;
             }
             public readonly Token keyword;
+            public EnvironmentVariableLocation varLoc;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
         public class Unary : Expr
@@ -129,11 +137,13 @@ namespace ULox
         }
         public class Variable : Expr
         {
-            public Variable( Token name)
+            public Variable( Token name, EnvironmentVariableLocation varLoc)
             {
                 this.name = name;
+                this.varLoc = varLoc;
             }
             public readonly Token name;
+            public EnvironmentVariableLocation varLoc;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
         public class Conditional : Expr

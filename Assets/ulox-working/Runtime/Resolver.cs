@@ -4,10 +4,8 @@ using System.Linq;
 
 namespace ULox
 {
-    //TODO resolver challenge 4,http://craftinginterpreters.com/resolving-and-binding.html https://github.com/munificent/craftinginterpreters/tree/master/note/answers/chapter11_resolving/4/com/craftinginterpreters
-    //  this storing depth and slot is desired but not via multiple maps in the interpreter
-    //  a solution that stores the name, depth and slot in the expr/stmt is prefered and would
-    // allow for the interpreter to resolve at runtime where the resolver cannot.
+    //TODO the interpreter resolves at runtime but the resolver should calc
+    //  the depth and slots in advance so single use environments are also speedy
     public class Resolver : Expr.Visitor<Object>,
                                 Stmt.Visitor
     {
@@ -144,6 +142,13 @@ namespace ULox
             return null;
         }
 
+        public void Visit(Stmt.Block stmt)
+        {
+            BeginScope();
+            Resolve(stmt.statements);
+            EndScope();
+        }
+
         //todo take reference for index and distance
         private void ResolveLocal(Expr expr, Token name, bool isRead)
         {
@@ -161,16 +166,29 @@ namespace ULox
             }
         }
 
-        public void Visit(Stmt.Block stmt)
-        {
-            BeginScope();
-            Resolve(stmt.statements);
-            EndScope();
-        }
-
         private void BeginScope()
         {
             scopes.Add(new Dictionary<string, VariableUse>());
+        }
+
+        private void Declare(Token name)
+        {
+            if (scopes.Count == 0) return;
+
+            var scope = scopes.Last();
+            if (scope.ContainsKey(name.Lexeme))
+            {
+                throw new ResolverException(name, "Already a variable with this name in this scope.");
+            }
+
+            scope.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared, scope.Count));
+        }
+
+        private void Define(Token name)
+        {
+            if (scopes.Count == 0) return;
+            var count = scopes.Last().Count;
+            scopes.Last()[name.Lexeme].state = VariableUse.State.Defined;
         }
 
         private void EndScope()
@@ -265,26 +283,6 @@ namespace ULox
                 Resolve(stmt.initializer);
             }
             Define(stmt.name);
-        }
-
-        private void Declare(Token name)
-        {
-            if (scopes.Count == 0) return;
-
-            var scope = scopes.Last();
-            if (scope.ContainsKey(name.Lexeme))
-            {
-                throw new ResolverException(name, "Already a variable with this name in this scope.");
-            }
-
-            scope.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared, scope.Count));
-        }
-
-        private void Define(Token name)
-        {
-            if (scopes.Count == 0) return;
-            var count = scopes.Last().Count;
-            scopes.Last()[name.Lexeme].state = VariableUse.State.Defined;
         }
 
         public void Visit(Stmt.While stmt)

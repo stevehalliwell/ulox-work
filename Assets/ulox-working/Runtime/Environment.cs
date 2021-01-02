@@ -42,12 +42,5 @@ namespace ULox
                 return ind;
             return -1;
         }
-
-        public short FindSlot(Token name)
-        {
-            if (valueIndicies.TryGetValue(name.Lexeme, out short ind))
-                return ind;
-            throw new EnvironmentException(name, $"Undefined variable {name.Lexeme}");
-        }
     }
 }

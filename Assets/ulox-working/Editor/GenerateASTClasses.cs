@@ -11,7 +11,7 @@ namespace ULox
 
         private static string[] _requiredExprTypes = new string[]
         {
-            "Assign   : Token name, Expr value",
+            "Assign   : Token name, Expr value, EnvironmentVariableLocation varLoc",
             "Binary   : Expr left, Token op, Expr right",
             "Call     : Expr callee, Token paren, List<Expr> arguments",
             "Get      : Expr obj, Token name",
@@ -19,10 +19,11 @@ namespace ULox
             "Literal  : object value",
             "Logical  : Expr left, Token op, Expr right",
             "Set      : Expr obj, Token name, Expr val",
-            "Super    : Token keyword, Token method",
-            "This     : Token keyword",
+            "Super    : Token keyword, Token method, EnvironmentVariableLocation superVarLoc," +
+                      " EnvironmentVariableLocation thisVarLoc",
+            "This     : Token keyword, EnvironmentVariableLocation varLoc",
             "Unary    : Token op, Expr right",
-            "Variable : Token name",
+            "Variable : Token name, EnvironmentVariableLocation varLoc",
             "Conditional : Expr condition, Expr ifTrue, Expr ifFalse",
             "Function : List<Token> parameters, List<Stmt> body",
         };
@@ -125,7 +126,12 @@ namespace ULox
                 foreach (var fieldItem in fields)
                 {
                     if (fieldItem.Length > 1)
-                        sb.AppendLine($"            public readonly {fieldItem};");
+                    {
+                        if(!fieldItem.Contains("EnvironmentVariableLocation"))
+                            sb.AppendLine($"            public readonly {fieldItem};");
+                        else
+                            sb.AppendLine($"            public {fieldItem};");
+                    }
                 }
                 sb.AppendLine(acceptVisitorLine);
                 sb.Append(@"        }");

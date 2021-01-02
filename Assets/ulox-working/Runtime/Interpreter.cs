@@ -35,20 +35,6 @@ namespace ULox
             }
         }
 
-        public IEnvironment AddressToEnvironment(string address, out string lastTokenLexeme)
-        {
-            var parts = address.Split('.');
-            lastTokenLexeme = parts.Last();
-            IEnvironment returnEnvironment = Globals;
-
-            for (int i = 0; i < parts.Length - 1 && returnEnvironment != null; i++)
-            {
-                returnEnvironment = returnEnvironment.FetchObject(returnEnvironment.FindSlot(parts[i])) as IEnvironment;
-            }
-
-            return returnEnvironment;
-        }
-
         public class Continue : InterpreterControlException
         {
             public Continue(Token from) : base(from)
@@ -236,17 +222,39 @@ namespace ULox
             _currentEnvironment.Define(stmt.name.Lexeme, value);
         }
 
-        public object Visit(Expr.Variable expr) => LookUpVariable(expr.name, expr);
-
-        private object LookUpVariable(Token name, Expr expr)
+        public object Visit(Expr.Variable expr)
         {
-            return _currentEnvironment.Fetch(_currentEnvironment.FindLocation(name));
+            if (expr.varLoc == EnvironmentVariableLocation.Invalid)
+            {
+                try
+                {
+                    expr.varLoc = _currentEnvironment.FindLocation(expr.name.Lexeme);
+                }
+                catch (LoxException)
+                {
+                    throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
+                }
+            }
+
+            return _currentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
         }
 
         public object Visit(Expr.Assign expr)
         {
             var val = Evaluate(expr.value);
-            _currentEnvironment.Assign(expr.name, val);
+            if (expr.varLoc == EnvironmentVariableLocation.Invalid)
+            {
+                try
+                {
+                    expr.varLoc = _currentEnvironment.FindLocation(expr.name.Lexeme);
+                    
+                }
+                catch (LoxException)
+                {
+                    throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
+                }
+            }
+            _currentEnvironment.Ancestor(expr.varLoc.depth).AssignSlot(expr.varLoc.slot, val);
             return val;
         }
 
@@ -447,13 +455,34 @@ namespace ULox
             return val;
         }
 
-        public object Visit(Expr.This expr) => LookUpVariable(expr.keyword, expr);
+        public object Visit(Expr.This expr)
+        {
+            if (expr.varLoc == EnvironmentVariableLocation.Invalid)
+            {
+                try
+                {
+                    expr.varLoc = _currentEnvironment.FindLocation(expr.keyword.Lexeme);
+                }
+                catch (LoxException)
+                {
+                    throw new EnvironmentException(expr.keyword, $"Undefined variable {expr.keyword.Lexeme}");
+                }
+            }
+            return _currentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
+        }
 
         public object Visit(Expr.Super expr)
         {
-            var superclass = (Class)_currentEnvironment.Fetch(_currentEnvironment.FindLocation("super"));
+            if(expr.superVarLoc == EnvironmentVariableLocation.Invalid)
+                expr.superVarLoc = _currentEnvironment.FindLocation("super");
 
-            var inst = (Instance)_currentEnvironment.Fetch(_currentEnvironment.FindLocation("this"));
+            var superclass = (Class)_currentEnvironment.Ancestor(expr.superVarLoc.depth).FetchObject(expr.superVarLoc.slot);
+
+
+            if(expr.thisVarLoc == EnvironmentVariableLocation.Invalid)
+                expr.thisVarLoc = _currentEnvironment.FindLocation("this");
+
+            var inst = (Instance)_currentEnvironment.Ancestor(expr.thisVarLoc.depth).FetchObject(expr.thisVarLoc.slot);
 
             var method = superclass.FindMethod(expr.method.Lexeme);
 

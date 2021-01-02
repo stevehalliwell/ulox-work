@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 
 namespace ULox
 {
@@ -13,7 +14,7 @@ namespace ULox
 
         public void SetValue(string address, object value)
         {
-            var containingEnvironment = _interpreter.AddressToEnvironment(address, out var endToken);
+            var containingEnvironment = AddressToEnvironment(address, out var endToken);
 
             value = Interpreter.SantizeObject(value);
 
@@ -33,7 +34,7 @@ namespace ULox
 
         public object GetValue(string address)
         {
-            var containingEnvironment = _interpreter.AddressToEnvironment(address, out var endToken);
+            var containingEnvironment = AddressToEnvironment(address, out var endToken);
 
             if(containingEnvironment != null)
             {
@@ -41,6 +42,20 @@ namespace ULox
             }
 
             return null;
+        }
+
+        public IEnvironment AddressToEnvironment(string address, out string lastTokenLexeme)
+        {
+            var parts = address.Split('.');
+            lastTokenLexeme = parts.Last();
+            IEnvironment returnEnvironment = _interpreter.Globals;
+
+            for (int i = 0; i < parts.Length - 1 && returnEnvironment != null; i++)
+            {
+                returnEnvironment = returnEnvironment.FetchObject(returnEnvironment.FindSlot(parts[i])) as IEnvironment;
+            }
+
+            return returnEnvironment;
         }
 
         public object CallFunction(string address, params object[] objs)
