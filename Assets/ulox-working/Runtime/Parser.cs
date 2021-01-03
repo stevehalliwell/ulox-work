@@ -203,6 +203,7 @@ namespace ULox
 
             return new Stmt.Class(
                 className,
+                EnvironmentVariableLocation.InvalidSlot,
                 superclass,
                 methods,
                 metaMethods,
@@ -271,7 +272,8 @@ namespace ULox
                         new Stmt.Expression(new Expr.Set(
                             new Expr.This(name.Copy(TokenType.THIS, "this"), EnvironmentVariableLocation.Invalid),
                             hiddenInternalFieldName,
-                            new Expr.Variable(valueName, EnvironmentVariableLocation.Invalid)))}));
+                            new Expr.Variable(valueName, EnvironmentVariableLocation.Invalid)))}), 
+                EnvironmentVariableLocation.InvalidSlot);
         }
 
         private static Stmt.Function CreateGetMethod(Token className, Token writtenFieldName, Token hiddenInternalFieldName)
@@ -281,13 +283,14 @@ namespace ULox
                     new List<Stmt>()
                     {
                         new Stmt.Return(className.Copy(TokenType.RETURN), new Expr.Get(
-                            new Expr.This(className.Copy(TokenType.THIS, "this"), EnvironmentVariableLocation.Invalid), hiddenInternalFieldName))}));
+                            new Expr.This(className.Copy(TokenType.THIS, "this"), EnvironmentVariableLocation.Invalid), hiddenInternalFieldName))})
+                , EnvironmentVariableLocation.InvalidSlot);
         }
 
         private Stmt.Function Function(FunctionType functionType)
         {
             var name = Consume(TokenType.IDENTIFIER, $"Expect {functionType} name.");
-            return new Stmt.Function(name, FunctionBody(functionType));
+            return new Stmt.Function(name, FunctionBody(functionType), EnvironmentVariableLocation.InvalidSlot);
         }
 
         private Expr.Function FunctionBody(FunctionType functionType)
@@ -339,7 +342,7 @@ namespace ULox
 
         private static Stmt.Var ToClassAutoVarDeclaration(Stmt.Var inVar)
         {
-            return new Stmt.Var(inVar.name.Copy(inVar.name.TokenType, "_" + inVar.name.Lexeme), inVar.initializer);
+            return new Stmt.Var(inVar.name.Copy(inVar.name.TokenType, "_" + inVar.name.Lexeme), inVar.initializer, EnvironmentVariableLocation.InvalidSlot);
         }
 
         private Stmt VarDeclaration()
@@ -355,13 +358,13 @@ namespace ULox
             if (Match(TokenType.COMMA))
             {
                 return new Stmt.Chain(
-                    new Stmt.Var(name, initializer),
+                    new Stmt.Var(name, initializer, EnvironmentVariableLocation.InvalidSlot),
                     VarDeclaration());
             }
             else
             {
                 Consume(TokenType.END_STATEMENT, "Expect end of statement after variable declaration.");
-                return new Stmt.Var(name, initializer);
+                return new Stmt.Var(name, initializer, EnvironmentVariableLocation.InvalidSlot);
             }
         }
 

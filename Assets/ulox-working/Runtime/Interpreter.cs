@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ULox
 {
@@ -211,17 +210,6 @@ namespace ULox
 
         public void Visit(Stmt.Print stmt) => _logger?.Invoke(Stringify(Evaluate(stmt.expression)));
 
-        public void Visit(Stmt.Var stmt)
-        {
-            Object value = null;
-            if (stmt.initializer != null)
-            {
-                value = Evaluate(stmt.initializer);
-            }
-
-            _currentEnvironment.Define(stmt.name.Lexeme, value);
-        }
-
         public object Visit(Expr.Variable expr)
         {
             if (expr.varLoc == EnvironmentVariableLocation.Invalid)
@@ -247,7 +235,6 @@ namespace ULox
                 try
                 {
                     expr.varLoc = _currentEnvironment.FindLocation(expr.name.Lexeme);
-                    
                 }
                 catch (LoxException)
                 {
@@ -337,12 +324,6 @@ namespace ULox
             throw new RuntimeTypeException(expr.paren, "Can only call function types");
         }
 
-        public void Visit(Stmt.Function stmt)
-        {
-            var func = new Function(stmt.name.Lexeme, stmt.function, _currentEnvironment, false);
-            _currentEnvironment.Define(stmt.name.Lexeme, func);
-        }
-
         public object Visit(Expr.Function expr)
         {
             return new Function(null, expr, _currentEnvironment, false);
@@ -354,6 +335,30 @@ namespace ULox
             if (stmt.value != null) val = Evaluate(stmt.value);
 
             throw new Return(stmt.keyword, val);
+        }
+
+        public void Visit(Stmt.Var stmt)
+        {
+            Object value = null;
+            if (stmt.initializer != null)
+            {
+                value = Evaluate(stmt.initializer);
+            }
+
+            if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
+                _currentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, value);
+            else
+                _currentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, value);
+        }
+
+        public void Visit(Stmt.Function stmt)
+        {
+            var func = new Function(stmt.name.Lexeme, stmt.function, _currentEnvironment, false);
+
+            if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
+                _currentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, func);
+            else
+                _currentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, func);
         }
 
         public void Visit(Stmt.Class stmt)
@@ -369,12 +374,15 @@ namespace ULox
                 }
             }
 
-            var classSlot = _currentEnvironment.Define(stmt.name.Lexeme, null);
+            if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
+                _currentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, null);
+            else
+                stmt.knownSlot = _currentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, null);
 
             if (stmt.superclass != null)
             {
                 _currentEnvironment = new Environment(_currentEnvironment);
-                _currentEnvironment.Define("super", superclass);
+                _currentEnvironment.DefineSlot("super", Class.SuperSlot, superclass);
             }
 
             var classMethods = new Dictionary<string, Function>();
@@ -419,7 +427,7 @@ namespace ULox
                 _currentEnvironment = _currentEnvironment.Enclosing;
             }
 
-            _currentEnvironment.AssignSlot(classSlot, @class);
+            _currentEnvironment.AssignSlot(stmt.knownSlot, @class);
         }
 
         public object Visit(Expr.Get expr)
@@ -473,13 +481,12 @@ namespace ULox
 
         public object Visit(Expr.Super expr)
         {
-            if(expr.superVarLoc == EnvironmentVariableLocation.Invalid)
+            if (expr.superVarLoc == EnvironmentVariableLocation.Invalid)
                 expr.superVarLoc = _currentEnvironment.FindLocation("super");
 
             var superclass = (Class)_currentEnvironment.Ancestor(expr.superVarLoc.depth).FetchObject(expr.superVarLoc.slot);
 
-
-            if(expr.thisVarLoc == EnvironmentVariableLocation.Invalid)
+            if (expr.thisVarLoc == EnvironmentVariableLocation.Invalid)
                 expr.thisVarLoc = _currentEnvironment.FindLocation("this");
 
             var inst = (Instance)_currentEnvironment.Ancestor(expr.thisVarLoc.depth).FetchObject(expr.thisVarLoc.slot);

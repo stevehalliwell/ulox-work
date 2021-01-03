@@ -2,7 +2,8 @@
 {
     public struct EnvironmentVariableLocation
     {
-        public static readonly EnvironmentVariableLocation Invalid = new EnvironmentVariableLocation { depth = 0, slot = -1 };
+        public const short InvalidSlot = -1;
+        public static readonly EnvironmentVariableLocation Invalid = new EnvironmentVariableLocation { depth = 0, slot = InvalidSlot };
         public ushort depth;
         public short slot;
 
@@ -21,7 +22,8 @@
     {
         IEnvironment Enclosing { get; }
         void AssignSlot(short slot, object val);
-        short Define(string name, object value);
+        void DefineSlot(string name, short slot, object value);
+        short DefineInAvailableSlot(string name, object value);
         short FindSlot(string name);
         object FetchObject(short slot);
     }

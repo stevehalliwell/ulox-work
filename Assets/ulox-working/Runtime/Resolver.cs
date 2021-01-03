@@ -16,13 +16,13 @@ namespace ULox
             public enum State { Declared, Defined, Read };
 
             public State state;
-            public int index;
+            public short slot;
 
-            public VariableUse(Token Name, State _state, int _index)
+            public VariableUse(Token Name, State _state, short _slot)
             {
                 name = Name; 
                 state = _state;
-                index = _index;
+                slot = _slot;
             }
         }
 
@@ -83,7 +83,7 @@ namespace ULox
         public object Visit(Expr.Assign expr)
         {
             Resolve(expr.value);
-            ResolveLocal(expr, expr.name, false);
+            expr.varLoc = ResolveLocal(expr, expr.name, false);
             return null;
         }
 
@@ -138,7 +138,7 @@ namespace ULox
                 throw new ResolverException(expr.name, "Can't read local variable in its own initializer.");
             }
 
-            ResolveLocal(expr, expr.name, true);
+            expr.varLoc = ResolveLocal(expr, expr.name, true);
             return null;
         }
 
@@ -149,21 +149,26 @@ namespace ULox
             EndScope();
         }
 
-        //todo take reference for index and distance
-        private void ResolveLocal(Expr expr, Token name, bool isRead)
+        private EnvironmentVariableLocation ResolveLocal(Expr expr, Token name, bool isRead)
         {
             for (int i = scopes.Count - 1; i >= 0; i--)
             {
-                if (scopes[i].ContainsKey(name.Lexeme))
+                if (scopes[i].TryGetValue(name.Lexeme, out var varUse))
                 {
                     if (isRead)
                     {
-                        scopes[i][name.Lexeme].state = VariableUse.State.Read;
+                        varUse.state = VariableUse.State.Read;
                     }
 
-                    return;
+                    return new EnvironmentVariableLocation()
+                    {
+                        depth = (ushort)(scopes.Count - i - 1),
+                        slot = varUse.slot
+                    };
                 }
             }
+
+            return EnvironmentVariableLocation.Invalid;
         }
 
         private void BeginScope()
@@ -171,7 +176,22 @@ namespace ULox
             scopes.Add(new Dictionary<string, VariableUse>());
         }
 
-        private void Declare(Token name)
+        private short Declare(Token name)
+        {
+            if (scopes.Count == 0) return EnvironmentVariableLocation.InvalidSlot;
+
+            var scope = scopes.Last();
+            if (scope.ContainsKey(name.Lexeme))
+            {
+                throw new ResolverException(name, "Already a variable with this name in this scope.");
+            }
+
+            var slot = (short)scope.Count;
+            scope.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared, slot));
+            return slot;
+        }
+
+        private void DeclareAt(Token name, short slot)
         {
             if (scopes.Count == 0) return;
 
@@ -180,8 +200,26 @@ namespace ULox
             {
                 throw new ResolverException(name, "Already a variable with this name in this scope.");
             }
+            if (scope.Values.FirstOrDefault(x => x.slot == slot) != default)
+            {
+                throw new ResolverException(name, $"Already a variable at slot {slot} in this scope.");
+            }
 
-            scope.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared, scope.Count));
+            scope.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared, slot));
+        }
+
+        private void DefineManually(string name, short slot)
+        {
+            if (scopes.Count == 0) return;
+            var scope = scopes.Last();
+
+            if (scope.ContainsKey(name) ||
+                scope.Values.FirstOrDefault(x => x.slot == slot) != default)
+            {
+                throw new LoxException($"Already a variable of name {name} or at slot {slot} in this scope.");
+            }
+
+            scope[name] = new VariableUse(new Token(TokenType.IDENTIFIER,name, name, -1,-1), VariableUse.State.Read, slot);
         }
 
         private void Define(Token name)
@@ -214,14 +252,6 @@ namespace ULox
             Resolve(stmt.expression);
         }
 
-        public void Visit(Stmt.Function stmt)
-        {
-            Declare(stmt.name);
-            Define(stmt.name);
-
-            ResolveFunction(stmt.function, FunctionType.FUNCTION);
-        }
-
         public object Visit(Expr.Function expr)
         {
             ResolveFunction(expr, FunctionType.FUNCTION);
@@ -236,9 +266,10 @@ namespace ULox
             BeginScope();
             if (func.parameters != null)
             {
-                foreach (var param in func.parameters)
+                for(int i = 0; i < func.parameters.Count; i++)
                 {
-                    Declare(param);
+                    var param = func.parameters[i];
+                    DeclareAt(param, (short)i);
                     Define(param);
                 }
             }
@@ -277,12 +308,20 @@ namespace ULox
 
         public void Visit(Stmt.Var stmt)
         {
-            Declare(stmt.name);
+            stmt.knownSlot = Declare(stmt.name);
             if (stmt.initializer != null)
             {
                 Resolve(stmt.initializer);
             }
             Define(stmt.name);
+        }
+
+        public void Visit(Stmt.Function stmt)
+        {
+            stmt.knownSlot = Declare(stmt.name);
+            Define(stmt.name);
+
+            ResolveFunction(stmt.function, FunctionType.FUNCTION);
         }
 
         public void Visit(Stmt.While stmt)
@@ -297,7 +336,7 @@ namespace ULox
             var enclosingClass = currentClass;
             currentClass = ClassType.CLASS;
 
-            Declare(stmt.name);
+            stmt.knownSlot = Declare(stmt.name);
             Define(stmt.name);
 
             if (stmt.superclass != null &&
@@ -321,7 +360,7 @@ namespace ULox
             foreach (Stmt.Function method in stmt.metaMethods)
             {
                 BeginScope();
-                scopes.Last()["this"] = new VariableUse(stmt.name, VariableUse.State.Read, scopes.Last().Count);
+                DefineManually("this", Class.ThisSlot);
                 ResolveFunction(method.function, FunctionType.METHOD);
                 EndScope();
             }
@@ -329,11 +368,11 @@ namespace ULox
             if (stmt.superclass != null)
             {
                 BeginScope();
-                scopes.Last()["super"] = new VariableUse(stmt.name, VariableUse.State.Read, scopes.Last().Count);
+                DefineManually("super", Class.SuperSlot);
             }
 
             BeginScope();
-            scopes.Last()["this"] = new VariableUse(stmt.name, VariableUse.State.Read, scopes.Last().Count);
+            DefineManually("this", Class.ThisSlot);
 
             foreach (var item in stmt.fields)
             {
@@ -376,7 +415,7 @@ namespace ULox
             if (currentClass == ClassType.NONE)
                 throw new ResolverException(expr.keyword, "Cannot use 'this' outside of a class.");
 
-            ResolveLocal(expr, expr.keyword, false);
+            expr.varLoc = ResolveLocal(expr, expr.keyword, false);
             return null;
         }
 
@@ -387,6 +426,7 @@ namespace ULox
             if (currentClass == ClassType.CLASS)
                 throw new ResolverException(expr.keyword, "Cannot use 'super' in a class with no superclass.");
 
+            //todo
             ResolveLocal(expr, expr.keyword, false);
             return null;
         }

@@ -5,6 +5,8 @@ namespace ULox
 {
     //todo  pre parse binding and post parse binding
     //  call function locally or globally
+    //todo user is allowed to define objects before interp runs which means the resolver needs to handle
+    //  that slots for non globals may not start at 0 for all scopes
     public class LoxEngine
     {
         private Scanner _scanner;
@@ -27,7 +29,7 @@ namespace ULox
                 }
                 else
                 {
-                    containingEnvironment.Define(endToken, value);
+                    containingEnvironment.DefineInAvailableSlot(endToken, value);
                 }
             }
         }

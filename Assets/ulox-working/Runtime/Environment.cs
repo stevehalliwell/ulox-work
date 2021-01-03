@@ -1,14 +1,14 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ULox
 {
-    //todo users then ask for depth and index if they have name, and store that for reuse
     public class Environment : IEnvironment
     {
         private IEnvironment _enclosing;
         protected Dictionary<string, short> valueIndicies = new Dictionary<string, short>();
-        protected List<object> objectList = new List<object>();
+        protected List<object> objectList = new List<object>() { null, null,null, null,null};
 
         public Environment(IEnvironment enclosing)
         {
@@ -27,12 +27,10 @@ namespace ULox
             return objectList[slot];
         }
 
-        public short Define(string name, object value)
+        public short DefineInAvailableSlot(string name, object value)
         {
-            //todo add error
-            short ind = (short)objectList.Count;
-            valueIndicies.Add(name, ind);
-            objectList.Add(value);
+            var ind = (short)(valueIndicies.Count() > 0 ? (valueIndicies.Values.Max() + 1) : 0);
+            DefineSlot(name, ind, value);
             return ind;
         }
 
@@ -41,6 +39,20 @@ namespace ULox
             if (valueIndicies.TryGetValue(name, out short ind))
                 return ind;
             return -1;
+        }
+
+        public void DefineSlot(string name, short slot, object value)
+        {
+            if(valueIndicies.ContainsKey(name) ||
+                valueIndicies.ContainsValue(slot))
+            {
+                throw new LoxException($"Environment value redinition not allowed. Requested {name}:{slot} collided.");
+            }
+
+            while (objectList.Count < slot + 1) { objectList.Add(null); }
+
+            valueIndicies[name] = slot;
+            objectList[slot] = value;
         }
     }
 }

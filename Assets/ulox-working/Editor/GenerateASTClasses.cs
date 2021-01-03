@@ -32,18 +32,18 @@ namespace ULox
         {
             "Block      : List<Stmt> statements",
             "Chain      : Stmt left, Stmt right",
-            "Class      : Token name, Expr.Variable superclass," +
+            "Class      : Token name, short knownSlot, Expr.Variable superclass," +
                         " List<Stmt.Function> methods," +
                         " List<Stmt.Function> metaMethods," +
                         " List<Stmt.Var> fields," +
                         " List<Stmt.Var> metaFields",
             "Expression : Expr expression",
-            "Function   : Token name, Expr.Function function",
+            "Function   : Token name, Expr.Function function, short knownSlot",
             "If         : Expr condition, Stmt thenBranch," +
                         " Stmt elseBranch",
             "Print      : Expr expression",
             "Return     : Token keyword, Expr value",
-            "Var        : Token name, Expr initializer",
+            "Var        : Token name, Expr initializer, short knownSlot",
             "While      : Expr condition, Stmt body," +
                         " Stmt increment",
             "Break      : Token keyword",
@@ -127,7 +127,7 @@ namespace ULox
                 {
                     if (fieldItem.Length > 1)
                     {
-                        if(!fieldItem.Contains("EnvironmentVariableLocation"))
+                        if (IsReadOnlyField(fieldItem))
                             sb.AppendLine($"            public readonly {fieldItem};");
                         else
                             sb.AppendLine($"            public {fieldItem};");
@@ -148,6 +148,12 @@ namespace ULox
 }");
 
             System.IO.File.WriteAllText(outputLocation + rootTypeName + ".cs", sb.ToString());
+        }
+
+        private static bool IsReadOnlyField(string fieldItem)
+        {
+            return !(fieldItem.Contains("EnvironmentVariableLocation") ||
+                                        fieldItem.Contains("Slot"));
         }
     }
 }

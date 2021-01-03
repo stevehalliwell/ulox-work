@@ -309,7 +309,7 @@ return a;",
             yield return new TestCaseData(
 @"var a = 1;
 var a = 2;",
-@"An item with the same key has already been added. Key: a")
+@"Environment value redinition not allowed. Requested a:9 collided.")
                 .SetName("CannotHaveDuplicateGlobals");
 
             yield return new TestCaseData(

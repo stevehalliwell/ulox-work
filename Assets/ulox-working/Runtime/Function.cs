@@ -6,6 +6,7 @@
         private Expr.Function _declaration;
         private IEnvironment _closure;
         private bool _isInitializer;
+        public const short StartingParamSlot = 0;
 
         public Function(
             string name,
@@ -30,7 +31,7 @@
             {
                 for (int i = 0; i < _declaration.parameters.Count; i++)
                 {
-                    environment.Define(_declaration.parameters[i].Lexeme, args[i]);
+                    environment.DefineSlot(_declaration.parameters[i].Lexeme, (short)(i + StartingParamSlot), args[i]);
                 }
             }
 
@@ -40,20 +41,21 @@
             }
             catch (Interpreter.Return exp)
             {
-                if (_isInitializer) return _closure.FetchObject(_closure.FindSlot("this"));
+                if (_isInitializer) return _closure.FetchObject(Class.ThisSlot);
 
                 return exp.Value;
             }
 
-            if (_isInitializer) return _closure.FetchObject(_closure.FindSlot("this"));
+            if (_isInitializer) return _closure.FetchObject(Class.ThisSlot);
 
             return null;
         }
 
         public Function Bind(Instance instance)
         {
+            //todo would be nice to not have an extra layer of env for this
             var env = new Environment(_closure);
-            env.Define("this", instance);
+            env.DefineSlot("this", Class.ThisSlot, instance);
             return new Function(_name, _declaration, env, _isInitializer);
         }
 

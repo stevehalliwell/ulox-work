@@ -4,6 +4,10 @@ namespace ULox
 {
     public class Class : Instance, ICallable
     {
+        public const short ThisSlot = 0;
+        public const short SuperSlot = 0;
+        public const int StartingMemberSlot = 0;
+
         private string _name;
         private Dictionary<string, Function> _methods;
         private Class _superclass;

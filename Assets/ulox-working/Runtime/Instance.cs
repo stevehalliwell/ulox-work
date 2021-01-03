@@ -31,7 +31,7 @@
             }
             else
             {
-                Define(name, val);
+                DefineInAvailableSlot(name, val);
             }
         }
 
