@@ -4,8 +4,7 @@ using System.Linq;
 
 namespace ULox
 {
-    //TODO the interpreter resolves at runtime but the resolver should calc
-    //  the depth and slots in advance so single use environments are also speedy
+    //todo warn when a function isn't a meta but doesn't use anything from the closure
     public class Resolver : Expr.Visitor<Object>,
                                 Stmt.Visitor
     {
@@ -20,16 +19,24 @@ namespace ULox
 
             public VariableUse(Token Name, State _state, short _slot)
             {
-                name = Name; 
+                name = Name;
                 state = _state;
                 slot = _slot;
             }
         }
 
-        private List<Dictionary<string, VariableUse>> scopes = new List<Dictionary<string, VariableUse>>();
+        private class ScopeInfo
+        {
+            public Dictionary<string, VariableUse> localVariables = new Dictionary<string, VariableUse>();
+            public List<int> fetchedVariableDistances = new List<int>();
+            public bool HasLocals => localVariables.Count > 0;
+            public bool HasClosedOverVars => fetchedVariableDistances.Count(x => x > 0) > 0;
+        }
+
+        private List<ScopeInfo> scopes = new List<ScopeInfo>();
         private Interpreter _interpreter;
         private FunctionType currentFunction = FunctionType.NONE;
-        private ClassType currentClass = ClassType.NONE;
+        private Stmt.Class _currentClass;
         private List<ResolverWarning> resolverWarnings = new List<ResolverWarning>();
 
         public List<ResolverWarning> ResolverWarnings => resolverWarnings;
@@ -57,8 +64,9 @@ namespace ULox
         public void Reset()
         {
             scopes.Clear();
+
             currentFunction = FunctionType.NONE;
-            currentClass = ClassType.NONE;
+            _currentClass = null;
             resolverWarnings = new List<ResolverWarning>();
         }
 
@@ -132,7 +140,7 @@ namespace ULox
         public object Visit(Expr.Variable expr)
         {
             if (scopes.Count > 0 &&
-                scopes.Last().TryGetValue(expr.name.Lexeme, out var existingFlag) &&
+                scopes.Last().localVariables.TryGetValue(expr.name.Lexeme, out var existingFlag) &&
                 existingFlag.state == VariableUse.State.Declared)
             {
                 throw new ResolverException(expr.name, "Can't read local variable in its own initializer.");
@@ -151,29 +159,34 @@ namespace ULox
 
         private EnvironmentVariableLocation ResolveLocal(Expr expr, Token name, bool isRead)
         {
+            EnvironmentVariableLocation retval = EnvironmentVariableLocation.Invalid;
             for (int i = scopes.Count - 1; i >= 0; i--)
             {
-                if (scopes[i].TryGetValue(name.Lexeme, out var varUse))
+                if (scopes[i].localVariables.TryGetValue(name.Lexeme, out var varUse))
                 {
                     if (isRead)
                     {
                         varUse.state = VariableUse.State.Read;
                     }
 
-                    return new EnvironmentVariableLocation()
+                    retval = new EnvironmentVariableLocation()
                     {
                         depth = (ushort)(scopes.Count - i - 1),
                         slot = varUse.slot
                     };
+                    break;
                 }
             }
 
-            return EnvironmentVariableLocation.Invalid;
+            if (scopes.Count > 0)
+                scopes.Last().fetchedVariableDistances.Add(retval.depth);
+
+            return retval;
         }
 
         private void BeginScope()
         {
-            scopes.Add(new Dictionary<string, VariableUse>());
+            scopes.Add(new ScopeInfo());
         }
 
         private short Declare(Token name)
@@ -181,13 +194,13 @@ namespace ULox
             if (scopes.Count == 0) return EnvironmentVariableLocation.InvalidSlot;
 
             var scope = scopes.Last();
-            if (scope.ContainsKey(name.Lexeme))
+            if (scope.localVariables.ContainsKey(name.Lexeme))
             {
                 throw new ResolverException(name, "Already a variable with this name in this scope.");
             }
 
-            var slot = (short)scope.Count;
-            scope.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared, slot));
+            var slot = (short)scope.localVariables.Count;
+            scope.localVariables.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared, slot));
             return slot;
         }
 
@@ -196,16 +209,16 @@ namespace ULox
             if (scopes.Count == 0) return;
 
             var scope = scopes.Last();
-            if (scope.ContainsKey(name.Lexeme))
+            if (scope.localVariables.ContainsKey(name.Lexeme))
             {
                 throw new ResolverException(name, "Already a variable with this name in this scope.");
             }
-            if (scope.Values.FirstOrDefault(x => x.slot == slot) != default)
+            if (scope.localVariables.Values.FirstOrDefault(x => x.slot == slot) != default)
             {
                 throw new ResolverException(name, $"Already a variable at slot {slot} in this scope.");
             }
 
-            scope.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared, slot));
+            scope.localVariables.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared, slot));
         }
 
         private void DefineManually(string name, short slot)
@@ -213,32 +226,36 @@ namespace ULox
             if (scopes.Count == 0) return;
             var scope = scopes.Last();
 
-            if (scope.ContainsKey(name) ||
-                scope.Values.FirstOrDefault(x => x.slot == slot) != default)
+            if (scope.localVariables.ContainsKey(name) ||
+                scope.localVariables.Values.FirstOrDefault(x => x.slot == slot) != default)
             {
                 throw new LoxException($"Already a variable of name {name} or at slot {slot} in this scope.");
             }
 
-            scope[name] = new VariableUse(new Token(TokenType.IDENTIFIER,name, name, -1,-1), VariableUse.State.Read, slot);
+            scope.localVariables[name] = new VariableUse(new Token(TokenType.IDENTIFIER, name, name, -1, -1), VariableUse.State.Read, slot);
         }
 
         private void Define(Token name)
         {
             if (scopes.Count == 0) return;
-            var count = scopes.Last().Count;
-            scopes.Last()[name.Lexeme].state = VariableUse.State.Defined;
+            var count = scopes.Last().localVariables.Count;
+            scopes.Last().localVariables[name.Lexeme].state = VariableUse.State.Defined;
         }
 
         private void EndScope()
         {
-            foreach (var item in scopes.Last().Values)
+            foreach (var item in scopes.Last().localVariables.Values)
             {
                 if (item.state != VariableUse.State.Read)
                 {
                     Warning(item.name, "Local variable is never read.");
                 }
             }
+            EndScopeNoWarnings();
+        }
 
+        private void EndScopeNoWarnings()
+        {
             scopes.RemoveAt(scopes.Count - 1);
         }
 
@@ -266,7 +283,7 @@ namespace ULox
             BeginScope();
             if (func.parameters != null)
             {
-                for(int i = 0; i < func.parameters.Count; i++)
+                for (int i = 0; i < func.parameters.Count; i++)
                 {
                     var param = func.parameters[i];
                     DeclareAt(param, (short)i);
@@ -274,6 +291,9 @@ namespace ULox
                 }
             }
             Resolve(func.body);
+
+            func.NeedsClosure = scopes.Count > 0 ? scopes.Last().HasClosedOverVars : true;
+            func.HasLocals = scopes.Count > 0 ? scopes.Last().HasLocals : true;
             EndScope();
 
             currentFunction = enclosingFunctionType;
@@ -333,8 +353,8 @@ namespace ULox
 
         public void Visit(Stmt.Class stmt)
         {
-            var enclosingClass = currentClass;
-            currentClass = ClassType.CLASS;
+            var enclosingClass = _currentClass;
+            _currentClass = stmt;
 
             stmt.knownSlot = Declare(stmt.name);
             Define(stmt.name);
@@ -348,7 +368,6 @@ namespace ULox
 
             if (stmt.superclass != null)
             {
-                currentClass = ClassType.SUBCLASS;
                 Resolve(stmt.superclass);
             }
 
@@ -357,11 +376,13 @@ namespace ULox
                 Resolve(item);
             }
 
-            foreach (Stmt.Function method in stmt.metaMethods)
+            foreach (Stmt.Function metaMeth in stmt.metaMethods)
             {
                 BeginScope();
                 DefineManually("this", Class.ThisSlot);
-                ResolveFunction(method.function, FunctionType.METHOD);
+                //Declare(metaMeth.name);
+                //Define(metaMeth.name);
+                ResolveFunction(metaMeth.function, FunctionType.METHOD);
                 EndScope();
             }
 
@@ -374,30 +395,37 @@ namespace ULox
             BeginScope();
             DefineManually("this", Class.ThisSlot);
 
+            BeginScope();
             foreach (var item in stmt.fields)
             {
                 Resolve(item);
             }
+            EndScopeNoWarnings();
 
-            foreach (Stmt.Function method in stmt.methods)
+            foreach (Stmt.Function thisMeth in stmt.methods)
             {
                 FunctionType declaration = FunctionType.METHOD;
-                if (method.name.Lexeme == "init")
+                if (thisMeth.name.Lexeme == "init")
                 {
                     declaration = FunctionType.INITIALIZER;
                 }
-                ResolveFunction(method.function, declaration);
+                //Declare(thisMeth.name);
+                //Define(thisMeth.name);
+                //todo can potentially locate and optimise this->get and this->set since we know some of the offsets
+                ResolveFunction(thisMeth.function, declaration);
             }
 
             EndScope();
 
             if (stmt.superclass != null) EndScope();
 
-            currentClass = enclosingClass;
+            _currentClass = enclosingClass;
         }
 
         public object Visit(Expr.Get expr)
         {
+            //todo if in class and method and obj is this, we can attempt to cache the offset to this in the env and the offset from 
+            //  the instance to the variable
             Resolve(expr.obj);
             ResolveLocal(expr, expr.name, true);
             return null;
@@ -405,6 +433,8 @@ namespace ULox
 
         public object Visit(Expr.Set expr)
         {
+            //todo if in class and method and obj is this, we can attempt to cache the offset to this in the env and the offset from 
+            //  the instance to the variable
             Resolve(expr.val);
             Resolve(expr.obj);
             return null;
@@ -412,7 +442,7 @@ namespace ULox
 
         public object Visit(Expr.This expr)
         {
-            if (currentClass == ClassType.NONE)
+            if (_currentClass == null)
                 throw new ResolverException(expr.keyword, "Cannot use 'this' outside of a class.");
 
             expr.varLoc = ResolveLocal(expr, expr.keyword, false);
@@ -421,12 +451,13 @@ namespace ULox
 
         public object Visit(Expr.Super expr)
         {
-            if (currentClass == ClassType.NONE)
+            if (_currentClass == null)
                 throw new ResolverException(expr.keyword, "Cannot use 'super' outside of a class.");
-            if (currentClass == ClassType.CLASS)
+            if (_currentClass.superclass == null)
                 throw new ResolverException(expr.keyword, "Cannot use 'super' in a class with no superclass.");
 
-            //todo
+            //todo it would be possible to keep a class tree and confirm if the method identifier exists on the super
+
             ResolveLocal(expr, expr.keyword, false);
             return null;
         }

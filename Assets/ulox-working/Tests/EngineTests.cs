@@ -186,6 +186,41 @@ outter.inner.a = 10;", true);
         }
 
         [Test]
+        public void Global_ExternalPOD_InternalPOD_CollisionError()
+        {
+            var test = new TestLoxEngine();
+            var testValue = "10";
+
+            //prefered method for multiple creates
+            var podClass = test.loxEngine.GetClass("POD");
+            test.loxEngine.SetValue("collide", test.loxEngine.CreateInstance(podClass));
+
+            test.loxEngine.SetValue("collide.a", testValue);
+
+            test.Run(@"var collide = List();", true);
+
+            Assert.IsTrue(test.InterpreterResult.StartsWith("Environment value redinition not allowed."));
+        }
+
+        [Test]
+        public void Inner_ExternalPOD_InternalPOD_Replace()
+        {
+            var test = new TestLoxEngine();
+            var testValue = "10";
+
+            //prefered method for multiple creates
+            var podClass = test.loxEngine.GetClass("POD");
+            test.loxEngine.SetValue("collide", test.loxEngine.CreateInstance(podClass));
+            test.loxEngine.SetValue("collide.inner", test.loxEngine.CreateInstance(podClass));
+
+            test.loxEngine.SetValue("collide.inner.a", testValue);
+
+            test.Run(@"print collide.inner; collide.inner = List(); print collide.inner;", true);
+
+            Assert.AreEqual("<inst POD><list []>", test.InterpreterResult);
+        }
+
+        [Test]
         public void ExternalSet_PODNested_Fetch_Validate()
         {
             var test = new TestLoxEngine();

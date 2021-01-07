@@ -3,6 +3,9 @@ using System.Collections.Generic;
 
 namespace ULox.Tests
 {
+    //todo more metafields and metamethods tests
+    //todo should you be able to get to metas via this or super or class or meta keyword? or not?
+    //todo fthis keyword to get access to the closure you are running in?
     public class InterpreterTests
     {
         public static IEnumerable<TestCaseData> Generator()
@@ -917,6 +920,203 @@ TestClass().Say();",
 TestClass().Say();",
 @"Why Hello There")
                 .SetName("MultiGetSetFieldPrintMatch");
+
+            yield return new TestCaseData(
+@"var a = true;
+if(a) print 7;
+else
+{
+    print -7;
+}",
+@"7")
+                .SetName("SingleStatementIf");
+
+            yield return new TestCaseData(
+@"var i = 0;
+while (i < 10) i += 1;
+print i;",
+@"10")
+                .SetName("SingleStatementWhile");
+
+            yield return new TestCaseData(
+@"class Base { var a = 1; }
+class Derived < Base { var b = 2;}
+var inst = Derived();
+print inst.b + inst.a;",
+@"3")
+                .SetName("SuperFields");
+
+            yield return new TestCaseData(
+@"class Base { BaseMeth(b) {print b + ""Bar"";} }
+class Derived < Base { var c = ""Foo"";}
+var inst = Derived();
+inst.BaseMeth(inst.c);",
+@"FooBar")
+                .SetName("SuperMethod");
+
+            yield return new TestCaseData(
+@"class Base { BaseMeth(b) {print b + ""Bar"";} }
+class Derived < Base { var c = ""Foo"";}
+var inst = Derived();
+inst.BaseMeth(inst.c);",
+@"FooBar")
+                .SetName("SuperMethodsAndField");
+
+            yield return new TestCaseData(
+@"class Base { BaseMeth(b) {print b + ""Bar"";} }
+class Derived < Base { ChildMeth(a) {print ""Well, ""; super.BaseMeth(a);}}
+var inst = Derived();
+inst.ChildMeth(""Foo"");",
+@"Well, FooBar")
+                .SetName("SuperMethodAndChildMethodField");
+
+            yield return new TestCaseData(
+@"class Base 
+{
+    BaseMeth(b) {print b + ""Bar"";} 
+}
+class Derived < Base 
+{ 
+    ChildMeth(a) { print ""Well, ""; super.BaseMeth(a + Derived.fb);}
+
+    class var fb = ""Foobar? "";
+}
+var inst = Derived();
+inst.ChildMeth(""is it "");",
+@"Well, is it Foobar? Bar")
+                .SetName("MetaFieldAndSuperMethod");
+
+            yield return new TestCaseData(
+@"class Base 
+{
+    var fb = ""Foobar? "";
+}
+class Derived < Base 
+{ 
+    class BaseMeth(b) {print b + ""Bar"";} 
+    ChildMeth(a) {print ""Well, ""; Derived.BaseMeth(a + this.fb);}
+}
+var inst = Derived();
+inst.ChildMeth(""is it "");",
+@"Well, is it Foobar? Bar")
+                .SetName("MetaMethodAndSuperField");
+
+            yield return new TestCaseData(
+@"class Base 
+{
+    getset foo = ""Foo"";
+}
+class Derived < Base 
+{ 
+    ChildMeth(a) 
+    {
+        print a; 
+        super.Setfoo(""Foo"");
+        print super.foo() + ""Bar"";
+    }
+}
+var inst = Derived();
+inst.ChildMeth(""is it "");",
+@"is it FooBar")
+                .SetName("DerivedSuperProperty");
+
+            yield return new TestCaseData(
+@"class Base 
+{
+    init(){this.foo=""Foo"";}
+}
+class Derived < Base 
+{ 
+    ChildMeth(a) 
+    {
+        print a; 
+        this.bar = ""Bar"";
+        //todo document this difference, perhaps super is an error if not on method?
+        //  would expect to use super here perhaps  
+        print this.foo + this.bar;
+    }
+}
+var inst = Derived();
+inst.ChildMeth(""is it "");",
+@"is it FooBar")
+                .SetName("DerivedSuperManualProperty");
+
+            yield return new TestCaseData(
+@"class Base 
+{
+    init(){this.foo=""Foo"";}
+}
+class Derived < Base 
+{ 
+    ChildMeth(a) 
+    {
+        this.bar = ""Bar"";
+        //todo document this difference, perhaps super is an error if not on method?
+        //  would expect to use super here perhaps  
+        print super.foo + this.bar;
+    }
+}
+var inst = Derived();
+inst.ChildMeth(""is it "");",
+@"IDENTIFIER|12:68 Could not find 'foo'via 'super'.")
+                .SetName("CannotUseSuperOnField");
+
+            yield return new TestCaseData(
+@"
+class BaseBase
+{
+    Foo(a) {print ""BaseBase"" + a;}
+}
+class Base < BaseBase
+{
+    Foo(a) {print ""Base"" + super.Foo(a);}
+}
+class Derived < Base 
+{
+    Foo(a) {print ""Derived"" + super.Foo(a);}
+}
+var inst = Derived();
+inst.Foo(""hi"");",
+@"BaseBasehiBaseDerived")
+                .SetName("SuperChain");
+
+            yield return new TestCaseData(
+@"
+class BaseBase
+{
+    Foo(a) {print ""BaseBase"" + a;}
+}
+class Base < BaseBase
+{
+    Foo(a) {print ""Base"" + super.Foo(a);}
+}
+class Derived < Base 
+{
+    Foo(a) {print ""Derived"" + super(BaseBase).Foo(a);}
+}
+var inst = Derived();
+inst.Foo(""hi"");",
+@"BaseBasehiDerived")
+                .SetName("SuperJumpChain");
+
+            yield return new TestCaseData(
+@"
+class BaseBase
+{
+    Foo(a) {print ""BaseBase"" + a;}
+}
+class Base < BaseBase
+{
+    Foo(a) {print ""Base"" + super.Foo(a);}
+}
+class Derived < Base 
+{
+    Foo(a) {print ""Derived"" + super(BassBase).Foo(a);}
+}
+var inst = Derived();
+inst.Foo(""hi"");",
+@"IDENTIFIER|12:52 Could not find parent class of name 'BassBase' via 'super'.")
+                .SetName("TypoSuperJumpChain");
 
             yield return new TestCaseData(
 @"print """";",

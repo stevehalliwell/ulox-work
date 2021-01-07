@@ -243,6 +243,31 @@ t.a += 1;",
                 .SetName("MultiFieldDeclare");
 
             yield return new TestCaseData(
+@"
+class Test
+{
+    init(a, b) { this._a = a; print b; }
+    get a = true;
+    set d = 7;
+    getset i, j, k;
+    func(funky) { d(funky); }
+}",
+@"{ class 2:11 - IDENTIFIER Test
+   instance { var 5:14 - IDENTIFIER _a[ True ] }{ var 6:14 - IDENTIFIER _d[ 7 ] }{ var 7:17 - IDENTIFIER _i }{ var 7:21 - IDENTIFIER _j }{ var 7:25 - IDENTIFIER _k }
+  fun 4:12 - IDENTIFIER init[  ( 4:14 - IDENTIFIER a | 4:18 - IDENTIFIER b ) { [ [ 4:28 - THIS this ]4:31 - IDENTIFIER _a[ 4:37 - IDENTIFIER a ] ] }
+    { print [ 4:48 - IDENTIFIER b ] } ]
+  fun 5:14 - IDENTIFIER a[ { return [ 5:14 - IDENTIFIER _a[ 2:11 - THIS this ] ] } ]
+  fun 6:14 - IDENTIFIER Setd[  ( 6:14 - IDENTIFIER value ) { [ [ 2:11 - THIS this ]6:14 - IDENTIFIER _d[ 6:14 - IDENTIFIER value ] ] } ]
+  fun 7:17 - IDENTIFIER i[ { return [ 7:17 - IDENTIFIER _i[ 2:11 - THIS this ] ] } ]
+  fun 7:17 - IDENTIFIER Seti[  ( 7:17 - IDENTIFIER value ) { [ [ 2:11 - THIS this ]7:17 - IDENTIFIER _i[ 7:17 - IDENTIFIER value ] ] } ]
+  fun 7:21 - IDENTIFIER j[ { return [ 7:21 - IDENTIFIER _j[ 2:11 - THIS this ] ] } ]
+  fun 7:21 - IDENTIFIER Setj[  ( 7:21 - IDENTIFIER value ) { [ [ 2:11 - THIS this ]7:21 - IDENTIFIER _j[ 7:21 - IDENTIFIER value ] ] } ]
+  fun 7:25 - IDENTIFIER k[ { return [ 7:25 - IDENTIFIER _k[ 2:11 - THIS this ] ] } ]
+  fun 7:25 - IDENTIFIER Setk[  ( 7:25 - IDENTIFIER value ) { [ [ 2:11 - THIS this ]7:25 - IDENTIFIER _k[ 7:25 - IDENTIFIER value ] ] } ]
+  fun 8:12 - IDENTIFIER func[  ( 8:18 - IDENTIFIER funky ) { [ call [ 8:25 - IDENTIFIER d ]( [ 8:31 - IDENTIFIER funky ] ) ] } ] }")
+                .SetName("ClassSugar");
+
+            yield return new TestCaseData(
 @"",
 @"")
                 .SetName("Empty");

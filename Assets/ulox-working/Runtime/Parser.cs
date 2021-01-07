@@ -3,7 +3,6 @@ using System.Linq;
 
 namespace ULox
 {
-    //todo single statement blocks, for single statement ifs and loops etc.
     public class Parser
     {
         private enum FunctionType { None, Function, Method, Get, Set, }
@@ -272,7 +271,8 @@ namespace ULox
                         new Stmt.Expression(new Expr.Set(
                             new Expr.This(name.Copy(TokenType.THIS, "this"), EnvironmentVariableLocation.Invalid),
                             hiddenInternalFieldName,
-                            new Expr.Variable(valueName, EnvironmentVariableLocation.Invalid)))}), 
+                            new Expr.Variable(valueName, EnvironmentVariableLocation.Invalid)))
+                    },false, false), 
                 EnvironmentVariableLocation.InvalidSlot);
         }
 
@@ -282,8 +282,11 @@ namespace ULox
                 new Expr.Function(null,
                     new List<Stmt>()
                     {
-                        new Stmt.Return(className.Copy(TokenType.RETURN), new Expr.Get(
-                            new Expr.This(className.Copy(TokenType.THIS, "this"), EnvironmentVariableLocation.Invalid), hiddenInternalFieldName))})
+                        new Stmt.Return(className.Copy(TokenType.RETURN), 
+                        new Expr.Get(
+                            new Expr.This(className.Copy(TokenType.THIS, "this"), 
+                                EnvironmentVariableLocation.Invalid), hiddenInternalFieldName, EnvironmentVariableLocation.Invalid))
+                    }, false, false)
                 , EnvironmentVariableLocation.InvalidSlot);
         }
 
@@ -337,7 +340,7 @@ namespace ULox
 
             Consume(TokenType.OPEN_BRACE, $"Expect '{{' before {functionType} body.");
             var body = Block();
-            return new Expr.Function(parameters, body);
+            return new Expr.Function(parameters, body, false, false);
         }
 
         private static Stmt.Var ToClassAutoVarDeclaration(Stmt.Var inVar)
@@ -581,6 +584,8 @@ namespace ULox
                     }
                 }
 
+                //a 'super.a = 1;' ends up in here unhandled
+
                 throw new ParseException(equals, "Invalid assignment target.");
             }
 
@@ -697,7 +702,7 @@ namespace ULox
                 {
                     var name = Consume(TokenType.IDENTIFIER,
                         "Expect property name after '.'.");
-                    expr = new Expr.Get(expr, name);
+                    expr = new Expr.Get(expr, name, EnvironmentVariableLocation.Invalid);
                 }
                 else
                 {
@@ -743,10 +748,22 @@ namespace ULox
             if (Match(TokenType.SUPER))
             {
                 Token keyword = Previous();
+                Token specifiedClass = new Token();
+                if(Match(TokenType.OPEN_PAREN))
+                {
+                    specifiedClass = Consume(TokenType.IDENTIFIER,
+                    "Expect parent class identifiying token.");
+                    Consume(TokenType.CLOSE_PAREN, "Expect ')' after 'super' with specified parent class name.");
+                }
                 Consume(TokenType.DOT, "Expect '.' after 'super'.");
                 Token method = Consume(TokenType.IDENTIFIER,
                     "Expect superclass method name.");
-                return new Expr.Super(keyword, method, EnvironmentVariableLocation.Invalid, EnvironmentVariableLocation.Invalid);
+                return new Expr.Super(
+                    keyword, 
+                    specifiedClass, 
+                    method, 
+                    EnvironmentVariableLocation.Invalid, 
+                    EnvironmentVariableLocation.Invalid);
             }
 
             if (Match(TokenType.THIS)) return new Expr.This(Previous(), EnvironmentVariableLocation.Invalid);

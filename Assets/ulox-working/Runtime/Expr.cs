@@ -45,13 +45,15 @@ namespace ULox
         }
         public class Get : Expr
         {
-            public Get( Expr obj, Token name)
+            public Get( Expr obj, Token name, EnvironmentVariableLocation varLoc)
             {
                 this.obj = obj;
                 this.name = name;
+                this.varLoc = varLoc;
             }
             public readonly Expr obj;
             public readonly Token name;
+            public EnvironmentVariableLocation varLoc;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
         public class Grouping : Expr
@@ -100,14 +102,16 @@ namespace ULox
         }
         public class Super : Expr
         {
-            public Super( Token keyword, Token method, EnvironmentVariableLocation superVarLoc, EnvironmentVariableLocation thisVarLoc)
+            public Super( Token keyword, Token classNameToken, Token method,  EnvironmentVariableLocation superVarLoc, EnvironmentVariableLocation thisVarLoc)
             {
                 this.keyword = keyword;
+                this.classNameToken = classNameToken;
                 this.method = method;
                 this.superVarLoc = superVarLoc;
                 this.thisVarLoc = thisVarLoc;
             }
             public readonly Token keyword;
+            public readonly Token classNameToken;
             public readonly Token method;
             public EnvironmentVariableLocation superVarLoc;
             public EnvironmentVariableLocation thisVarLoc;
@@ -161,13 +165,17 @@ namespace ULox
         }
         public class Function : Expr
         {
-            public Function( List<Token> parameters, List<Stmt> body)
+            public Function( List<Token> parameters, List<Stmt> body, bool HasLocals, bool NeedsClosure)
             {
                 this.parameters = parameters;
                 this.body = body;
+                this.HasLocals = HasLocals;
+                this.NeedsClosure = NeedsClosure;
             }
             public readonly List<Token> parameters;
             public readonly List<Stmt> body;
+            public bool HasLocals;
+            public bool NeedsClosure;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
 

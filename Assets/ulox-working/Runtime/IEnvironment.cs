@@ -3,7 +3,7 @@
     public struct EnvironmentVariableLocation
     {
         public const short InvalidSlot = -1;
-        public static readonly EnvironmentVariableLocation Invalid = new EnvironmentVariableLocation { depth = 0, slot = InvalidSlot };
+        public static readonly EnvironmentVariableLocation Invalid = new EnvironmentVariableLocation { depth = ushort.MaxValue, slot = InvalidSlot };
         public ushort depth;
         public short slot;
 
@@ -39,7 +39,7 @@
 
         public static EnvironmentVariableLocation FindLocation(this IEnvironment env, string name)
         {
-            short slot = -1;
+            short slot;
             ushort depth = 0;
             while (env != null)
             {

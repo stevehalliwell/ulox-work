@@ -326,6 +326,7 @@ namespace ULox
 
         public object Visit(Expr.Function expr)
         {
+            //todo if it doesn't use closure does it need current env?
             return new Function(null, expr, _currentEnvironment, false);
         }
 
@@ -435,7 +436,17 @@ namespace ULox
             var obj = Evaluate(expr.obj);
             if (obj is Instance objInst)
             {
-                object result = objInst.Get(expr.name);
+                object result = null;
+
+                if (expr.varLoc != EnvironmentVariableLocation.Invalid)
+                {
+                    result = objInst.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
+                }
+                else
+                {
+                    result = objInst.Get(expr.name);
+                }
+                
                 if (result is Function resultFunc)
                 {
                     if (resultFunc.IsGetter)
@@ -479,12 +490,27 @@ namespace ULox
             return _currentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
         }
 
+        //todo super and this behave very differently, can they be uniformed
         public object Visit(Expr.Super expr)
         {
             if (expr.superVarLoc == EnvironmentVariableLocation.Invalid)
                 expr.superVarLoc = _currentEnvironment.FindLocation("super");
 
             var superclass = (Class)_currentEnvironment.Ancestor(expr.superVarLoc.depth).FetchObject(expr.superVarLoc.slot);
+
+            if (!string.IsNullOrEmpty(expr.classNameToken.Lexeme))
+            {
+                while (superclass != null && superclass.Name != expr.classNameToken.Lexeme)
+                {
+                    superclass = superclass.Super;
+                }
+
+                if (superclass == null)
+                {
+                    throw new RuntimeTypeException(expr.classNameToken,
+                        $"Could not find parent class of name '{expr.classNameToken.Lexeme}' via 'super'.");
+                }
+            }
 
             if (expr.thisVarLoc == EnvironmentVariableLocation.Invalid)
                 expr.thisVarLoc = _currentEnvironment.FindLocation("this");
@@ -496,8 +522,9 @@ namespace ULox
             if (method == null)
             {
                 throw new RuntimeTypeException(expr.method,
-                    "Undefined property '" + expr.method.Lexeme + "'.");
+                    $"Could not find '{expr.method.Lexeme}'via 'super'.");
             }
+
             return method.Bind(inst);
         }
 

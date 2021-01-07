@@ -5,6 +5,7 @@ using System.Text;
 
 namespace ULox
 {
+    //todo hash or index all strings
     public class Scanner
     {
         public List<Token> Tokens { get; private set; }
@@ -34,14 +35,14 @@ namespace ULox
             { "false",  TokenType.FALSE},
             { "null",   TokenType.NULL},
             { "print",  TokenType.PRINT},
-            { "fun",  TokenType.FUNCTION},
+            { "fun",    TokenType.FUNCTION},
             { "class",  TokenType.CLASS},
-            { ".",  TokenType.DOT},
-            { "this",  TokenType.THIS},
+            { ".",      TokenType.DOT},
+            { "this",   TokenType.THIS},
             { "super",  TokenType.SUPER},
-            { "get",  TokenType.GET},
-            { "set",  TokenType.SET},
-            { "getset",  TokenType.GETSET},
+            { "get",    TokenType.GET},
+            { "set",    TokenType.SET},
+            { "getset", TokenType.GETSET},
         };
 
         public Scanner()
@@ -208,7 +209,6 @@ namespace ULox
             }
 
             AddToken(hasFoundDecimalPoint ? TokenType.FLOAT : TokenType.INT,
-                //todo eventually we want to be smarter for now
                 double.Parse(workingSpaceStringBuilder.ToString()));
         }
 

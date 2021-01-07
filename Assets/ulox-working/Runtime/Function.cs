@@ -20,12 +20,13 @@
             _isInitializer = isInitializer;
         }
 
-        public int Arity => _declaration.parameters.Count;
+        public int Arity => _declaration?.parameters?.Count ?? 0;
 
         public bool IsGetter => _declaration.parameters == null;
 
         public object Call(Interpreter interpreter, object[] args)
         {
+            //if doesn't have locals does it need the new env?
             var environment = new Environment(_closure);
             if (_declaration.parameters != null)
             {

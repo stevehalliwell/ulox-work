@@ -331,6 +331,70 @@ new TokenType[]
             TokenType.EOF,
 })
                 .SetName("Conditional");
+
+            yield return new TestCaseData(
+@"class Test
+{
+    init(a,b) {this._a = a; print b;}
+    get a = true;
+    set d = 7;
+    getset i,j,k;
+    func(funky){d(funky);}
+}",
+new TokenType[]
+{
+TokenType.CLASS,
+TokenType.IDENTIFIER,
+TokenType.OPEN_BRACE,
+TokenType.IDENTIFIER,
+TokenType.OPEN_PAREN,
+TokenType.IDENTIFIER,
+TokenType.COMMA,
+TokenType.IDENTIFIER,
+TokenType.CLOSE_PAREN,
+TokenType.OPEN_BRACE,
+TokenType.THIS,
+TokenType.DOT,
+TokenType.IDENTIFIER,
+TokenType.ASSIGN,
+TokenType.IDENTIFIER,
+TokenType.END_STATEMENT,
+TokenType.PRINT,
+TokenType.IDENTIFIER,
+TokenType.END_STATEMENT,
+TokenType.CLOSE_BRACE,
+TokenType.GET,
+TokenType.IDENTIFIER,
+TokenType.ASSIGN,
+TokenType.TRUE,
+TokenType.END_STATEMENT,
+TokenType.SET,
+TokenType.IDENTIFIER,
+TokenType.ASSIGN,
+TokenType.INT,
+TokenType.END_STATEMENT,
+TokenType.GETSET,
+TokenType.IDENTIFIER,
+TokenType.COMMA,
+TokenType.IDENTIFIER,
+TokenType.COMMA,
+TokenType.IDENTIFIER,
+TokenType.END_STATEMENT,
+TokenType.IDENTIFIER,
+TokenType.OPEN_PAREN,
+TokenType.IDENTIFIER,
+TokenType.CLOSE_PAREN,
+TokenType.OPEN_BRACE,
+TokenType.IDENTIFIER,
+TokenType.OPEN_PAREN,
+TokenType.IDENTIFIER,
+TokenType.CLOSE_PAREN,
+TokenType.END_STATEMENT,
+TokenType.CLOSE_BRACE,
+TokenType.CLOSE_BRACE,
+TokenType.EOF
+})
+                .SetName("ClassSugar");
         }
 
         [Test]

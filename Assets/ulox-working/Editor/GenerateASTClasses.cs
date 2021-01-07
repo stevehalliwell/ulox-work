@@ -14,18 +14,20 @@ namespace ULox
             "Assign   : Token name, Expr value, EnvironmentVariableLocation varLoc",
             "Binary   : Expr left, Token op, Expr right",
             "Call     : Expr callee, Token paren, List<Expr> arguments",
-            "Get      : Expr obj, Token name",
+            "Get      : Expr obj, Token name, EnvironmentVariableLocation varLoc",
             "Grouping : Expr expression",
             "Literal  : object value",
             "Logical  : Expr left, Token op, Expr right",
             "Set      : Expr obj, Token name, Expr val",
-            "Super    : Token keyword, Token method, EnvironmentVariableLocation superVarLoc," +
+            "Super    : Token keyword, Token classNameToken, Token method, " +
+                      " EnvironmentVariableLocation superVarLoc," +
                       " EnvironmentVariableLocation thisVarLoc",
             "This     : Token keyword, EnvironmentVariableLocation varLoc",
             "Unary    : Token op, Expr right",
             "Variable : Token name, EnvironmentVariableLocation varLoc",
             "Conditional : Expr condition, Expr ifTrue, Expr ifFalse",
-            "Function : List<Token> parameters, List<Stmt> body",
+            "Function : List<Token> parameters, List<Stmt> body,"+
+                      " bool HasLocals, bool NeedsClosure",
         };
 
         private static string[] _requiredStmtTypes = new string[]
@@ -153,7 +155,8 @@ namespace ULox
         private static bool IsReadOnlyField(string fieldItem)
         {
             return !(fieldItem.Contains("EnvironmentVariableLocation") ||
-                                        fieldItem.Contains("Slot"));
+                                        fieldItem.Contains("Slot") ||
+                                        fieldItem.Contains("bool"));
         }
     }
 }
