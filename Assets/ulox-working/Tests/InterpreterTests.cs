@@ -3,7 +3,9 @@ using System.Collections.Generic;
 
 namespace ULox.Tests
 {
-    //todo more metafields and metamethods tests
+    //todo is there a desire to get access to your class from within instance method?e.g. cthis
+    //todo calling super in a meta method
+    //todo more metafields and metamethods tests?
     //todo should you be able to get to metas via this or super or class or meta keyword? or not?
     //todo fthis keyword to get access to the closure you are running in?
     public class InterpreterTests
@@ -463,7 +465,7 @@ class BostonCream < Doughnut {
 }
 
 BostonCream().cook();",
-@"IDENTIFIER|9:21 Undefined property 'Missing'.")
+@"IDENTIFIER|9:21 Could not find 'Missing'via 'super'.")
                 .SetName("Class_SuperMissingMethod");
 
             yield return new TestCaseData(

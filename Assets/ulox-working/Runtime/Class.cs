@@ -2,9 +2,6 @@
 
 namespace ULox
 {
-    //todo document that pure vars get merged down into child in same order, methods do not
-    //  do super methods need to be aware of this?
-    //todo is there a desire to get access to your class from your instance?
     public class Class : Instance, ICallable
     {
         //presently closures go super->this->members 
@@ -42,6 +39,9 @@ namespace ULox
         {
             var instance = new Instance(this, interpreter.CurrentEnvironment);
 
+            //calling recursively pre-fix so most base class does its vars, then its child, then its child,
+            //  and so on, will allow base class methods to use var index should they wish as ahead of time
+            //  order is stable
             CreateFields(interpreter, instance, this);
 
             var initializer = FindMethod("init");

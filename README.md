@@ -6,6 +6,16 @@ Don't expect this to be used (very much) in production. At least not in the stat
 
 ## Status 
 ![current code coverage](badge_linecoverage.png)
+- [Use of VarLoc, more QOL, more Tests](../../tree/core_jlox_varloc)
+	- Add support for chainning declarations, see [Class Sugar](#class-sugar).
+	- Each Environemnt now a flat list of objects with a string to index lookup. Used and stored in Exprs (VarLocs).
+		- Parser marks the VarLoc as 'Invalid'.
+		- Resolver attempts to determine the VarLoc, being ancesor and slot of identifiers.
+		- Interpreter will 'find' identifiers by Lexeme if VarLoc is invalid and save the VarLoc for next time.
+	- Resolver tracks use of variables in each scope, for future use.
+	- Class fields are made base first, as expected in other languagues. This ensures VarLoc order is the same for super methods in child classes.
+	- Super supports optional token in bracket to specify the name of the base class being targeted by the super.
+	- More Tests.
 - [Unity demos and some QOL improvements](../../tree/core_jlox_unity_demos)
 	- More tests.
 	- Bouncing Balls 
@@ -101,3 +111,24 @@ class Foo
 This is done by generating the AST nodes in the parser. 
 
 Note: the backing fields, are always named \_VAR_NAME (prepended with an underscore). These backing fields are set up by the interperter before the class init is called, this allows the backing fields to be used directly in the init function itself.
+
+You can chain together multiple variable declares in 1 statement.
+```
+class Foo
+{
+	var a, b = 2, c = "hello";
+	getset d, e = 7, d;
+}
+```
+is expanded by the parser to be equivilant in interpretation as 
+```
+class Foo
+{
+	var a;
+	var b = 2;
+	var c = "hello";
+	getset d;
+	getset e = 7;
+	getset d;
+}
+```
