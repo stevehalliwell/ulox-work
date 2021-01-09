@@ -86,14 +86,27 @@ namespace ULox
         public void Run(string text)
         {
             _scanner.Reset();
-            _scanner.Scan(text);
+            var tokens = _scanner.Scan(text);
             _parser.Reset();
-            var statements = _parser.Parse(_scanner.Tokens);
+            var statements = _parser.Parse(tokens);
 
             _resolver.Reset();
             _resolver.Resolve(statements);
 
             _interpreter.Interpret(statements);
+        }
+
+        public void RunREPL(string text, Action<string> output)
+        {
+            _scanner.Reset();
+            var tokens = _scanner.Scan(text);
+            _parser.Reset();
+            var statements = _parser.Parse(tokens);
+
+            _resolver.Reset();
+            _resolver.Resolve(statements);
+
+            _interpreter.REPLInterpret(statements, output);
         }
 
         public void SetValue(string address, object value)

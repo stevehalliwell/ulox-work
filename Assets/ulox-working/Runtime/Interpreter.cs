@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace ULox
 {
-    //todo REPL
     public class Interpreter : Expr.Visitor<Object>,
                                Stmt.Visitor
     {
@@ -40,6 +39,7 @@ namespace ULox
             {
             }
         }
+
         private Environment _globals = new Environment(null);
         private IEnvironment _currentEnvironment;
 
@@ -47,7 +47,7 @@ namespace ULox
 
         public IEnvironment CurrentEnvironment => _currentEnvironment;
 
-        public Interpreter()
+        public Interpreter(bool useREPL = false)
         {
             _currentEnvironment = Globals;
         }
@@ -57,6 +57,21 @@ namespace ULox
             foreach (var item in statements)
             {
                 Execute(item);
+            }
+        }
+        public void REPLInterpret(List<Stmt> statements, Action<string> output)
+        {
+            foreach (var item in statements)
+            {
+                if (item is Stmt.Expression stmtExpr)
+                {
+                    var res = Evaluate(stmtExpr.expression);
+                    output?.Invoke(res?.ToString() ?? "null");
+                }
+                else
+                {
+                    Execute(item);
+                }
             }
         }
 

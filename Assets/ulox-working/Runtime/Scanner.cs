@@ -59,7 +59,7 @@ namespace ULox
             workingSpaceStringBuilder = new StringBuilder();
         }
 
-        public void Scan(string text)
+        public List<Token> Scan(string text)
         {
             using (_stringReader = new StringReader(text))
             {
@@ -145,6 +145,8 @@ namespace ULox
 
                 Tokens.Add(new Token(TokenType.EOF, "", null, _line, _characterNumber));
             }
+
+            return Tokens;
         }
 
         private void ConsumeBlockComment()

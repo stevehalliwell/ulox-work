@@ -47,16 +47,14 @@ if (end > start) { print (true); }",
             Interpreter interpreter = null;
             object[] arguments = null;
 
-            test.loxEngine.SetValue("TestAction", new Callable(1, (interp, args) =>
+            test.loxEngine.SetValue("TestAction", new Callable(1, (args) =>
              {
-                 interpreter = interp;
                  arguments = args;
                  return (string)args[0] + "World!";
              }));
 
             test.Run(@"print( TestAction(""Hello ""));", true);
-
-            Assert.AreEqual(interpreter, test.Interpreter);
+            
             Assert.AreEqual("Hello World!", test.InterpreterResult);
         }
 

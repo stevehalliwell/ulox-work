@@ -27,7 +27,8 @@ namespace ULox
             "Variable : Token name, EnvironmentVariableLocation varLoc",
             "Conditional : Expr condition, Expr ifTrue, Expr ifFalse",
             "Function : List<Token> parameters, List<Stmt> body,"+
-                      " bool HasLocals, bool NeedsClosure",
+                      " bool HasLocals, bool NeedsClosure, " +
+                      " bool HasReturns",
         };
 
         private static string[] _requiredStmtTypes = new string[]

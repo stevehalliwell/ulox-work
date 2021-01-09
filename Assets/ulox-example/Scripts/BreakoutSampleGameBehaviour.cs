@@ -24,13 +24,11 @@ namespace ULox.Demo
 
         private void Start()
         {
-            var interpreter = new Interpreter();
-            var resolver = new Resolver(interpreter);
             loxEngine = new LoxEngine(
                 new Scanner(),
                 new Parser() { CatchAndSynch = false },
-                resolver,
-                interpreter,
+                new Resolver(),
+                new Interpreter(),
                 new LoxCoreLibrary(Debug.Log),
                 new StandardClasses(),
                 new UnityFunctions());

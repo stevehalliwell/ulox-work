@@ -4,23 +4,21 @@ namespace ULox
 {
     public abstract class TestLoxEngine
     {
-        public string InterpreterResult { get; private set; }
+        public string InterpreterResult { get; private set; } = string.Empty;
         public LoxEngine loxEngine;
         private Resolver resolver;
-        public Interpreter Interpreter { get; private set; }
 
         private void SetResult(string str) => InterpreterResult += str;
 
         protected TestLoxEngine(params ILoxEngineLibraryBinder[] loxEngineLibraryBinders)
         {
             var binders = new ILoxEngineLibraryBinder[] { new LoxCoreLibrary(SetResult) };
-            Interpreter = new Interpreter();
-            resolver = new Resolver(Interpreter);
+            resolver = new Resolver();
             loxEngine = new LoxEngine(
                 new Scanner(),
                 new Parser() { CatchAndSynch = false },
                 resolver,
-                Interpreter,
+                new Interpreter(),
                 binders.Concat(loxEngineLibraryBinders).ToArray());
         }
 

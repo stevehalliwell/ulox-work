@@ -33,13 +33,13 @@ namespace ULox
             public bool HasClosedOverVars => fetchedVariableDistances.Count(x => x > 0) > 0;
         }
 
-        private List<ScopeInfo> scopes = new List<ScopeInfo>();
-        private Interpreter _interpreter;
-        private FunctionType currentFunction = FunctionType.NONE;
+        private List<ScopeInfo> _scopes = new List<ScopeInfo>();
+        private FunctionType _currentFunctionType = FunctionType.NONE;
+        private Expr.Function _currentExprFunc;
         private Stmt.Class _currentClass;
-        private List<ResolverWarning> resolverWarnings = new List<ResolverWarning>();
+        private List<ResolverWarning> _resolverWarnings = new List<ResolverWarning>();
 
-        public List<ResolverWarning> ResolverWarnings => resolverWarnings;
+        public List<ResolverWarning> ResolverWarnings => _resolverWarnings;
 
         private enum FunctionType
         {
@@ -56,18 +56,18 @@ namespace ULox
             SUBCLASS,
         }
 
-        public Resolver(Interpreter interpreter)
+        public Resolver()
         {
-            _interpreter = interpreter;
+            Reset();
         }
 
         public void Reset()
         {
-            scopes.Clear();
+            _scopes.Clear();
 
-            currentFunction = FunctionType.NONE;
+            _currentFunctionType = FunctionType.NONE;
             _currentClass = null;
-            resolverWarnings = new List<ResolverWarning>();
+            _resolverWarnings = new List<ResolverWarning>();
         }
 
         public void Resolve(List<Stmt> statements)
@@ -139,8 +139,8 @@ namespace ULox
 
         public object Visit(Expr.Variable expr)
         {
-            if (scopes.Count > 0 &&
-                scopes.Last().localVariables.TryGetValue(expr.name.Lexeme, out var existingFlag) &&
+            if (_scopes.Count > 0 &&
+                _scopes.Last().localVariables.TryGetValue(expr.name.Lexeme, out var existingFlag) &&
                 existingFlag.state == VariableUse.State.Declared)
             {
                 throw new ResolverException(expr.name, "Can't read local variable in its own initializer.");
@@ -160,9 +160,9 @@ namespace ULox
         private EnvironmentVariableLocation ResolveLocal(Expr expr, Token name, bool isRead)
         {
             EnvironmentVariableLocation retval = EnvironmentVariableLocation.Invalid;
-            for (int i = scopes.Count - 1; i >= 0; i--)
+            for (int i = _scopes.Count - 1; i >= 0; i--)
             {
-                if (scopes[i].localVariables.TryGetValue(name.Lexeme, out var varUse))
+                if (_scopes[i].localVariables.TryGetValue(name.Lexeme, out var varUse))
                 {
                     if (isRead)
                     {
@@ -171,29 +171,29 @@ namespace ULox
 
                     retval = new EnvironmentVariableLocation()
                     {
-                        depth = (ushort)(scopes.Count - i - 1),
+                        depth = (ushort)(_scopes.Count - i - 1),
                         slot = varUse.slot
                     };
                     break;
                 }
             }
 
-            if (scopes.Count > 0)
-                scopes.Last().fetchedVariableDistances.Add(retval.depth);
+            if (_scopes.Count > 0)
+                _scopes.Last().fetchedVariableDistances.Add(retval.depth);
 
             return retval;
         }
 
         private void BeginScope()
         {
-            scopes.Add(new ScopeInfo());
+            _scopes.Add(new ScopeInfo());
         }
 
         private short Declare(Token name)
         {
-            if (scopes.Count == 0) return EnvironmentVariableLocation.InvalidSlot;
+            if (_scopes.Count == 0) return EnvironmentVariableLocation.InvalidSlot;
 
-            var scope = scopes.Last();
+            var scope = _scopes.Last();
             if (scope.localVariables.ContainsKey(name.Lexeme))
             {
                 throw new ResolverException(name, "Already a variable with this name in this scope.");
@@ -206,9 +206,9 @@ namespace ULox
 
         private void DeclareAt(Token name, short slot)
         {
-            if (scopes.Count == 0) return;
+            if (_scopes.Count == 0) return;
 
-            var scope = scopes.Last();
+            var scope = _scopes.Last();
             if (scope.localVariables.ContainsKey(name.Lexeme))
             {
                 throw new ResolverException(name, "Already a variable with this name in this scope.");
@@ -223,8 +223,8 @@ namespace ULox
 
         private void DefineManually(string name, short slot)
         {
-            if (scopes.Count == 0) return;
-            var scope = scopes.Last();
+            if (_scopes.Count == 0) return;
+            var scope = _scopes.Last();
 
             if (scope.localVariables.ContainsKey(name) ||
                 scope.localVariables.Values.FirstOrDefault(x => x.slot == slot) != default)
@@ -237,14 +237,14 @@ namespace ULox
 
         private void Define(Token name)
         {
-            if (scopes.Count == 0) return;
-            var count = scopes.Last().localVariables.Count;
-            scopes.Last().localVariables[name.Lexeme].state = VariableUse.State.Defined;
+            if (_scopes.Count == 0) return;
+            var count = _scopes.Last().localVariables.Count;
+            _scopes.Last().localVariables[name.Lexeme].state = VariableUse.State.Defined;
         }
 
         private void EndScope()
         {
-            foreach (var item in scopes.Last().localVariables.Values)
+            foreach (var item in _scopes.Last().localVariables.Values)
             {
                 if (item.state != VariableUse.State.Read)
                 {
@@ -256,12 +256,12 @@ namespace ULox
 
         private void EndScopeNoWarnings()
         {
-            scopes.RemoveAt(scopes.Count - 1);
+            _scopes.RemoveAt(_scopes.Count - 1);
         }
 
         private void Warning(Token name, string msg)
         {
-            resolverWarnings.Add(new ResolverWarning() { Token = name, Message = msg });
+            _resolverWarnings.Add(new ResolverWarning() { Token = name, Message = msg });
         }
 
         public void Visit(Stmt.Expression stmt)
@@ -277,8 +277,10 @@ namespace ULox
 
         private void ResolveFunction(Expr.Function func, FunctionType functionType)
         {
-            var enclosingFunctionType = currentFunction;
-            currentFunction = functionType;
+            var enclosingFunctionType = _currentFunctionType;
+            _currentFunctionType = functionType;
+            var enclosingFunc = _currentExprFunc;
+            _currentExprFunc = func;
 
             BeginScope();
             if (func.parameters != null)
@@ -292,11 +294,12 @@ namespace ULox
             }
             Resolve(func.body);
 
-            func.NeedsClosure = scopes.Count > 0 ? scopes.Last().HasClosedOverVars : true;
-            func.HasLocals = scopes.Count > 0 ? scopes.Last().HasLocals : true;
+            func.NeedsClosure = _scopes.Count > 0 ? _scopes.Last().HasClosedOverVars : true;
+            func.HasLocals = _scopes.Count > 0 ? _scopes.Last().HasLocals : true;
             EndScope();
 
-            currentFunction = enclosingFunctionType;
+            _currentFunctionType = enclosingFunctionType;
+            _currentExprFunc = enclosingFunc;
         }
 
         public void Visit(Stmt.If stmt)
@@ -308,17 +311,19 @@ namespace ULox
 
         public void Visit(Stmt.Return stmt)
         {
-            if (currentFunction == FunctionType.NONE)
+            if (_currentFunctionType == FunctionType.NONE)
             {
                 throw new ResolverException(stmt.keyword, "Cannot return outside of a function.");
             }
             if (stmt.value != null)
             {
-                if (currentFunction == FunctionType.INITIALIZER)
+                if (_currentFunctionType == FunctionType.INITIALIZER)
                     throw new ResolverException(stmt.keyword, "Cannot return a value from an initializer");
 
                 Resolve(stmt.value);
             }
+
+            if(_currentExprFunc != null) _currentExprFunc.HasReturns = true;
         }
 
         public void Visit(Stmt.Var stmt)

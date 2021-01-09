@@ -272,7 +272,7 @@ namespace ULox
                             new Expr.This(name.Copy(TokenType.THIS, "this"), EnvironmentVariableLocation.Invalid),
                             hiddenInternalFieldName,
                             new Expr.Variable(valueName, EnvironmentVariableLocation.Invalid)))
-                    },false, false), 
+                    },false, false, false), 
                 EnvironmentVariableLocation.InvalidSlot);
         }
 
@@ -286,7 +286,7 @@ namespace ULox
                         new Expr.Get(
                             new Expr.This(className.Copy(TokenType.THIS, "this"), 
                                 EnvironmentVariableLocation.Invalid), hiddenInternalFieldName, EnvironmentVariableLocation.Invalid))
-                    }, false, false)
+                    }, false, false, true)
                 , EnvironmentVariableLocation.InvalidSlot);
         }
 
@@ -340,7 +340,7 @@ namespace ULox
 
             Consume(TokenType.OPEN_BRACE, $"Expect '{{' before {functionType} body.");
             var body = Block();
-            return new Expr.Function(parameters, body, false, false);
+            return new Expr.Function(parameters, body, false, false, false);
         }
 
         private static Stmt.Var ToClassAutoVarDeclaration(Stmt.Var inVar)
@@ -520,7 +520,7 @@ namespace ULox
 
         private Expr Expression() => Conditional();
 
-        internal void Reset()
+        public void Reset()
         {
             _tokens = null;
             current = 0;

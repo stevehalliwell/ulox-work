@@ -13,7 +13,7 @@ namespace ULox
 
         public void BindToEngine(LoxEngine engine)
         {
-            //todo print probably should be part of standard lib and include printr style print
+            //todo printr style print
             engine.SetValue("print", new Callable(1, (args) =>
             {
                 var obj = args[0];

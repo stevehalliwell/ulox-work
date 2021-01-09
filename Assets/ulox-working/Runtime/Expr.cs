@@ -165,17 +165,19 @@ namespace ULox
         }
         public class Function : Expr
         {
-            public Function( List<Token> parameters, List<Stmt> body, bool HasLocals, bool NeedsClosure)
+            public Function( List<Token> parameters, List<Stmt> body, bool HasLocals, bool NeedsClosure,  bool HasReturns)
             {
                 this.parameters = parameters;
                 this.body = body;
                 this.HasLocals = HasLocals;
                 this.NeedsClosure = NeedsClosure;
+                this.HasReturns = HasReturns;
             }
             public readonly List<Token> parameters;
             public readonly List<Stmt> body;
             public bool HasLocals;
             public bool NeedsClosure;
+            public bool HasReturns;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
 
