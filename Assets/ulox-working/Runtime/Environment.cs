@@ -46,7 +46,7 @@ namespace ULox
             if(valueIndicies.ContainsKey(name) ||
                 valueIndicies.ContainsValue(slot))
             {
-                throw new LoxException($"Environment value redinition not allowed. Requested {name}:{slot} collided.");
+                throw new LoxException($"Environment value redefinition not allowed. Requested {name}:{slot} collided.");
             }
 
             while (objectList.Count < slot + 1) { objectList.Add(null); }

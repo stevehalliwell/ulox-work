@@ -5,41 +5,27 @@ namespace ULox
 {
     public class LoxEngine
     {
-        private Scanner _scanner;
+        private Interpreter _interpreter;
         private Parser _parser;
         private Resolver _resolver;
-        private Interpreter _interpreter;
+        private Scanner _scanner;
 
-        public void SetValue(string address, object value)
+        public LoxEngine(
+            Scanner scanner,
+            Parser parser,
+            Resolver resolver,
+            Interpreter interpreter,
+            params ILoxEngineLibraryBinder[] loxEngineLibraryBinders)
         {
-            var containingEnvironment = AddressToEnvironment(address, out var endToken);
+            _scanner = scanner;
+            _parser = parser;
+            _resolver = resolver;
+            _interpreter = interpreter;
 
-            value = Interpreter.SantizeObject(value);
-
-            if (containingEnvironment != null)
+            foreach (var binder in loxEngineLibraryBinders)
             {
-                var existingIndex = containingEnvironment.FindSlot(endToken);
-                if (existingIndex >= 0)
-                {
-                    containingEnvironment.AssignSlot(existingIndex, value);
-                }
-                else
-                {
-                    containingEnvironment.DefineInAvailableSlot(endToken, value);
-                }
+                binder.BindToEngine(this);
             }
-        }
-
-        public object GetValue(string address)
-        {
-            var containingEnvironment = AddressToEnvironment(address, out var endToken);
-
-            if(containingEnvironment != null)
-            {
-                return containingEnvironment.FetchObject(containingEnvironment.FindSlot(endToken));
-            }
-
-            return null;
         }
 
         public IEnvironment AddressToEnvironment(string address, out string lastTokenLexeme)
@@ -69,11 +55,6 @@ namespace ULox
             return callable.Call(_interpreter, objs);
         }
 
-        public Class GetClass(string className)
-        {
-            return GetValue(className) as Class;
-        }
-
         public Instance CreateInstance(string className, params object[] objs)
         {
             return CreateInstance(GetClass(className), objs);
@@ -85,30 +66,21 @@ namespace ULox
             return @class?.Call(_interpreter, objs) as Instance;
         }
 
-        private Action<string> _logger;
-
-        public LoxEngine(
-            Scanner scanner,
-            Parser parser,
-            Resolver resolver,
-            Interpreter interpreter,
-            Action<string> logger)
+        public Class GetClass(string className)
         {
-            _scanner = scanner;
-            _parser = parser;
-            _resolver = resolver;
-            _interpreter = interpreter;
-            _logger = logger;
+            return GetValue(className) as Class;
+        }
 
-            SetValue("clock", new Callable(() => System.DateTime.Now.Ticks));
-            SetValue("sleep", new Callable(1, (args) => System.Threading.Thread.Sleep((int)(double)args[0])));
-            SetValue("abort", new Callable(() => throw new LoxException("abort")));
-            SetValue("Rand", new Callable(() => UnityEngine.Random.value));
-            SetValue("RandRange", new Callable(2, (args) => UnityEngine.Random.Range((float)(double)args[0], (float)(double)args[1])));
+        public object GetValue(string address)
+        {
+            var containingEnvironment = AddressToEnvironment(address, out var endToken);
 
-            SetValue("POD", new PODClass(null));
-            SetValue("Array", new ArrayClass(null));
-            SetValue("List", new ListClass(null));
+            if (containingEnvironment != null)
+            {
+                return containingEnvironment.FetchObject(containingEnvironment.FindSlot(endToken));
+            }
+
+            return null;
         }
 
         public void Run(string text)
@@ -122,6 +94,26 @@ namespace ULox
             _resolver.Resolve(statements);
 
             _interpreter.Interpret(statements);
+        }
+
+        public void SetValue(string address, object value)
+        {
+            var containingEnvironment = AddressToEnvironment(address, out var endToken);
+
+            value = Interpreter.SantizeObject(value);
+
+            if (containingEnvironment != null)
+            {
+                var existingIndex = containingEnvironment.FindSlot(endToken);
+                if (existingIndex >= 0)
+                {
+                    containingEnvironment.AssignSlot(existingIndex, value);
+                }
+                else
+                {
+                    containingEnvironment.DefineInAvailableSlot(endToken, value);
+                }
+            }
         }
     }
 }

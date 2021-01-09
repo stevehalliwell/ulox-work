@@ -27,7 +27,9 @@ namespace ULox.Demo
                 new Parser() { CatchAndSynch = false },
                 resolver,
                 interpreter,
-                Debug.Log);
+                new LoxCoreLibrary(),
+                new StandardClasses(),
+                new UnityFunctions());
 
             loxEngine.SetValue("SetUIText",
                 new Callable(1, (args) => text.text = (string)args[0]));

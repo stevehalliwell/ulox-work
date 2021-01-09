@@ -2,7 +2,7 @@
 
 namespace ULox
 {
-    public class TestLoxEngine
+    public abstract class TestLoxEngine
     {
         public string InterpreterResult { get; private set; }
         public LoxEngine loxEngine;
@@ -11,7 +11,7 @@ namespace ULox
 
         private void SetResult(string str) => InterpreterResult += str;
 
-        public TestLoxEngine()
+        protected TestLoxEngine(params ILoxEngineLibraryBinder[] loxEngineLibraryBinders)
         {
             Interpreter = new Interpreter(SetResult);
             resolver = new Resolver(Interpreter);
@@ -20,7 +20,7 @@ namespace ULox
                 new Parser() { CatchAndSynch = false },
                 resolver,
                 Interpreter,
-                SetResult);
+                loxEngineLibraryBinders);
         }
 
         public void Run(string testString, bool catchAndLogExceptions, bool logWarnings = true)
