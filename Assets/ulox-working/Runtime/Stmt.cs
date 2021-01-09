@@ -80,15 +80,6 @@ namespace ULox
             public readonly Stmt elseBranch;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
-        public class Print : Stmt
-        {
-            public Print( Expr expression)
-            {
-                this.expression = expression;
-            }
-            public readonly Expr expression;
-            public override void Accept(Visitor visitor) => visitor.Visit(this);
-        }
         public class Return : Stmt
         {
             public Return( Token keyword, Expr value)
@@ -155,7 +146,6 @@ namespace ULox
             void Visit(Expression stmt);
             void Visit(Function stmt);
             void Visit(If stmt);
-            void Visit(Print stmt);
             void Visit(Return stmt);
             void Visit(Var stmt);
             void Visit(While stmt);

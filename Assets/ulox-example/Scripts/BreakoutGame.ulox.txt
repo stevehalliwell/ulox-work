@@ -75,7 +75,7 @@ fun CreateBall()
 
 fun SetupGame()
 {
-	print "Setting Up Game";
+	print ("Setting Up Game");
 	SetUIText("Welcome to uLox Breakout.\n\nPress space to begin.");
 
 	paddleID = CreateGameObject(paddleName);
@@ -134,7 +134,7 @@ fun PreGameLoop()
 	//wait for input to start game
 	if(GetKey("space"))
 	{
-		print "Game Started";
+		print ("Game Started");
 		currentUpdate = UpdateGameLoop;
 
 		CreateBall();

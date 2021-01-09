@@ -10,13 +10,13 @@ namespace ULox.Tests
 
             yield return new TestCaseData(
 @"var arr = Array(3);
-print arr;",
+print (arr);",
 @"<array [null,null,null,]>")
                 .SetName("ArrayEmpty");
 
             yield return new TestCaseData(
 @"var arr = Array(3);
-print arr.Get(arr.Count()-1);",
+print (arr.Get(arr.Count()-1));",
 @"null")
                 .SetName("ArrayEmpty_LastNull");
 
@@ -26,14 +26,14 @@ for(var i = 0; i < arr.Count(); i += 1)
 {
     arr.Set(i,i);
 }
-print arr;",
+print (arr);",
 @"<array [0,1,2,3,4,]>")
                 .SetName("ArrayPrint");
 
             yield return new TestCaseData(
 @"var arr = Array(5);
 
-print arr.Get(6);",
+print (arr.Get(6));",
 @"Index was out of range. Must be non-negative and less than the size of the collection.
 Parameter name: index")
                 .SetName("ArrayBoundsError");
@@ -51,9 +51,9 @@ for(var i = 0; i < 10; i += 1) { list.Add(i); }
 list.RemoveAt(4);
 list.Remove(0);
 
-for(var i = 0; i < list.Count(); i += 1) { print list.Get(i); }
+for(var i = 0; i < list.Count(); i += 1) { print (list.Get(i)); }
 
-print list;
+print (list);
 ",
 @"12356789<list [1,2,3,5,6,7,8,9,]>")
                 .SetName("List_Fill_Validate");
@@ -61,7 +61,7 @@ print list;
             yield return new TestCaseData(
 @"var pod = POD();
 pod.a = 10;
-print pod.a;",
+print (pod.a);",
 @"10")
                 .SetName("POD_Store_Validate");
 
@@ -69,12 +69,12 @@ print pod.a;",
 @"var outter = POD();
 outter.inner = POD();
 outter.inner.a = 10;
-print outter.inner.a;",
+print (outter.inner.a);",
 @"10")
                 .SetName("PODNested_Store_Validate");
 
             yield return new TestCaseData(
-@"print """";",
+@"print ("""");",
 @"")
                 .SetName("Empty");
         }
@@ -122,7 +122,7 @@ outter.inner.a = 10;", true);
 
             test.loxEngine.SetValue("outter.inner.a", testValue);
 
-            test.Run(@"print outter.inner.a;", true);
+            test.Run(@"print (outter.inner.a);", true);
 
             Assert.AreEqual(testValue, test.InterpreterResult);
         }
@@ -157,15 +157,14 @@ outter.inner.a = 10;", true);
 
             test.loxEngine.SetValue("collide.inner.a", testValue);
 
-            test.Run(@"print collide.inner; collide.inner = List(); print collide.inner;", true);
+            test.Run(@"print (collide.inner); collide.inner = List(); print (collide.inner);", true);
 
             Assert.AreEqual("<inst POD><list []>", test.InterpreterResult);
         }
         public class StandardClassesTestLoxEngine : TestLoxEngine
         {
             public StandardClassesTestLoxEngine()
-                : base(new LoxCoreLibrary(),
-                      new StandardClasses())
+                : base(new StandardClasses())
             {
             }
         }

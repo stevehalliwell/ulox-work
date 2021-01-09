@@ -50,7 +50,7 @@ class Ball
 
 fun SetupGame()
 {
-	print "Setting Up Game";
+	print ("Setting Up Game");
 
 	for(var i = 0; i < numBallsToSpawn; i += 1)
 	{

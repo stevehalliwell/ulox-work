@@ -40,8 +40,6 @@ namespace ULox
             {
             }
         }
-
-        private Action<string> _logger;
         private Environment _globals = new Environment(null);
         private IEnvironment _currentEnvironment;
 
@@ -49,9 +47,8 @@ namespace ULox
 
         public IEnvironment CurrentEnvironment => _currentEnvironment;
 
-        public Interpreter(Action<string> logger)
+        public Interpreter()
         {
-            _logger = logger;
             _currentEnvironment = Globals;
         }
 
@@ -200,15 +197,7 @@ namespace ULox
             throw new RuntimeTypeException(op, "Operands must be numbers.");
         }
 
-        private static string Stringify(object value)
-        {
-            if (value == null) return "null";
-            return value.ToString();
-        }
-
         public void Visit(Stmt.Expression stmt) => Evaluate(stmt.expression);
-
-        public void Visit(Stmt.Print stmt) => _logger?.Invoke(Stringify(Evaluate(stmt.expression)));
 
         public object Visit(Expr.Variable expr)
         {

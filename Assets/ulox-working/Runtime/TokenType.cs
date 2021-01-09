@@ -63,8 +63,6 @@
         SET,
         GETSET,
 
-        PRINT,
-
         EOF,
 
         NONE,

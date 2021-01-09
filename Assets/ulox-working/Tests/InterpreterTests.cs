@@ -13,19 +13,19 @@ namespace ULox.Tests
         public static IEnumerable<TestCaseData> Generator()
         {
             yield return new TestCaseData(
-@"print 1 + 4 * 2 / 2;",
+@"print(1 + 4 * 2 / 2);",
 @"5")
                 .SetName("Math_Expr");
 
             yield return new TestCaseData(
-@"print 4 * (2 / 2 + 1);",
+@"print(4 * (2 / 2 + 1));",
 @"8")
                 .SetName("Math_Grouping_Expr");
 
             yield return new TestCaseData(
 @"if( (1 > 2 and 4 < 5) or true)
 {
-    print ""inner"";
+    print(""inner"");
 }",
 @"inner")
                 .SetName("Logic_Expr");
@@ -34,7 +34,7 @@ namespace ULox.Tests
 @"var a = false;
 var b = ""Hello"";
 
-print a or b; ",
+print( a or b); ",
 @"Hello")
                 .SetName("Print_Logic");
 
@@ -59,7 +59,7 @@ var c = ""global c"";
 res = res + a;
 res = res + b;
 res = res + c;
-print res;",
+print(res);",
 @"inner aouter bglobal couter aouter bglobal cglobal aglobal bglobal c")
                 .SetName("Globals_Locals");
 
@@ -73,14 +73,14 @@ for (var b = 1; a < 10000; b = temp + b)
     a = b;
 }
 
-print a;",
+print( a);",
 @"10946")
                 .SetName("Loop_Fib");
 
             yield return new TestCaseData(
 @"fun sayHi(first, last)
 {
-    print ""Hi, "" + first + "" "" + last + ""!"";
+    print(""Hi, "" + first + "" "" + last + ""!"");
 }
 
 sayHi(""Dear"", ""Reader"");",
@@ -101,7 +101,7 @@ for (; i < 20; i = i + 1)
     last = fib(i);
 }
 
-print last;",
+print(last);",
 @"4181")
                 .SetName("Recursive_Fib");
 
@@ -121,14 +121,14 @@ print last;",
 var counter = makeCounter();
 counter();
 counter();
-print counter();",
+print(counter());",
 @"3")
                 .SetName("Closure_Counter");
 
             yield return new TestCaseData(
 @"class Bagel {}
 var bagel = Bagel();
-print bagel;",
+print(bagel);",
 @"<inst Bagel>")
                 .SetName("Class_Empty");
 
@@ -142,7 +142,7 @@ var partial = PartialClass();
 partial.BeginingOfStatement = ""Hello "";
 partial.EndOfStatement = ""World"";
 
-print partial.BeginingOfStatement + partial.EndOfStatement; ",
+print(partial.BeginingOfStatement + partial.EndOfStatement); ",
 @"Hello World")
                 .SetName("Class_DataStore");
 
@@ -150,7 +150,7 @@ print partial.BeginingOfStatement + partial.EndOfStatement; ",
 @"
 class Bacon {
   eat() {
-    print ""Crunch crunch crunch!"";
+    print( ""Crunch crunch crunch!"");
   }
 }
 
@@ -162,7 +162,7 @@ Bacon().eat();",
 @"class Cake {
   taste() {
     var adjective = ""delicious"";
-    print ""The "" + this.flavor + "" cake is "" + adjective + ""!"";
+    print(""The "" + this.flavor + "" cake is "" + adjective + ""!"");
   }
 }
 
@@ -182,7 +182,7 @@ cake.taste();",
 }
 
 var circ = Circle(4);
-print circ.area();",
+print(circ.area());",
 @"50.24")
                 .SetName("Class_init");
 
@@ -194,26 +194,26 @@ var i = 1;
 var f = 1.01;
 var s = ""hello"";
 
-print Klass;
-print k;
-print Func;
-print i;
-print f;
-print s;",
+print( Klass);
+print( k);
+print( Func);
+print( i);
+print( f);
+print( s);",
 @"<class Klass><inst Klass><fn Func>11.01hello")
                 .SetName("Print_Types");
 
             yield return new TestCaseData(
 @"class Doughnut {
   cook() {
-    print ""Fry until golden brown."";
+    print(""Fry until golden brown."");
   }
 }
 
 class BostonCream < Doughnut {
   cook() {
     super.cook();
-    print ""Pipe full of custard and coat with chocolate."";
+    print(""Pipe full of custard and coat with chocolate."");
   }
 }
 
@@ -224,12 +224,12 @@ BostonCream().cook();",
             yield return new TestCaseData(
 @"var a = 10;
 a = -a;
-print a;",
+print(a);",
 @"-10")
                 .SetName("Unary");
 
             yield return new TestCaseData(
-@"print ""hello incomplete string;",
+@"print(""hello incomplete string);",
 @"IDENTIFIER|1:32 Unterminated String")
                 .SetName("IncompleteStringDeclare");
 
@@ -243,7 +243,7 @@ print a;",
 var i;
 for(i = 0; i < 3; i = i + 1)
 {
-    print i;
+    print(i);
 }",
 @"012")
                 .SetName("ForExprInitialiser");
@@ -252,23 +252,23 @@ for(i = 0; i < 3; i = i + 1)
 @"
 var a = 2;
 if(a == 0)
-{print 1;}
+{print(1);}
 else if (a == 1)
 {}
 else
-{print 3;}",
+{print(3);}",
 @"3")
                 .SetName("IfElseChain");
 
             yield return new TestCaseData(
-@"print a;",
-@"IDENTIFIER|1:8 Undefined variable a")
+@"print(a);",
+@"IDENTIFIER|1:7 Undefined variable a")
                 .SetName("UndefinedVar");
 
             yield return new TestCaseData(
 @"var Func = 6;
-print Func();",
-@"CLOSE_PAREN|2:13 Can only call function types")
+print(Func());",
+@"CLOSE_PAREN|2:12 Can only call function types")
                 .SetName("NotAFunc");
 
             yield return new TestCaseData(
@@ -276,8 +276,8 @@ print Func();",
 {
 }
 
-print Undef().a;",
-@"IDENTIFIER|5:16 Undefined property 'a'.")
+print(Undef().a);",
+@"IDENTIFIER|5:15 Undefined property 'a'.")
                 .SetName("UndefinedProperty");
 
             yield return new TestCaseData(
@@ -361,8 +361,8 @@ class Child {
                 .SetName("CannotSuperOutsideClass");
 
             yield return new TestCaseData(
-@"var a = print 7;",
-@"PRINT|1:16 Expect expression.")
+@"var a = if(7);",
+@"IF|1:13 Expect expression.")
                 .SetName("CannotRValueStatementsInAssign");
 
             yield return new TestCaseData(
@@ -370,7 +370,7 @@ class Child {
 
 if(a != null)
 {
-    print a;
+    print(a);
 }",
 @"1")
                 .SetName("IfNotNull");
@@ -380,7 +380,7 @@ if(a != null)
 
 if(a >= 1)
 {
-    print a;
+    print(a);
 }",
 @"1")
                 .SetName("GreaterOrEqual");
@@ -391,7 +391,7 @@ var b;
 var c;
 var d = ""World"";
 
-print (a+b)+c+d;",
+print((a+b)+c+d);",
 @"Hello World")
                 .SetName("StringNullConcats");
 
@@ -407,7 +407,7 @@ var res = A+B;",
 @"var a = ""hello"";
 var b = !a;
 
-print b;",
+print(b);",
 @"False")
                 .SetName("NotNotTruthy");
 
@@ -439,8 +439,8 @@ class Klass < Func{}",
             yield return new TestCaseData(
 @"fun Func(a,b){}
 
-print Func.a;",
-@"IDENTIFIER|3:13 Only instances have properties.")
+print(Func.a);",
+@"IDENTIFIER|3:12 Only instances have properties.")
                 .SetName("OnlyInstHasGet");
 
             yield return new TestCaseData(
@@ -453,14 +453,14 @@ Func.a = 67;",
             yield return new TestCaseData(
 @"class Doughnut {
   cook() {
-    print ""Fry until golden brown."";
+    print(""Fry until golden brown."");
   }
 }
 
 class BostonCream < Doughnut {
   cook() {
     super.Missing();
-    print ""Pipe full of custard and coat with chocolate."";
+    print(""Pipe full of custard and coat with chocolate."");
   }
 }
 
@@ -471,7 +471,7 @@ BostonCream().cook();",
             yield return new TestCaseData(
 @"fun Say(a,b,c)
 {
-    print a + b + c;
+    print(a + b + c);
 }
 
 Say(""Hello"","" "",""World!"");",
@@ -480,23 +480,23 @@ Say(""Hello"","" "",""World!"");",
 
             yield return new TestCaseData(
 @"var a = 1 < 2 ? 3 : 4;
-print a;",
+print (a);",
 @"3")
                 .SetName("SimpleConditional");
 
             yield return new TestCaseData(
 @"var a = !(1 < 2) ? 3 : 4;
-print a;",
+print(a);",
 @"4")
                 .SetName("SimpleConditionalReverse");
 
             yield return new TestCaseData(
-@"print + 5;",
-@"PLUS|1:8 Missing left-had operand.")
+@"print(+ 5);",
+@"PLUS|1:7 Missing left-had operand.")
                 .SetName("MissingLHS");
 
             yield return new TestCaseData(
-@"print ""Hello "" + 7;",
+@"print(""Hello "" + 7);",
 @"Hello 7")
                 .SetName("AutoNumberToStringConcat");
 
@@ -504,7 +504,7 @@ print a;",
 @"var a = 0;
 while(a < 10)
 {
-    print a;
+    print(a);
     if (a > 3) {break;}
     a = a + 1;
 }",
@@ -514,7 +514,7 @@ while(a < 10)
             yield return new TestCaseData(
 @"for(var i = 0; i < 10; i = i + 1)
 {
-    print i;
+    print(i);
     if (i > 3) {break;}
 }",
 @"01234")
@@ -526,7 +526,7 @@ while(a < 10)
 {
     a = a + 1;
     if (a > 3) {continue;}
-    print a;
+    print(a);
 }",
 @"123")
                 .SetName("WhileContinue");
@@ -535,7 +535,7 @@ while(a < 10)
 @"for(var i = 0; i < 10; i = i + 1)
 {
     if (i > 3) {continue;}
-    print i;
+    print(i);
 }",
 @"0123")
                 .SetName("ForContinue");
@@ -550,7 +550,7 @@ while(a < 10)
 }
 
 thrice(fun(a) {
-    print a;
+    print(a);
 });",
 @"123")
                 .SetName("Lambda");
@@ -578,7 +578,7 @@ thrice(fun(a) {
 {
     var a = 1;
     var b = 2;
-    print b;
+    print(b);
 }",
 @"3:14 - IDENTIFIER a Local variable is never read.")
                 .SetName("UnusedLocals");
@@ -595,7 +595,7 @@ thrice(fun(a) {
 }
 
 var circle = Circle(4);
-print circle.area;",
+print(circle.area);",
 @"50.24")
                 .SetName("ClassGetProperty");
 
@@ -606,7 +606,7 @@ print circle.area;",
   }
 }
 
-print Math.square(3);",
+print( Math.square(3));",
 @"9")
                 .SetName("MetaClassMethods");
 
@@ -618,7 +618,7 @@ print Math.square(3);",
 }
 
 Math.pi = 3.14;
-print Math.pi;",
+print(Math.pi);",
 @"3.14")
                 .SetName("MetaClassFieldStorage");
 
@@ -630,7 +630,7 @@ print Math.pi;",
     }
 }
 
-print Math.PI;",
+print(Math.PI);",
 @"3.14")
                 .SetName("MetaClassVar");
 
@@ -639,7 +639,7 @@ print Math.PI;",
 loop
 {
     i = i + 1;
-    print i;
+    print(i);
     if(i >= 9)
     {
         break;
@@ -658,7 +658,7 @@ a *= 3;
 a -= 2;
 a /= 2;
 a %= 1;
-print a;
+print(a);
 
 class Test{init(){this.a = 0;}}
 var t = Test();
@@ -668,7 +668,7 @@ t.a *= 3;
 t.a -= 2;
 t.a /= 2;
 t.a %= 1;
-print t.a;
+print(t.a);
 //a *=3;
 //print a;
 //a -= 1;
@@ -679,7 +679,7 @@ print t.a;
                 .SetName("AddedOperators");
 
             yield return new TestCaseData(
-@"print 50 % 40 % 9;",
+@"print(50 % 40 % 9);",
 @"1")
                 .SetName("Modulus");
 
@@ -690,9 +690,9 @@ print t.a;
     Area {return this.Side * this.Side;}
 }
 var sq = Square();
-print sq.Side;
+print(sq.Side);
 sq.SetSide(2);
-print sq.Area;",
+print(sq.Area);",
 @"null4")
                 .SetName("ClassGetSet");
 
@@ -703,8 +703,8 @@ print sq.Area;",
     Area {return this.Side * this.Side;}
 }
 var sq = Square();
-print sq.Arae;",
-@"IDENTIFIER|7:14 Undefined property 'Arae'.")
+print(sq.Arae);",
+@"IDENTIFIER|7:13 Undefined property 'Arae'.")
                 .SetName("ClassGetSet_Typo_Error");
 
             yield return new TestCaseData(
@@ -714,9 +714,9 @@ print sq.Arae;",
     Area {return this.Side * this.Side;}
 }
 var sq = Square();
-print sq.Area;
+print(sq.Area);
 sq.Side = 2;
-print sq.Area;",
+print(sq.Area);",
 @"STAR|4:35 Operands must be numbers.")
                 .SetName("ClassVars_nullfield");
 
@@ -727,7 +727,7 @@ print sq.Area;",
     Area {return this.Side * this.Side;}
 }
 
-print Square().Area;",
+print(Square().Area);",
 @"4")
                 .SetName("ClassVars_InitialValue");
 
@@ -738,8 +738,8 @@ print Square().Area;",
     Area {return this.Side * this.Side;}
 }
 var sq = Square();
-print sq.Side;
-print sq.Area;",
+print(sq.Side);
+print(sq.Area);",
 @"24")
                 .SetName("ClassVars_GetInitialValue");
 
@@ -751,7 +751,7 @@ print sq.Area;",
 }
 var sq = Square();
 sq.SetSide(2);
-print sq.Area;",
+print(sq.Area);",
 @"4")
                 .SetName("ClassVars_SetInitialValue");
 
@@ -763,8 +763,8 @@ print sq.Area;",
 }
 var sq = Square();
 sq.SetSide(2);
-print sq.Side;
-print sq.Area;",
+print(sq.Side);
+print(sq.Area);",
 @"24")
                 .SetName("ClassVars_GetSetInitialValue");
 
@@ -772,13 +772,13 @@ print sq.Area;",
 @"class Square
 {
     init() {this.side = 1;}
-    get Side {print this.side; return this.side;}
+    get Side {print(this.side); return this.side;}
     Area {return this.side * this.side;}
 }
 
 var sq = Square();
 sq.Side;
-print sq.Area;",
+print(sq.Area);",
 @"11")
                 .SetName("Class_CustomGet");
 
@@ -786,13 +786,13 @@ print sq.Area;",
 @"class Square
 {
     init() {this.side = 1;}
-    set Side {print value; this.side = value;}
+    set Side {print(value); this.side = value;}
     Area {return this.side * this.side;}
 }
 
 var sq = Square();
 sq.Side(2);
-print sq.Area;",
+print(sq.Area);",
 @"24")
                 .SetName("Class_CustomSet");
 
@@ -886,20 +886,20 @@ print sq.Area;",
                 .SetName("Class_Static_DupMethods");
 
             yield return new TestCaseData(
-@"print ""Hello\r\nWorld!"";",
+@"print(""Hello\r\nWorld!"");",
 @"Hello
 World!")
                 .SetName("Print_EscapedChars");
 
             yield return new TestCaseData(
 @"var val = 1;
-get a(){print val;}",
+get a(){print(val);}",
 @"GET|2:3 Only expected withing class declaration.")
                 .SetName("Unexpected_get");
 
             yield return new TestCaseData(
 @"var a = ""Why "", b = ""Hello "", c = ""There"";
-print a + b + c;",
+print(a + b + c);",
 @"Why Hello There")
                 .SetName("MultiVariablePrintMatch");
 
@@ -907,7 +907,7 @@ print a + b + c;",
 @"class TestClass
 {
     var a = ""Why "", b = ""Hello "", c = ""There"";
-    Say() { print this.a + this.b + this.c; }
+    Say() { print(this.a + this.b + this.c); }
 }
 TestClass().Say();",
 @"Why Hello There")
@@ -917,7 +917,7 @@ TestClass().Say();",
 @"class TestClass
 {
     getset a = ""Why "", b = ""Hello "", c = ""There"";
-    Say() { print this.a + this.b + this.c; }
+    Say() { print(this.a + this.b + this.c); }
 }
 TestClass().Say();",
 @"Why Hello There")
@@ -925,10 +925,10 @@ TestClass().Say();",
 
             yield return new TestCaseData(
 @"var a = true;
-if(a) print 7;
+if(a) print(7);
 else
 {
-    print -7;
+    print(-7);
 }",
 @"7")
                 .SetName("SingleStatementIf");
@@ -936,7 +936,7 @@ else
             yield return new TestCaseData(
 @"var i = 0;
 while (i < 10) i += 1;
-print i;",
+print(i);",
 @"10")
                 .SetName("SingleStatementWhile");
 
@@ -944,12 +944,12 @@ print i;",
 @"class Base { var a = 1; }
 class Derived < Base { var b = 2;}
 var inst = Derived();
-print inst.b + inst.a;",
+print(inst.b + inst.a);",
 @"3")
                 .SetName("SuperFields");
 
             yield return new TestCaseData(
-@"class Base { BaseMeth(b) {print b + ""Bar"";} }
+@"class Base { BaseMeth(b) {print(b + ""Bar"");} }
 class Derived < Base { var c = ""Foo"";}
 var inst = Derived();
 inst.BaseMeth(inst.c);",
@@ -957,7 +957,7 @@ inst.BaseMeth(inst.c);",
                 .SetName("SuperMethod");
 
             yield return new TestCaseData(
-@"class Base { BaseMeth(b) {print b + ""Bar"";} }
+@"class Base { BaseMeth(b) {print(b + ""Bar"");} }
 class Derived < Base { var c = ""Foo"";}
 var inst = Derived();
 inst.BaseMeth(inst.c);",
@@ -965,8 +965,8 @@ inst.BaseMeth(inst.c);",
                 .SetName("SuperMethodsAndField");
 
             yield return new TestCaseData(
-@"class Base { BaseMeth(b) {print b + ""Bar"";} }
-class Derived < Base { ChildMeth(a) {print ""Well, ""; super.BaseMeth(a);}}
+@"class Base { BaseMeth(b) {print(b + ""Bar"");} }
+class Derived < Base { ChildMeth(a) {print(""Well, ""); super.BaseMeth(a);}}
 var inst = Derived();
 inst.ChildMeth(""Foo"");",
 @"Well, FooBar")
@@ -975,11 +975,11 @@ inst.ChildMeth(""Foo"");",
             yield return new TestCaseData(
 @"class Base 
 {
-    BaseMeth(b) {print b + ""Bar"";} 
+    BaseMeth(b) {print(b + ""Bar"");} 
 }
 class Derived < Base 
 { 
-    ChildMeth(a) { print ""Well, ""; super.BaseMeth(a + Derived.fb);}
+    ChildMeth(a) { print(""Well, ""); super.BaseMeth(a + Derived.fb);}
 
     class var fb = ""Foobar? "";
 }
@@ -995,8 +995,8 @@ inst.ChildMeth(""is it "");",
 }
 class Derived < Base 
 { 
-    class BaseMeth(b) {print b + ""Bar"";} 
-    ChildMeth(a) {print ""Well, ""; Derived.BaseMeth(a + this.fb);}
+    class BaseMeth(b) {print(b + ""Bar"");} 
+    ChildMeth(a) {print(""Well, ""); Derived.BaseMeth(a + this.fb);}
 }
 var inst = Derived();
 inst.ChildMeth(""is it "");",
@@ -1012,9 +1012,9 @@ class Derived < Base
 { 
     ChildMeth(a) 
     {
-        print a; 
+        print(a); 
         super.Setfoo(""Foo"");
-        print super.foo() + ""Bar"";
+        print(super.foo() + ""Bar"");
     }
 }
 var inst = Derived();
@@ -1031,11 +1031,11 @@ class Derived < Base
 { 
     ChildMeth(a) 
     {
-        print a; 
+        print(a); 
         this.bar = ""Bar"";
         //todo document this difference, perhaps super is an error if not on method?
         //  would expect to use super here perhaps  
-        print this.foo + this.bar;
+        print(this.foo + this.bar);
     }
 }
 var inst = Derived();
@@ -1055,27 +1055,27 @@ class Derived < Base
         this.bar = ""Bar"";
         //todo document this difference, perhaps super is an error if not on method?
         //  would expect to use super here perhaps  
-        print super.foo + this.bar;
+        print(super.foo + this.bar);
     }
 }
 var inst = Derived();
 inst.ChildMeth(""is it "");",
-@"IDENTIFIER|12:68 Could not find 'foo'via 'super'.")
+@"IDENTIFIER|12:67 Could not find 'foo'via 'super'.")
                 .SetName("CannotUseSuperOnField");
 
             yield return new TestCaseData(
 @"
 class BaseBase
 {
-    Foo(a) {print ""BaseBase"" + a;}
+    Foo(a) {print(""BaseBase"" + a);}
 }
 class Base < BaseBase
 {
-    Foo(a) {print ""Base"" + super.Foo(a);}
+    Foo(a) {print(""Base"" + super.Foo(a));}
 }
 class Derived < Base 
 {
-    Foo(a) {print ""Derived"" + super.Foo(a);}
+    Foo(a) {print(""Derived"" + super.Foo(a));}
 }
 var inst = Derived();
 inst.Foo(""hi"");",
@@ -1086,15 +1086,15 @@ inst.Foo(""hi"");",
 @"
 class BaseBase
 {
-    Foo(a) {print ""BaseBase"" + a;}
+    Foo(a) {print(""BaseBase"" + a);}
 }
 class Base < BaseBase
 {
-    Foo(a) {print ""Base"" + super.Foo(a);}
+    Foo(a) {print(""Base"" + super.Foo(a));}
 }
 class Derived < Base 
 {
-    Foo(a) {print ""Derived"" + super(BaseBase).Foo(a);}
+    Foo(a) {print(""Derived"" + super(BaseBase).Foo(a));}
 }
 var inst = Derived();
 inst.Foo(""hi"");",
@@ -1105,23 +1105,23 @@ inst.Foo(""hi"");",
 @"
 class BaseBase
 {
-    Foo(a) {print ""BaseBase"" + a;}
+    Foo(a) {print(""BaseBase"" + a);}
 }
 class Base < BaseBase
 {
-    Foo(a) {print ""Base"" + super.Foo(a);}
+    Foo(a) {print(""Base"" + super.Foo(a));}
 }
 class Derived < Base 
 {
-    Foo(a) {print ""Derived"" + super(BassBase).Foo(a);}
+    Foo(a) {print(""Derived"" + super(BassBase).Foo(a));}
 }
 var inst = Derived();
 inst.Foo(""hi"");",
-@"IDENTIFIER|12:52 Could not find parent class of name 'BassBase' via 'super'.")
+@"IDENTIFIER|12:51 Could not find parent class of name 'BassBase' via 'super'.")
                 .SetName("TypoSuperJumpChain");
 
             yield return new TestCaseData(
-@"print """";",
+@"print("""");",
 @"")
                 .SetName("Empty");
         }
@@ -1141,7 +1141,7 @@ inst.Foo(""hi"");",
         public class InterpreterTestLoxEngine : TestLoxEngine
         {
             public InterpreterTestLoxEngine()
-                :base(new LoxCoreLibrary())
+                :base()
             {
             }
         }

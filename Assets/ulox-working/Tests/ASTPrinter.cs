@@ -275,12 +275,6 @@ namespace ULox.Tests
             Dent();
         }
 
-        public void Visit(Stmt.Print stmt)
-        {
-            Print("print ");
-            Print(stmt.expression);
-        }
-
         public void Visit(Stmt.Return stmt)
         {
             Print("return ");

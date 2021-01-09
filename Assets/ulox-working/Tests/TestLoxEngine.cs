@@ -13,14 +13,15 @@ namespace ULox
 
         protected TestLoxEngine(params ILoxEngineLibraryBinder[] loxEngineLibraryBinders)
         {
-            Interpreter = new Interpreter(SetResult);
+            var binders = new ILoxEngineLibraryBinder[] { new LoxCoreLibrary(SetResult) };
+            Interpreter = new Interpreter();
             resolver = new Resolver(Interpreter);
             loxEngine = new LoxEngine(
                 new Scanner(),
                 new Parser() { CatchAndSynch = false },
                 resolver,
                 Interpreter,
-                loxEngineLibraryBinders);
+                binders.Concat(loxEngineLibraryBinders).ToArray());
         }
 
         public void Run(string testString, bool catchAndLogExceptions, bool logWarnings = true)

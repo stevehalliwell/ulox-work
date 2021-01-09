@@ -306,11 +306,6 @@ namespace ULox
             if (stmt.elseBranch != null) Resolve(stmt.elseBranch);
         }
 
-        public void Visit(Stmt.Print stmt)
-        {
-            Resolve(stmt.expression);
-        }
-
         public void Visit(Stmt.Return stmt)
         {
             if (currentFunction == FunctionType.NONE)

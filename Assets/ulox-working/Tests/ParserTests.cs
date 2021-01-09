@@ -8,10 +8,10 @@ namespace ULox.Tests
         public static IEnumerable<TestCaseData> Generator()
         {
             yield return new TestCaseData(
-@"for(var i = 0; i < 10; i = i+1) {print i;}",
+@"for(var i = 0; i < 10; i = i+1) {print(i);}",
 @"{ { var 1:10 - IDENTIFIER i[ 0 ] }
 { while [ 1:23 - LESS < [ 1:20 - IDENTIFIER i ] [ 10 ] ]
-  { { print [ 1:51 - IDENTIFIER i ] } }
+  { { [ call [ 1:48 - IDENTIFIER print ]( [ 1:50 - IDENTIFIER i ] ) ] } }
   { [ assign 1:31 - IDENTIFIER i[ 1:38 - PLUS + [ 1:37 - IDENTIFIER i ] [ 1 ] ] ] } } }")
                 .SetName("ForLoop");
             yield return new TestCaseData(
@@ -61,12 +61,12 @@ this.b = 2;
 
 var inst = Foo();
 
-print inst.a;",
+print( inst.a);",
 @"{ class 1:10 - IDENTIFIER Foo
    instance 
   fun 3:12 - IDENTIFIER init[ { [ [ 5:4 - THIS this ]5:6 - IDENTIFIER a[ 1 ] ] } ] }
 { var 11:9 - IDENTIFIER inst[ call [ 11:17 - IDENTIFIER Foo ] ] }
-{ print [ 13:13 - IDENTIFIER a[ 13:11 - IDENTIFIER inst ] ] }")
+{ [ call [ 13:5 - IDENTIFIER print ]( [ 13:14 - IDENTIFIER a[ 13:12 - IDENTIFIER inst ] ] ) ] }")
                 .SetName("Class");
             yield return new TestCaseData(
 @"class Foo
@@ -88,7 +88,7 @@ this.b = 2;
 
 var inst = Bar();
 
-print inst.a + inst.b;",
+print (inst.a + inst.b);",
 @"{ class 1:10 - IDENTIFIER Foo
    instance 
   fun 3:12 - IDENTIFIER init[ { [ [ 5:4 - THIS this ]5:6 - IDENTIFIER a[ 1 ] ] } ] }
@@ -97,7 +97,7 @@ print inst.a + inst.b;",
   fun 11:4 - IDENTIFIER init[ { [ call [ super 13:10 - IDENTIFIER init ] ] }
     { [ [ 14:4 - THIS this ]14:6 - IDENTIFIER b[ 2 ] ] } ] }
 { var 18:9 - IDENTIFIER inst[ call [ 18:17 - IDENTIFIER Bar ] ] }
-{ print [ 20:16 - PLUS + [ 20:13 - IDENTIFIER a[ 20:11 - IDENTIFIER inst ] ] [ 20:24 - IDENTIFIER b[ 20:22 - IDENTIFIER inst ] ] ] }")
+{ [ call [ 20:5 - IDENTIFIER print ]( [ 20:17 - PLUS + [ 20:14 - IDENTIFIER a[ 20:12 - IDENTIFIER inst ] ] [ 20:25 - IDENTIFIER b[ 20:23 - IDENTIFIER inst ] ] ] ) ] }")
                 .SetName("Inher");
             yield return new TestCaseData(
 @"var logic = true and false or true;
@@ -246,7 +246,7 @@ t.a += 1;",
 @"
 class Test
 {
-    init(a, b) { this._a = a; print b; }
+    init(a, b) { this._a = a; print (b); }
     get a = true;
     set d = 7;
     getset i, j, k;
@@ -255,7 +255,7 @@ class Test
 @"{ class 2:11 - IDENTIFIER Test
    instance { var 5:14 - IDENTIFIER _a[ True ] }{ var 6:14 - IDENTIFIER _d[ 7 ] }{ var 7:17 - IDENTIFIER _i }{ var 7:21 - IDENTIFIER _j }{ var 7:25 - IDENTIFIER _k }
   fun 4:12 - IDENTIFIER init[  ( 4:14 - IDENTIFIER a | 4:18 - IDENTIFIER b ) { [ [ 4:28 - THIS this ]4:31 - IDENTIFIER _a[ 4:37 - IDENTIFIER a ] ] }
-    { print [ 4:48 - IDENTIFIER b ] } ]
+    { [ call [ 4:45 - IDENTIFIER print ]( [ 4:49 - IDENTIFIER b ] ) ] } ]
   fun 5:14 - IDENTIFIER a[ { return [ 5:14 - IDENTIFIER _a[ 2:11 - THIS this ] ] } ]
   fun 6:14 - IDENTIFIER Setd[  ( 6:14 - IDENTIFIER value ) { [ [ 2:11 - THIS this ]6:14 - IDENTIFIER _d[ 6:14 - IDENTIFIER value ] ] } ]
   fun 7:17 - IDENTIFIER i[ { return [ 7:17 - IDENTIFIER _i[ 2:11 - THIS this ] ] } ]

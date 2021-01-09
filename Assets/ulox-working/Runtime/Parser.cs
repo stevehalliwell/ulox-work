@@ -376,7 +376,6 @@ namespace ULox
             if (Match(TokenType.LOOP)) return LoopStatement();
             if (Match(TokenType.FOR)) return ForStatement();
             if (Match(TokenType.IF)) return IfStatement();
-            if (Match(TokenType.PRINT)) return PrintStatement();
             if (Match(TokenType.RETURN)) return ReturnStatement();
             if (Match(TokenType.WHILE)) return WhileStatement();
             if (Match(TokenType.BREAK)) return BreakStatement();
@@ -510,13 +509,6 @@ namespace ULox
 
             Consume(TokenType.CLOSE_BRACE, "Expect '}' after block.");
             return statements;
-        }
-
-        private Stmt PrintStatement()
-        {
-            var value = Expression();
-            Consume(TokenType.END_STATEMENT, "Expect end of statement after value.");
-            return new Stmt.Print(value);
         }
 
         private Stmt ExpressionStatement()
@@ -835,7 +827,6 @@ namespace ULox
                 case TokenType.FOR:
                 case TokenType.IF:
                 case TokenType.WHILE:
-                case TokenType.PRINT:
                 case TokenType.RETURN:
                     return;
                 }

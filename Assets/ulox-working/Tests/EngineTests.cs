@@ -16,13 +16,13 @@ namespace ULox.Tests
 @"var start = clock();
 sleep(50);
 var end = clock();
-if (end > start) { print true; }",
+if (end > start) { print (true); }",
 @"True")
                 .SetName("Clock_Sleep_GreaterTime");
 
           
             yield return new TestCaseData(
-@"print """";",
+@"print ("""");",
 @"")
                 .SetName("Empty");
         }
@@ -54,7 +54,7 @@ if (end > start) { print true; }",
                  return (string)args[0] + "World!";
              }));
 
-            test.Run(@"print TestAction(""Hello "");", true);
+            test.Run(@"print( TestAction(""Hello ""));", true);
 
             Assert.AreEqual(interpreter, test.Interpreter);
             Assert.AreEqual("Hello World!", test.InterpreterResult);
@@ -104,7 +104,7 @@ if (end > start) { print true; }",
 
             test.loxEngine.SetValue("Func", new Callable(2, (args) => args[0].ToString() + args[1].ToString()));
 
-            test.Run(@"print Func(1,2);", true);
+            test.Run(@"print (Func(1,2));", true);
 
             Assert.AreEqual("12", test.InterpreterResult);
         }
@@ -141,7 +141,7 @@ if (end > start) { print true; }",
 
             test.loxEngine.SetValue(nameof(extVar), extVar);
 
-            test.Run(@"print extVar or """";", true);
+            test.Run(@"print (extVar or """");", true);
 
             Assert.AreEqual(extVar.ToString(), test.InterpreterResult);
         }
@@ -151,7 +151,7 @@ if (end > start) { print true; }",
         {
             var test = new EngineTestLoxEngine();
 
-            test.Run(@"fun Foo(){print 1;}", true);
+            test.Run(@"fun Foo(){print (1);}", true);
 
             var funcRes = test.loxEngine.CallFunction("Foo");
 
@@ -163,7 +163,7 @@ if (end > start) { print true; }",
         {
             var test = new EngineTestLoxEngine();
 
-            test.Run(@"fun Foo(v){print v;}", true);
+            test.Run(@"fun Foo(v){print (v);}", true);
 
             var funcRes = test.loxEngine.CallFunction("Foo", "hello");
 
@@ -175,7 +175,7 @@ if (end > start) { print true; }",
         {
             var test = new EngineTestLoxEngine();
 
-            test.Run(@"fun AddPrint(a,b){print a+b;}", true);
+            test.Run(@"fun AddPrint(a,b){print (a+b);}", true);
 
             var funcRes = test.loxEngine.CallFunction("AddPrint", 7, 3.14);
 
@@ -194,7 +194,7 @@ if (end > start) { print true; }",
 
             //use
             test.Run(
- @"print testInstance.val;", true, false);
+ @"print (testInstance.val);", true, false);
 
             Assert.AreEqual("1", test.InterpreterResult);
         }
@@ -207,7 +207,7 @@ if (end > start) { print true; }",
 
             test.loxEngine.SetValue(nameof(extVar), extVar);
 
-            test.Run(@"print extVar or """";", true);
+            test.Run(@"print (extVar or """");", true);
 
             Assert.AreEqual(extVar.ToString().Substring(0, 4), test.InterpreterResult.Substring(0, 4));
         }
@@ -220,7 +220,7 @@ if (end > start) { print true; }",
 
             test.loxEngine.SetValue(nameof(extVar), extVar);
 
-            test.Run(@"print extVar or """";", true);
+            test.Run(@"print (extVar or """");", true);
 
             Assert.AreEqual(extVar.ToString(), test.InterpreterResult);
         }
@@ -234,7 +234,7 @@ if (end > start) { print true; }",
 
             test.loxEngine.SetValue(nameof(extVar), extVar);
 
-            test.Run(@"print extVar or """";", true);
+            test.Run(@"print (extVar or """");", true);
 
             Assert.AreEqual(extVar.ToString(), test.InterpreterResult);
         }
@@ -244,20 +244,20 @@ if (end > start) { print true; }",
             var test = new EngineTestLoxEngine();
             var initialTestString =
 @"var v = true;
-print v;";
+print(v);";
 
             test.Run(initialTestString, true);
 
             test.loxEngine.SetValue("v", false);
 
-            test.Run("print v;", true);
+            test.Run("print (v);", true);
 
             Assert.AreEqual("TrueFalse", test.InterpreterResult);
         }
         public class EngineTestLoxEngine : TestLoxEngine
         {
             public EngineTestLoxEngine()
-                : base(new LoxCoreLibrary())
+                : base()
             {
             }
         }

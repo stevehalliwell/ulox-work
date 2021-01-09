@@ -6,45 +6,19 @@ namespace ULox.Tests
 {
     public class ScannerTests
     {
-        private static string[] StringDeclareTestStrings = new string[]
+        private static string[] FloatDeclareTestStrings = new string[]
         {
-            @"var lang = ""lox"";",
-            @"var lang=""lox"";",
-            @"var lang
+            @"var PI = 3.14;",
+            @"var PI= 3.14;",
+            @"var PI =3.14;",
+            @"var PI=3.14;",
+            @"var
+PI
 =
-""lox""
+3.14
 ;",
-            @"var multi = ""Now is the winter of our discontent
-Made glorious summer by this sun of York;
-And all the clouds that lour'd upon our house
-In the deep bosom of the ocean buried.""; ",
+            @"var PI = 3.;",
         };
-
-        [Test]
-        [TestCaseSource(nameof(StringDeclareTestStrings))]
-        public void Scanner_StringVarDeclare_TokenTypeMatch(string testString)
-        {
-            var tokenResults = new TokenType[]
-            {
-                TokenType.VAR,
-                TokenType.IDENTIFIER,
-                TokenType.ASSIGN,
-                TokenType.STRING,
-                TokenType.END_STATEMENT,
-                TokenType.EOF
-            };
-
-            var scanner = new Scanner();
-
-            scanner.Scan(testString);
-
-            var resultingTokenTypes = scanner.Tokens.Select(x => x.TokenType).ToArray();
-
-            for (int i = 0; i < resultingTokenTypes.Length; i++)
-            {
-                Assert.AreEqual(tokenResults[i], resultingTokenTypes[i]);
-            }
-        }
 
         private static string[] IntDeclareTestStrings = new string[]
         {
@@ -62,71 +36,19 @@ rand
             @"var rand = 71234 ;",
         };
 
-        [Test]
-        [TestCaseSource(nameof(IntDeclareTestStrings))]
-        public void Scanner_IntVarDeclare_TokenTypeMatch(string testString)
-        {
-            var tokenResults = new TokenType[]
-            {
-                TokenType.VAR,
-                TokenType.IDENTIFIER,
-                TokenType.ASSIGN,
-                TokenType.INT,
-                TokenType.END_STATEMENT,
-                TokenType.EOF
-            };
-
-            var scanner = new Scanner();
-
-            scanner.Scan(testString);
-
-            var resultingTokenTypes = scanner.Tokens.Select(x => x.TokenType).ToArray();
-
-            for (int i = 0; i < resultingTokenTypes.Length; i++)
-            {
-                Assert.AreEqual(tokenResults[i], resultingTokenTypes[i]);
-            }
-        }
-
-        private static string[] FloatDeclareTestStrings = new string[]
-        {
-            @"var PI = 3.14;",
-            @"var PI= 3.14;",
-            @"var PI =3.14;",
-            @"var PI=3.14;",
-            @"var
-PI
+        private static string[] StringDeclareTestStrings = new string[]
+                        {
+            @"var lang = ""lox"";",
+            @"var lang=""lox"";",
+            @"var lang
 =
-3.14
+""lox""
 ;",
-            @"var PI = 3.;",
+            @"var multi = ""Now is the winter of our discontent
+Made glorious summer by this sun of York;
+And all the clouds that lour'd upon our house
+In the deep bosom of the ocean buried.""; ",
         };
-
-        [Test]
-        [TestCaseSource(nameof(FloatDeclareTestStrings))]
-        public void Scanner_FloatVarDeclare_TokenTypeMatch(string testString)
-        {
-            var tokenResults = new TokenType[]
-            {
-                TokenType.VAR,
-                TokenType.IDENTIFIER,
-                TokenType.ASSIGN,
-                TokenType.FLOAT,
-                TokenType.END_STATEMENT,
-                TokenType.EOF
-            };
-
-            var scanner = new Scanner();
-
-            scanner.Scan(testString);
-
-            var resultingTokenTypes = scanner.Tokens.Select(x => x.TokenType).ToArray();
-
-            for (int i = 0; i < resultingTokenTypes.Length; i++)
-            {
-                Assert.AreEqual(tokenResults[i], resultingTokenTypes[i]);
-            }
-        }
 
         public static IEnumerable<TestCaseData> Generator()
         {
@@ -359,7 +281,7 @@ TokenType.IDENTIFIER,
 TokenType.ASSIGN,
 TokenType.IDENTIFIER,
 TokenType.END_STATEMENT,
-TokenType.PRINT,
+TokenType.IDENTIFIER,
 TokenType.IDENTIFIER,
 TokenType.END_STATEMENT,
 TokenType.CLOSE_BRACE,
@@ -398,16 +320,50 @@ TokenType.EOF
         }
 
         [Test]
-        [TestCaseSource(nameof(Generator))]
-        public void Scanner_TokenTypeMatch(string testString, TokenType[] tokenResults)
+        [TestCaseSource(nameof(FloatDeclareTestStrings))]
+        public void Scanner_FloatVarDeclare_TokenTypeMatch(string testString)
         {
+            var tokenResults = new TokenType[]
+            {
+                TokenType.VAR,
+                TokenType.IDENTIFIER,
+                TokenType.ASSIGN,
+                TokenType.FLOAT,
+                TokenType.END_STATEMENT,
+                TokenType.EOF
+            };
+
             var scanner = new Scanner();
 
             scanner.Scan(testString);
 
             var resultingTokenTypes = scanner.Tokens.Select(x => x.TokenType).ToArray();
 
-            //var resString = string.Join(",", resultingTokenTypes.Select(x => x.ToString()).ToArray());
+            for (int i = 0; i < resultingTokenTypes.Length; i++)
+            {
+                Assert.AreEqual(tokenResults[i], resultingTokenTypes[i]);
+            }
+        }
+
+        [Test]
+        [TestCaseSource(nameof(IntDeclareTestStrings))]
+        public void Scanner_IntVarDeclare_TokenTypeMatch(string testString)
+        {
+            var tokenResults = new TokenType[]
+            {
+                TokenType.VAR,
+                TokenType.IDENTIFIER,
+                TokenType.ASSIGN,
+                TokenType.INT,
+                TokenType.END_STATEMENT,
+                TokenType.EOF
+            };
+
+            var scanner = new Scanner();
+
+            scanner.Scan(testString);
+
+            var resultingTokenTypes = scanner.Tokens.Select(x => x.TokenType).ToArray();
 
             for (int i = 0; i < resultingTokenTypes.Length; i++)
             {
@@ -440,6 +396,49 @@ fun foo(p)
             scanner.Scan(testString);
 
             Assert.AreEqual(firstRes, scanner.Tokens);
+        }
+
+        [Test]
+        [TestCaseSource(nameof(StringDeclareTestStrings))]
+        public void Scanner_StringVarDeclare_TokenTypeMatch(string testString)
+        {
+            var tokenResults = new TokenType[]
+            {
+                TokenType.VAR,
+                TokenType.IDENTIFIER,
+                TokenType.ASSIGN,
+                TokenType.STRING,
+                TokenType.END_STATEMENT,
+                TokenType.EOF
+            };
+
+            var scanner = new Scanner();
+
+            scanner.Scan(testString);
+
+            var resultingTokenTypes = scanner.Tokens.Select(x => x.TokenType).ToArray();
+
+            for (int i = 0; i < resultingTokenTypes.Length; i++)
+            {
+                Assert.AreEqual(tokenResults[i], resultingTokenTypes[i]);
+            }
+        }
+        [Test]
+        [TestCaseSource(nameof(Generator))]
+        public void Scanner_TokenTypeMatch(string testString, TokenType[] tokenResults)
+        {
+            var scanner = new Scanner();
+
+            scanner.Scan(testString);
+
+            var resultingTokenTypes = scanner.Tokens.Select(x => x.TokenType).ToArray();
+
+            var resString = string.Join(",", resultingTokenTypes.Select(x => x.ToString()).ToArray());
+
+            for (int i = 0; i < resultingTokenTypes.Length; i++)
+            {
+                Assert.AreEqual(tokenResults[i], resultingTokenTypes[i]);
+            }
         }
     }
 }

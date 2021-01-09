@@ -10,18 +10,18 @@ namespace ULox.Tests
 
             yield return new TestCaseData(
 @"var v = Rand();
-if(v < 1 and v >=0) { print true; }",
+if(v < 1 and v >=0) { print (true); }",
 @"True")
                 .SetName("Rand_Valid");
 
             yield return new TestCaseData(
 @"var v = RandRange(-1,3);
-if(v <= 3 and v >= -1) { print true; }",
+if(v <= 3 and v >= -1) { print (true); }",
 @"True")
                 .SetName("RandRange_Valid");
 
             yield return new TestCaseData(
-@"print """";",
+@"print ("""");",
 @"")
                 .SetName("Empty");
         }
@@ -40,8 +40,7 @@ if(v <= 3 and v >= -1) { print true; }",
         public class UnityFunctionsClassesTestLoxEngine : TestLoxEngine
         {
             public UnityFunctionsClassesTestLoxEngine()
-                : base(new LoxCoreLibrary(),
-                      new StandardClasses(),
+                : base(new StandardClasses(),
                       new UnityFunctions())
             {
             }

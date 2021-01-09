@@ -34,7 +34,6 @@ namespace ULox
             { "true",   TokenType.TRUE},
             { "false",  TokenType.FALSE},
             { "null",   TokenType.NULL},
-            { "print",  TokenType.PRINT},
             { "fun",    TokenType.FUNCTION},
             { "class",  TokenType.CLASS},
             { ".",      TokenType.DOT},
