@@ -59,6 +59,7 @@ namespace ULox
                 Execute(item);
             }
         }
+
         public void REPLInterpret(List<Stmt> statements, Action<string> output)
         {
             foreach (var item in statements)
@@ -450,7 +451,7 @@ namespace ULox
                 {
                     result = objInst.Get(expr.name);
                 }
-                
+
                 if (result is Function resultFunc)
                 {
                     if (resultFunc.IsGetter)

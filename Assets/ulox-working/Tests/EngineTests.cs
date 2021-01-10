@@ -20,7 +20,39 @@ if (end > start) { print (true); }",
 @"True")
                 .SetName("Clock_Sleep_GreaterTime");
 
-          
+            yield return new TestCaseData(
+@"var a = 10;
+printr (a);",
+@"10")
+                .SetName("PrintR_var");
+
+            yield return new TestCaseData(
+@"class Test{getset a;}
+printr (Test);",
+@"<class Test>
+  <fn a>
+  <fn Seta>")
+                .SetName("PrintR_Class");
+
+            yield return new TestCaseData(
+@"class Test{getset a;}
+printr (Test());",
+@"<inst Test>
+  _a : null")
+                .SetName("PrintR_Inst");
+
+            yield return new TestCaseData(
+@"class Test{getset a;var b = 10;}
+var t = Test();
+t.Seta(Test());
+printr (t);",
+@"<inst Test>
+  _a : <inst Test>
+    _a : null
+    b : 10
+  b : 10")
+                .SetName("PrintR_InstNested");
+
             yield return new TestCaseData(
 @"print ("""");",
 @"")
@@ -44,17 +76,16 @@ if (end > start) { print (true); }",
         public void CallableFullFunc_Validate()
         {
             var test = new EngineTestLoxEngine();
-            Interpreter interpreter = null;
             object[] arguments = null;
 
             test.loxEngine.SetValue("TestAction", new Callable(1, (args) =>
-             {
-                 arguments = args;
-                 return (string)args[0] + "World!";
-             }));
+            {
+                arguments = args;
+                return (string)args[0] + "World!";
+            }));
 
             test.Run(@"print( TestAction(""Hello ""));", true);
-            
+
             Assert.AreEqual("Hello World!", test.InterpreterResult);
         }
 
@@ -185,14 +216,14 @@ if (end > start) { print (true); }",
         {
             var test = new EngineTestLoxEngine();
             test.Run(
- @"class TestClass{var val = 1;}", true, false);
+@"class TestClass{var val = 1;}", true, false);
 
             //create
             test.loxEngine.SetValue("testInstance", test.loxEngine.CreateInstance("TestClass"));
 
             //use
             test.Run(
- @"print (testInstance.val);", true, false);
+@"print (testInstance.val);", true, false);
 
             Assert.AreEqual("1", test.InterpreterResult);
         }
@@ -223,7 +254,6 @@ if (end > start) { print (true); }",
             Assert.AreEqual(extVar.ToString(), test.InterpreterResult);
         }
 
-
         [Test]
         public void ExternalString_EngineRead_Matches()
         {
@@ -236,6 +266,7 @@ if (end > start) { print (true); }",
 
             Assert.AreEqual(extVar.ToString(), test.InterpreterResult);
         }
+
         [Test]
         public void ExternalUpdateValue_EngineRead_Matches()
         {
@@ -252,7 +283,8 @@ print(v);";
 
             Assert.AreEqual("TrueFalse", test.InterpreterResult);
         }
-        public class EngineTestLoxEngine : TestLoxEngine
+
+        internal class EngineTestLoxEngine : TestLoxEngine
         {
             public EngineTestLoxEngine()
                 : base()

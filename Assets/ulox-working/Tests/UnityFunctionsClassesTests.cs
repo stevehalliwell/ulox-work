@@ -7,7 +7,6 @@ namespace ULox.Tests
     {
         public static IEnumerable<TestCaseData> Generator()
         {
-
             yield return new TestCaseData(
 @"var v = Rand();
 if(v < 1 and v >=0) { print (true); }",
@@ -26,7 +25,6 @@ if(v <= 3 and v >= -1) { print (true); }",
                 .SetName("Empty");
         }
 
-
         [Test]
         [TestCaseSource(nameof(Generator))]
         public void Engine_StringifiedResult_Matches(string testString, string requiredResult)
@@ -37,7 +35,8 @@ if(v <= 3 and v >= -1) { print (true); }",
 
             Assert.AreEqual(requiredResult, engine.InterpreterResult);
         }
-        public class UnityFunctionsClassesTestLoxEngine : TestLoxEngine
+
+        internal class UnityFunctionsClassesTestLoxEngine : TestLoxEngine
         {
             public UnityFunctionsClassesTestLoxEngine()
                 : base(new StandardClasses(),

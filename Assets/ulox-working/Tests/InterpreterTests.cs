@@ -973,12 +973,12 @@ inst.ChildMeth(""Foo"");",
                 .SetName("SuperMethodAndChildMethodField");
 
             yield return new TestCaseData(
-@"class Base 
+@"class Base
 {
-    BaseMeth(b) {print(b + ""Bar"");} 
+    BaseMeth(b) {print(b + ""Bar"");}
 }
-class Derived < Base 
-{ 
+class Derived < Base
+{
     ChildMeth(a) { print(""Well, ""); super.BaseMeth(a + Derived.fb);}
 
     class var fb = ""Foobar? "";
@@ -989,13 +989,13 @@ inst.ChildMeth(""is it "");",
                 .SetName("MetaFieldAndSuperMethod");
 
             yield return new TestCaseData(
-@"class Base 
+@"class Base
 {
     var fb = ""Foobar? "";
 }
-class Derived < Base 
-{ 
-    class BaseMeth(b) {print(b + ""Bar"");} 
+class Derived < Base
+{
+    class BaseMeth(b) {print(b + ""Bar"");}
     ChildMeth(a) {print(""Well, ""); Derived.BaseMeth(a + this.fb);}
 }
 var inst = Derived();
@@ -1004,15 +1004,15 @@ inst.ChildMeth(""is it "");",
                 .SetName("MetaMethodAndSuperField");
 
             yield return new TestCaseData(
-@"class Base 
+@"class Base
 {
     getset foo = ""Foo"";
 }
-class Derived < Base 
-{ 
-    ChildMeth(a) 
+class Derived < Base
+{
+    ChildMeth(a)
     {
-        print(a); 
+        print(a);
         super.Setfoo(""Foo"");
         print(super.foo() + ""Bar"");
     }
@@ -1023,18 +1023,18 @@ inst.ChildMeth(""is it "");",
                 .SetName("DerivedSuperProperty");
 
             yield return new TestCaseData(
-@"class Base 
+@"class Base
 {
     init(){this.foo=""Foo"";}
 }
-class Derived < Base 
-{ 
-    ChildMeth(a) 
+class Derived < Base
+{
+    ChildMeth(a)
     {
-        print(a); 
+        print(a);
         this.bar = ""Bar"";
         //todo document this difference, perhaps super is an error if not on method?
-        //  would expect to use super here perhaps  
+        //  would expect to use super here perhaps
         print(this.foo + this.bar);
     }
 }
@@ -1044,17 +1044,17 @@ inst.ChildMeth(""is it "");",
                 .SetName("DerivedSuperManualProperty");
 
             yield return new TestCaseData(
-@"class Base 
+@"class Base
 {
     init(){this.foo=""Foo"";}
 }
-class Derived < Base 
-{ 
-    ChildMeth(a) 
+class Derived < Base
+{
+    ChildMeth(a)
     {
         this.bar = ""Bar"";
         //todo document this difference, perhaps super is an error if not on method?
-        //  would expect to use super here perhaps  
+        //  would expect to use super here perhaps
         print(super.foo + this.bar);
     }
 }
@@ -1073,7 +1073,7 @@ class Base < BaseBase
 {
     Foo(a) {print(""Base"" + super.Foo(a));}
 }
-class Derived < Base 
+class Derived < Base
 {
     Foo(a) {print(""Derived"" + super.Foo(a));}
 }
@@ -1092,7 +1092,7 @@ class Base < BaseBase
 {
     Foo(a) {print(""Base"" + super.Foo(a));}
 }
-class Derived < Base 
+class Derived < Base
 {
     Foo(a) {print(""Derived"" + super(BaseBase).Foo(a));}
 }
@@ -1111,7 +1111,7 @@ class Base < BaseBase
 {
     Foo(a) {print(""Base"" + super.Foo(a));}
 }
-class Derived < Base 
+class Derived < Base
 {
     Foo(a) {print(""Derived"" + super(BassBase).Foo(a));}
 }
@@ -1137,11 +1137,10 @@ inst.Foo(""hi"");",
             Assert.IsTrue(engine.InterpreterResult.StartsWith(requiredResult), $"Expected:{requiredResult} but got {engine.InterpreterResult}");
         }
 
-
-        public class InterpreterTestLoxEngine : TestLoxEngine
+        internal class InterpreterTestLoxEngine : TestLoxEngine
         {
             public InterpreterTestLoxEngine()
-                :base()
+                : base()
             {
             }
         }

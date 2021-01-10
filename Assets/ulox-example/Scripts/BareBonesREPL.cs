@@ -11,6 +11,7 @@ namespace ULox.Demo
     public class BareBonesREPL : MonoBehaviour
     {
         public InputField inputField;
+
         //text item output
         private LoxEngine loxEngine;
 

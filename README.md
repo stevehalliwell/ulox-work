@@ -46,11 +46,8 @@ Don't expect this to be used (very much) in production. At least not in the stat
 - [Core jlox](../../tree/core_jlox) Core jlox equivilant implemented in C# inside a Unity project using the TestRunner and Code Coverage to confirm correct behavior and error reporting.
 
 ## Pending
-- Add standard lib equivilant for interpreter.
 - Add Unity specific hooks and functions.
-- Add REPL support.
 - Add Performance tests.
-- Increment and Decrement (maybe).
 
 ## Differences
 - null instead of nil.
@@ -132,3 +129,4 @@ class Foo
 	getset d;
 }
 ```
+

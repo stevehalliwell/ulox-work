@@ -7,7 +7,6 @@ namespace ULox.Tests
     {
         public static IEnumerable<TestCaseData> Generator()
         {
-
             yield return new TestCaseData(
 @"var arr = Array(3);
 print (arr);",
@@ -79,7 +78,6 @@ print (outter.inner.a);",
                 .SetName("Empty");
         }
 
-
         [Test]
         [TestCaseSource(nameof(Generator))]
         public void Engine_StringifiedResult_Matches(string testString, string requiredResult)
@@ -91,7 +89,6 @@ print (outter.inner.a);",
             Assert.AreEqual(requiredResult, engine.InterpreterResult);
         }
 
-       
         [Test]
         public void ExternalFetch_PODNested_Store_Validate()
         {
@@ -104,8 +101,6 @@ outter.inner.a = 10;", true);
 
             Assert.AreEqual(10, test.loxEngine.GetValue("outter.inner.a"));
         }
-
-        
 
         [Test]
         public void ExternalSet_PODNested_Fetch_Validate()
@@ -161,7 +156,8 @@ outter.inner.a = 10;", true);
 
             Assert.AreEqual("<inst POD><list []>", test.InterpreterResult);
         }
-        public class StandardClassesTestLoxEngine : TestLoxEngine
+
+        internal class StandardClassesTestLoxEngine : TestLoxEngine
         {
             public StandardClassesTestLoxEngine()
                 : base(new StandardClasses())

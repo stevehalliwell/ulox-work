@@ -323,7 +323,7 @@ namespace ULox
                 Resolve(stmt.value);
             }
 
-            if(_currentExprFunc != null) _currentExprFunc.HasReturns = true;
+            if (_currentExprFunc != null) _currentExprFunc.HasReturns = true;
         }
 
         public void Visit(Stmt.Var stmt)
@@ -424,7 +424,7 @@ namespace ULox
 
         public object Visit(Expr.Get expr)
         {
-            //todo if in class and method and obj is this, we can attempt to cache the offset to this in the env and the offset from 
+            //todo if in class and method and obj is this, we can attempt to cache the offset to this in the env and the offset from
             //  the instance to the variable
             Resolve(expr.obj);
             ResolveLocal(expr, expr.name, true);
@@ -433,7 +433,7 @@ namespace ULox
 
         public object Visit(Expr.Set expr)
         {
-            //todo if in class and method and obj is this, we can attempt to cache the offset to this in the env and the offset from 
+            //todo if in class and method and obj is this, we can attempt to cache the offset to this in the env and the offset from
             //  the instance to the variable
             Resolve(expr.val);
             Resolve(expr.obj);

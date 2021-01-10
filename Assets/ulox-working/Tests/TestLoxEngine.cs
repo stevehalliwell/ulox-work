@@ -8,7 +8,7 @@ namespace ULox
         public LoxEngine loxEngine;
         private Resolver resolver;
 
-        private void SetResult(string str) => InterpreterResult += str;
+        protected void SetResult(string str) => InterpreterResult += str;
 
         protected TestLoxEngine(params ILoxEngineLibraryBinder[] loxEngineLibraryBinders)
         {
@@ -22,11 +22,14 @@ namespace ULox
                 binders.Concat(loxEngineLibraryBinders).ToArray());
         }
 
-        public void Run(string testString, bool catchAndLogExceptions, bool logWarnings = true)
+        public virtual void Run(string testString, bool catchAndLogExceptions, bool logWarnings = true, System.Action<string> REPLPrint = null)
         {
             try
             {
-                loxEngine.Run(testString);
+                if (REPLPrint != null)
+                    loxEngine.RunREPL(testString, REPLPrint);
+                else
+                    loxEngine.Run(testString);
 
                 if (logWarnings)
                 {

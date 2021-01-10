@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 
 namespace ULox
@@ -8,7 +7,9 @@ namespace ULox
     {
         private IEnvironment _enclosing;
         protected Dictionary<string, short> valueIndicies = new Dictionary<string, short>();
-        protected List<object> objectList = new List<object>() { null, null,null, null,null};
+        protected List<object> objectList = new List<object>() { null, null, null, null, null };
+
+        public IReadOnlyDictionary<string, short> ReadOnlyValueIndicies => valueIndicies;
 
         public Environment(IEnvironment enclosing)
         {
@@ -43,7 +44,7 @@ namespace ULox
 
         public void DefineSlot(string name, short slot, object value)
         {
-            if(valueIndicies.ContainsKey(name) ||
+            if (valueIndicies.ContainsKey(name) ||
                 valueIndicies.ContainsValue(slot))
             {
                 throw new LoxException($"Environment value redefinition not allowed. Requested {name}:{slot} collided.");

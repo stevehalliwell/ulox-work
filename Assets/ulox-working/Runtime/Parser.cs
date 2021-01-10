@@ -73,7 +73,7 @@ namespace ULox
             if (Match(TokenType.LESS))
             {
                 Consume(TokenType.IDENTIFIER, "Expect superclass name.");
-                superclass = new Expr.Variable(Previous(),EnvironmentVariableLocation.Invalid);
+                superclass = new Expr.Variable(Previous(), EnvironmentVariableLocation.Invalid);
             }
 
             Consume(TokenType.OPEN_BRACE, "Expect { befefore class body.");
@@ -90,18 +90,18 @@ namespace ULox
                 if (Match(TokenType.GET))
                 {
                     //check if its short hand and generate, if not then pass to function
-                    if (CheckNext(TokenType.END_STATEMENT, 
+                    if (CheckNext(TokenType.END_STATEMENT,
                         TokenType.ASSIGN,
                         TokenType.COMMA))
                     {
                         HandleGetSetGeneration(
-                            className, 
-                            methods, 
-                            metaMethods, 
-                            fields, 
-                            metaFields, 
+                            className,
+                            methods,
+                            metaMethods,
+                            fields,
+                            metaFields,
                             isClassMeta,
-                            true, 
+                            true,
                             false);
                     }
                     else
@@ -113,8 +113,8 @@ namespace ULox
                 else if (Match(TokenType.SET))
                 {
                     if (CheckNext(TokenType.END_STATEMENT,
-                       TokenType.ASSIGN,
-                       TokenType.COMMA))
+                        TokenType.ASSIGN,
+                        TokenType.COMMA))
                     {
                         HandleGetSetGeneration(
                             className,
@@ -135,7 +135,7 @@ namespace ULox
                 else if (Match(TokenType.GETSET))
                 {
                     HandleGetSetGeneration(
-                            className,
+                        className,
                             methods,
                             metaMethods,
                             fields,
@@ -211,11 +211,11 @@ namespace ULox
         }
 
         private void HandleGetSetGeneration(
-            Token className, 
-            List<Stmt.Function> methods, 
-            List<Stmt.Function> metaMethods, 
-            List<Stmt.Var> fields, 
-            List<Stmt.Var> metaFields, 
+            Token className,
+            List<Stmt.Function> methods,
+            List<Stmt.Function> metaMethods,
+            List<Stmt.Var> fields,
+            List<Stmt.Var> metaFields,
             bool isClassMeta,
             bool doGet,
             bool doSet)
@@ -229,7 +229,7 @@ namespace ULox
                     var genFunc = CreateGetMethod(className, origAssign.name, hiddenAssign.name);
                     (isClassMeta ? metaMethods : methods).Add(genFunc);
                 }
-                if(doSet)
+                if (doSet)
                 {
                     var genFunc = CreateSetMethod(className, origAssign.name, hiddenAssign.name);
                     (isClassMeta ? metaMethods : methods).Add(genFunc);
@@ -249,7 +249,7 @@ namespace ULox
 
         private void FlattenChainOfVars(Stmt stmt, List<Stmt.Var> res)
         {
-            if(stmt is Stmt.Var isVar)
+            if (stmt is Stmt.Var isVar)
             {
                 res.Add(isVar);
             }
@@ -272,7 +272,7 @@ namespace ULox
                             new Expr.This(name.Copy(TokenType.THIS, "this"), EnvironmentVariableLocation.Invalid),
                             hiddenInternalFieldName,
                             new Expr.Variable(valueName, EnvironmentVariableLocation.Invalid)))
-                    },false, false, false), 
+                    }, false, false, false),
                 EnvironmentVariableLocation.InvalidSlot);
         }
 
@@ -282,9 +282,9 @@ namespace ULox
                 new Expr.Function(null,
                     new List<Stmt>()
                     {
-                        new Stmt.Return(className.Copy(TokenType.RETURN), 
+                        new Stmt.Return(className.Copy(TokenType.RETURN),
                         new Expr.Get(
-                            new Expr.This(className.Copy(TokenType.THIS, "this"), 
+                            new Expr.This(className.Copy(TokenType.THIS, "this"),
                                 EnvironmentVariableLocation.Invalid), hiddenInternalFieldName, EnvironmentVariableLocation.Invalid))
                     }, false, false, true)
                 , EnvironmentVariableLocation.InvalidSlot);
@@ -357,7 +357,7 @@ namespace ULox
             {
                 initializer = Expression();
             }
-            
+
             if (Match(TokenType.COMMA))
             {
                 return new Stmt.Chain(
@@ -741,7 +741,7 @@ namespace ULox
             {
                 Token keyword = Previous();
                 Token specifiedClass = new Token();
-                if(Match(TokenType.OPEN_PAREN))
+                if (Match(TokenType.OPEN_PAREN))
                 {
                     specifiedClass = Consume(TokenType.IDENTIFIER,
                     "Expect parent class identifiying token.");
@@ -751,10 +751,10 @@ namespace ULox
                 Token method = Consume(TokenType.IDENTIFIER,
                     "Expect superclass method name.");
                 return new Expr.Super(
-                    keyword, 
-                    specifiedClass, 
-                    method, 
-                    EnvironmentVariableLocation.Invalid, 
+                    keyword,
+                    specifiedClass,
+                    method,
+                    EnvironmentVariableLocation.Invalid,
                     EnvironmentVariableLocation.Invalid);
             }
 

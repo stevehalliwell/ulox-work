@@ -4,14 +4,16 @@ namespace ULox
 {
     public class Class : Instance, ICallable
     {
-        //presently closures go super->this->members 
+        //presently closures go super->this->members
         //  These offsets exist so that if/when this changes, it's less tiresome to do so
         public const short ThisSlot = 0;
+
         public const short SuperSlot = 0;
         public const int StartingMemberSlot = 0;
 
         private string _name;
         private Dictionary<string, Function> _methods;
+        public IReadOnlyDictionary<string, Function> ReadOnlyMethods => _methods;
         private Class _superclass;
         public Class Super => _superclass;
         private List<Stmt.Var> _vars;
