@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace ULox.Demo
@@ -41,8 +40,6 @@ namespace ULox.Demo
                 new Callable(1, (args) => CreateGameObject((string)args[0])));
             loxEngine.SetValue("SetGameObjectPosition",
                 new Callable(3, (args) => SetGameObjectPosition(Convert.ToInt32(args[0]), Convert.ToSingle(args[1]), Convert.ToSingle(args[2]))));
-            loxEngine.SetValue("Reload",
-                new Callable(() => SceneManager.LoadScene(SceneManager.GetActiveScene().name)));
             loxEngine.SetValue("SetGameObjectVelocity",
                 new Callable(3, (args) => SetGameObjectVelocity(Convert.ToInt32(args[0]), Convert.ToSingle(args[1]), Convert.ToSingle(args[2]))));
             loxEngine.SetValue("DestroyGameObject",

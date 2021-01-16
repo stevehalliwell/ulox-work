@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace ULox.Demo
@@ -27,19 +26,11 @@ namespace ULox.Demo
                 new Interpreter(),
                 new LoxCoreLibrary(Debug.Log),
                 new StandardClasses(),
-                new UnityFunctions());
+                new UnityFunctions(availablePrefabs));
 
             loxEngine.SetValue("SetUIText",
                 new Callable(1, (args) => text.text = (string)args[0]));
-            loxEngine.SetValue("GetKey",
-                new Callable(1, (args) => Input.GetKey((string)args[0])));
-            loxEngine.SetValue("CreateGameObject",
-                new Callable(1, (args) => CreateGameObject((string)args[0])));
-            loxEngine.SetValue("SetGameObjectPosition",
-                new Callable(3, (args) => ((GameObject)args[0]).transform.position = new Vector2(Convert.ToSingle(args[1]), Convert.ToSingle(args[2]))));
-            loxEngine.SetValue("Reload",
-                new Callable(() => SceneManager.LoadScene(SceneManager.GetActiveScene().name)));
-
+            
             loxEngine.Run(script.text);
 
             loxEngine.CallFunction("SetupGame");
@@ -50,16 +41,6 @@ namespace ULox.Demo
         {
             loxEngine.SetValue("dt", Time.deltaTime);
             loxEngine.CallFunction(gameUpdateFunction);
-        }
-
-        private GameObject CreateGameObject(string name)
-        {
-            var loc = availablePrefabs.Find(x => x.name == name);
-            if (loc != null)
-            {
-                return Instantiate(loc);
-            }
-            return null;
         }
     }
 }

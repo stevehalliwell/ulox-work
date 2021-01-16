@@ -28,6 +28,8 @@ namespace ULox
             }
         }
 
+        public Interpreter Interpreter => _interpreter;
+
         public IEnvironment AddressToEnvironment(string address, out string lastTokenLexeme)
         {
             var parts = address.Split('.');

@@ -40,7 +40,7 @@
             {
                 interpreter.ExecuteBlock(_declaration.body, environment);
             }
-            catch (Interpreter.Return exp)
+            catch (Return exp)
             {
                 if (_isInitializer) return _closure.FetchObject(Class.ThisSlot);
 

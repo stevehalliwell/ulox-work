@@ -1,5 +1,6 @@
 ﻿using NUnit.Framework;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ULox.Tests
 {
@@ -52,6 +53,56 @@ printr (t);",
     b : 10
   b : 10")
                 .SetName("PrintR_InstNested");
+
+            yield return new TestCaseData(
+@"class Base {getset a;}
+class Test < Base{getset b;}
+printr (Test);",
+@"<class Test>
+  meta : <class Base>
+    <fn a>
+    <fn Seta>
+  <fn b>
+  <fn Setb>")
+                .SetName("PrintR_Class_WithBase");
+
+            yield return new TestCaseData(
+@"class Base {var c = 1;}
+class Test < Base{getset a;var b = 10;}
+var t = Test();
+t.Seta(Test());
+printr (t);",
+@"<inst Test>
+  c : 1
+  _a : <inst Test>
+    c : 1
+    _a : null
+    b : 10
+  b : 10")
+                .SetName("PrintR_InstNested_WithBase");
+
+            yield return new TestCaseData(
+@"class Test {var a;}
+var insta = Test();
+var instb = Test();
+
+insta.a = instb;
+instb.a = insta;
+
+printr (insta);",
+@"<inst Test>
+  a : <inst Test>
+    a : <inst Test>
+      a : <inst Test>
+        a : <inst Test>
+          a : <inst Test>
+            a : <inst Test>
+              a : <inst Test>
+                a : <inst Test>
+                  a : <inst Test>
+                    a : MAX_DEPTH_REACHED
+")
+                .SetName("PrintR_CircluarRef");
 
             yield return new TestCaseData(
 @"print ("""");",
@@ -282,6 +333,56 @@ print(v);";
             test.Run("print (v);", true);
 
             Assert.AreEqual("TrueFalse", test.InterpreterResult);
+        }
+
+        [Test]
+        public void RunSameScript_SameEngine_SeparateEnvironments()
+        {
+            var test = new EngineTestLoxEngine();
+            var initialTestString = @"fun Test(){print(1);}";
+            var envs = new List<IEnvironment>();
+
+            for (int i = 0; i < 3; i++)
+            {
+                envs.Add(test.loxEngine.Interpreter.PushNewEnvironemnt());
+                test.Run(initialTestString, true);
+                test.loxEngine.Interpreter.PopSpecificEnvironemnt(envs.Last());
+            }
+
+            var secondTestString = @"Test();";
+
+            for (int i = 0; i < 3; i++)
+            {
+                test.loxEngine.Interpreter.PushEnvironemnt(envs[i]);
+                test.Run(secondTestString, true);
+                test.loxEngine.Interpreter.PopEnvironemnt();
+            }
+
+            Assert.AreEqual("111", test.InterpreterResult);
+        }
+
+        [Test]
+        public void RunSameScript_SameEngine_SeparateEnvironments_WithCollisions()
+        {
+            var test = new EngineTestLoxEngine();
+            var initialTestString = @"fun Test(){print(1);}";
+            var envs = new List<IEnvironment>();
+
+            for (int i = 0; i < 3; i++)
+            {
+                envs.Add(test.loxEngine.Interpreter.PushNewEnvironemnt());
+                test.Run(initialTestString, true);
+                test.loxEngine.Interpreter.PopSpecificEnvironemnt(envs.Last());
+            }
+
+            for (int i = 0; i < 3; i++)
+            {
+                test.loxEngine.Interpreter.PushEnvironemnt(envs[i]);
+                test.Run(initialTestString, true);
+                test.loxEngine.Interpreter.PopEnvironemnt();
+            }
+
+            Assert.IsTrue(test.InterpreterResult.StartsWith("Environment value redefinition not allowed. Requested Test:1 collided."));
         }
 
         internal class EngineTestLoxEngine : TestLoxEngine

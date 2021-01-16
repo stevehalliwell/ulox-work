@@ -6,7 +6,7 @@ DestroyGameObject(int) - gameobject id
 GetKey(string):bool
 SetGameObjectPosition(int, x, y) - gameobject id
 SetGameObjectVelocity(int, x, y) - gameobject id
-Reload - reload the current unity scene
+ReloadScene - reload the current unity scene
 
 
 Unity will find and call: 
@@ -145,7 +145,7 @@ var currentUpdate;
 
 fun Update()
 {
-	if(GetKey("escape")){Reload();}
+	if(GetKey("escape")){ReloadScene();}
 	currentUpdate();
 }
 

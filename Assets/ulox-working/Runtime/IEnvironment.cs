@@ -57,5 +57,17 @@
 
             throw new LoxException($"Undefined variable {name}");
         }
+
+        public static object FetchObjectByName(this IEnvironment env, string name)
+        {
+            var loc = env.FindSlot(name);
+
+            if (loc != -1)
+            {
+                return env.FetchObject(loc);
+            }
+
+            return null;
+        }
     }
 }

@@ -1,0 +1,6 @@
+each gameobject has it's own script on it to run it's behaviour and handle responses from unity itself.
+-run each in it's own env/closure/instance?
+-central script and environment
+-each object needs to run in its own context, so those scripts need to either 
+	-be wrapped like modules would be
+	-define themselves as part global part context

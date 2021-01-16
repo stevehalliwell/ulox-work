@@ -1,0 +1,8 @@
+var hp = 3;
+
+fun OnCollision()
+{
+	hp-=1; 
+	if (hp <= 0)
+		DestroyUnityObject(thisGameObject);
+}

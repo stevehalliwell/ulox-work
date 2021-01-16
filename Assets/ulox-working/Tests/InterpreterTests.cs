@@ -7,7 +7,7 @@ namespace ULox.Tests
     //todo calling super in a meta method
     //todo more metafields and metamethods tests?
     //todo should you be able to get to metas via this or super or class or meta keyword? or not?
-    //todo fthis keyword to get access to the closure you are running in?
+    //todo fthis keyword to get access to the environment that you are running in?
     public class InterpreterTests
     {
         public static IEnumerable<TestCaseData> Generator()

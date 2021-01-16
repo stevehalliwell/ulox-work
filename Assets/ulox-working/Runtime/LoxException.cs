@@ -79,4 +79,37 @@
         {
         }
     }
+    public class InterpreterControlException : System.Exception
+    {
+        public Token From { get; set; }
+
+        public InterpreterControlException(Token from)
+        {
+            From = from;
+        }
+    }
+
+    public class Return : InterpreterControlException
+    {
+        public object Value { get; set; }
+
+        public Return(Token from, object val) : base(from)
+        {
+            Value = val;
+        }
+    }
+
+    public class Break : InterpreterControlException
+    {
+        public Break(Token from) : base(from)
+        {
+        }
+    }
+
+    public class Continue : InterpreterControlException
+    {
+        public Continue(Token from) : base(from)
+        {
+        }
+    }
 }

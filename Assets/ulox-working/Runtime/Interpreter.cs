@@ -6,50 +6,42 @@ namespace ULox
     public class Interpreter : Expr.Visitor<Object>,
                                Stmt.Visitor
     {
-        public class InterpreterControlException : Exception
-        {
-            public Token From { get; set; }
-
-            public InterpreterControlException(Token from)
-            {
-                From = from;
-            }
-        }
-
-        public class Return : InterpreterControlException
-        {
-            public object Value { get; set; }
-
-            public Return(Token from, object val) : base(from)
-            {
-                Value = val;
-            }
-        }
-
-        public class Break : InterpreterControlException
-        {
-            public Break(Token from) : base(from)
-            {
-            }
-        }
-
-        public class Continue : InterpreterControlException
-        {
-            public Continue(Token from) : base(from)
-            {
-            }
-        }
-
         private Environment _globals = new Environment(null);
-        private IEnvironment _currentEnvironment;
+        public IEnvironment CurrentEnvironment => _environmentStack.Peek();
+        private Stack<IEnvironment> _environmentStack = new Stack<IEnvironment>();
 
         public Environment Globals => _globals;
 
-        public IEnvironment CurrentEnvironment => _currentEnvironment;
-
-        public Interpreter(bool useREPL = false)
+        public Interpreter()
         {
-            _currentEnvironment = Globals;
+            _environmentStack.Push(Globals);
+        }
+
+        public IEnvironment PushNewEnvironemnt()
+        {
+            var ret = new Environment(CurrentEnvironment);
+            _environmentStack.Push(ret);
+            return ret;
+        }
+
+        public void PushEnvironemnt(IEnvironment env)
+        {
+            _environmentStack.Push(env);
+        }
+
+        public bool PopSpecificEnvironemnt(IEnvironment env)
+        {
+            if (_environmentStack.Peek() == env)
+            {
+                _environmentStack.Pop();
+                return true;
+            }
+            return false;
+        }
+
+        public IEnvironment PopEnvironemnt()
+        {
+            return _environmentStack.Pop();
         }
 
         public void Interpret(List<Stmt> statements)
@@ -78,10 +70,9 @@ namespace ULox
 
         public void ExecuteBlock(List<Stmt> statements, Environment environment)
         {
-            var prevEnv = this._currentEnvironment;
             try
             {
-                this._currentEnvironment = environment;
+                _environmentStack.Push(environment);
                 foreach (var stmt in statements)
                 {
                     Execute(stmt);
@@ -89,7 +80,7 @@ namespace ULox
             }
             finally
             {
-                this._currentEnvironment = prevEnv;
+                _environmentStack.Pop();
             }
         }
 
@@ -221,7 +212,7 @@ namespace ULox
             {
                 try
                 {
-                    expr.varLoc = _currentEnvironment.FindLocation(expr.name.Lexeme);
+                    expr.varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
                 }
                 catch (LoxException)
                 {
@@ -229,7 +220,7 @@ namespace ULox
                 }
             }
 
-            return _currentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
+            return CurrentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
         }
 
         public object Visit(Expr.Assign expr)
@@ -239,18 +230,18 @@ namespace ULox
             {
                 try
                 {
-                    expr.varLoc = _currentEnvironment.FindLocation(expr.name.Lexeme);
+                    expr.varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
                 }
                 catch (LoxException)
                 {
                     throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
                 }
             }
-            _currentEnvironment.Ancestor(expr.varLoc.depth).AssignSlot(expr.varLoc.slot, val);
+            CurrentEnvironment.Ancestor(expr.varLoc.depth).AssignSlot(expr.varLoc.slot, val);
             return val;
         }
 
-        public void Visit(Stmt.Block stmt) => ExecuteBlock(stmt.statements, new Environment(_currentEnvironment));
+        public void Visit(Stmt.Block stmt) => ExecuteBlock(stmt.statements, new Environment(CurrentEnvironment));
 
         public void Visit(Stmt.If stmt)
         {
@@ -309,6 +300,7 @@ namespace ULox
         public object Visit(Expr.Call expr)
         {
             var callee = Evaluate(expr.callee);
+            //todo would be nice not to have to alloc for each call
             var args = new object[expr.arguments.Count];
             var i = 0;
             foreach (var item in expr.arguments)
@@ -332,7 +324,7 @@ namespace ULox
         public object Visit(Expr.Function expr)
         {
             //todo if it doesn't use closure does it need current env?
-            return new Function(null, expr, _currentEnvironment, false);
+            return new Function(null, expr, CurrentEnvironment, false);
         }
 
         public void Visit(Stmt.Return stmt)
@@ -352,19 +344,19 @@ namespace ULox
             }
 
             if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
-                _currentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, value);
+                CurrentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, value);
             else
-                _currentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, value);
+                CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, value);
         }
 
         public void Visit(Stmt.Function stmt)
         {
-            var func = new Function(stmt.name.Lexeme, stmt.function, _currentEnvironment, false);
+            var func = new Function(stmt.name.Lexeme, stmt.function, CurrentEnvironment, false);
 
             if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
-                _currentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, func);
+                CurrentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, func);
             else
-                _currentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, func);
+                CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, func);
         }
 
         public void Visit(Stmt.Class stmt)
@@ -381,20 +373,20 @@ namespace ULox
             }
 
             if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
-                _currentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, null);
+                CurrentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, null);
             else
-                stmt.knownSlot = _currentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, null);
-
+                stmt.knownSlot = CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, null);
+            
             if (stmt.superclass != null)
             {
-                _currentEnvironment = new Environment(_currentEnvironment);
-                _currentEnvironment.DefineSlot("super", Class.SuperSlot, superclass);
+                _environmentStack.Push(new Environment(CurrentEnvironment));
+                CurrentEnvironment.DefineSlot("super", Class.SuperSlot, superclass);
             }
 
             var classMethods = new Dictionary<string, Function>();
             foreach (var method in stmt.metaMethods)
             {
-                var func = new Function(method.name.Lexeme, method.function, _currentEnvironment, false);
+                var func = new Function(method.name.Lexeme, method.function, CurrentEnvironment, false);
                 classMethods[method.name.Lexeme] = func;
             }
 
@@ -406,7 +398,7 @@ namespace ULox
                 var function = new Function(
                     method.name.Lexeme,
                     method.function,
-                    _currentEnvironment,
+                    CurrentEnvironment,
                     method.name.Lexeme == "init");
 
                 methods[method.name.Lexeme] = function;
@@ -418,7 +410,7 @@ namespace ULox
                 superclass,
                 methods,
                 stmt.fields,
-                _currentEnvironment);
+                CurrentEnvironment);
 
             if (stmt.metaFields != null)
             {
@@ -430,10 +422,10 @@ namespace ULox
 
             if (superclass != null)
             {
-                _currentEnvironment = _currentEnvironment.Enclosing;
+                _environmentStack.Pop();
             }
 
-            _currentEnvironment.AssignSlot(stmt.knownSlot, @class);
+            CurrentEnvironment.AssignSlot(stmt.knownSlot, @class);
         }
 
         public object Visit(Expr.Get expr)
@@ -485,23 +477,23 @@ namespace ULox
             {
                 try
                 {
-                    expr.varLoc = _currentEnvironment.FindLocation(expr.keyword.Lexeme);
+                    expr.varLoc = CurrentEnvironment.FindLocation(expr.keyword.Lexeme);
                 }
                 catch (LoxException)
                 {
                     throw new EnvironmentException(expr.keyword, $"Undefined variable {expr.keyword.Lexeme}");
                 }
             }
-            return _currentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
+            return CurrentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
         }
 
         //todo super and this behave very differently, can they be uniformed
         public object Visit(Expr.Super expr)
         {
             if (expr.superVarLoc == EnvironmentVariableLocation.Invalid)
-                expr.superVarLoc = _currentEnvironment.FindLocation("super");
+                expr.superVarLoc = CurrentEnvironment.FindLocation("super");
 
-            var superclass = (Class)_currentEnvironment.Ancestor(expr.superVarLoc.depth).FetchObject(expr.superVarLoc.slot);
+            var superclass = (Class)CurrentEnvironment.Ancestor(expr.superVarLoc.depth).FetchObject(expr.superVarLoc.slot);
 
             if (!string.IsNullOrEmpty(expr.classNameToken.Lexeme))
             {
@@ -518,9 +510,9 @@ namespace ULox
             }
 
             if (expr.thisVarLoc == EnvironmentVariableLocation.Invalid)
-                expr.thisVarLoc = _currentEnvironment.FindLocation("this");
+                expr.thisVarLoc = CurrentEnvironment.FindLocation("this");
 
-            var inst = (Instance)_currentEnvironment.Ancestor(expr.thisVarLoc.depth).FetchObject(expr.thisVarLoc.slot);
+            var inst = (Instance)CurrentEnvironment.Ancestor(expr.thisVarLoc.depth).FetchObject(expr.thisVarLoc.slot);
 
             var method = superclass.FindMethod(expr.method.Lexeme);
 

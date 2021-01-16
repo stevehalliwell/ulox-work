@@ -1,11 +1,20 @@
 # ulox-work
-Working through [Crafting Interpreters](http://craftinginterpreters.com/), in Unity C#.
+Worked through [Crafting Interpreters](http://craftinginterpreters.com/), in Unity C#. Now I'm just noodling around.
 
 ## Why though?
 Don't expect this to be used (very much) in production. At least not in the state it is right now. Honestly it was something fun to work through, a pleasent sparetime distraction.
 
+Beyond a port of jlox, it is now something to toy with, optimize, prototype with, mess with features and usability. 
+
 ## Status 
+ulox is no longer a superset of lox. The last point where that was the case is at [this commit](../../tree/core_jlox_varloc)
 ![current code coverage](badge_linecoverage.png)
+- [Libraries] (../../tree/ulox_with_libraries)
+	- Refactor hardwired parts of LoxEngine into modules/libraries.
+	- print and printr functions added. Removed print statement.
+	- Add REPL demo.
+	- Add ScriptPerObject Unity Demo.
+	- Handful of additional tests.
 - [Use of VarLoc, more QOL, more Tests](../../tree/core_jlox_varloc)
 	- Add support for chainning declarations, see [Class Sugar](#class-sugar).
 	- Each Environemnt now a flat list of objects with a string to index lookup. Used and stored in Exprs (VarLocs).
@@ -48,11 +57,14 @@ Don't expect this to be used (very much) in production. At least not in the stat
 ## Pending
 - Add Unity specific hooks and functions.
 - Add Performance tests.
+- Add/port tests from (craftinginterpreters)[https://github.com/munificent/craftinginterpreters/tree/master/test]
+- Add Testing and Asserting library to lox.
 
 ## Differences
 - null instead of nil.
 - [Class Sugar](#class-sugar).
 - An Instance is an Environment.
+- print is no longer a statement. It's now a function in the LoxCoreLibrary. 
 
 ## Class Sugar
 The added keywords in class declarations minimise the amount of plumbing required to do basic things.

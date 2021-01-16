@@ -1,10 +1,10 @@
 /*
 Code we expect from Unity's side;
 SetUIText(string)
-CreateGameObject(string):GameObject (returns a GameObject reference that we'll pass back to unity)
+CreateFromPrefab(string):GameObject (returns a GameObject reference that we'll pass back to unity)
 GetKey(string):bool
 SetGameObjectPosition(GameObject, x, y)
-Reload - reload the current unity scene
+ReloadScene - reload the current unity scene
 
 
 Unity will find and call: 
@@ -30,7 +30,7 @@ class Ball
 
 	init() 
 	{
-		this.go = CreateGameObject(ballName);
+		this.go = CreateFromPrefab(ballName);
 	}
 
 	Tick()
@@ -60,7 +60,7 @@ fun SetupGame()
 
 fun Update()
 {
-	if(GetKey("escape")){Reload();}
+	if(GetKey("escape")){ReloadScene();}
 
 	var len = balls.Count();
 	for(var i = 0; i < len; i += 1)
