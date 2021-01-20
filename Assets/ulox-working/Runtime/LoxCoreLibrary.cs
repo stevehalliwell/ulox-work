@@ -13,19 +13,24 @@ namespace ULox
             _logger = logger;
         }
 
-        public void BindToEngine(LoxEngine engine)
+        public void BindToEngine(Engine engine)
         {
-            engine.SetValue("print", new Callable(1, (args) => PrintViaLogger(args[0])));
-            engine.SetValue("printr", new Callable(1, (args) =>
-            {
-                const int PRINTR_DEPTH = 10;
-                var sb = new System.Text.StringBuilder();
-                PrintRecursive(args[0], sb, string.Empty, PRINTR_DEPTH);
-                PrintViaLogger(sb.ToString());
-            }));
-            engine.SetValue("clock", new Callable(() => System.DateTime.Now.Ticks));
-            engine.SetValue("sleep", new Callable(1, (args) => System.Threading.Thread.Sleep((int)(double)args[0])));
-            engine.SetValue("abort", new Callable(() => throw new LoxException("abort")));
+            engine.SetValue("print", 
+                new Callable(1, (args) => PrintViaLogger(args[0])));
+            engine.SetValue("printr", 
+                new Callable(1, (args) =>
+                {
+                    const int PRINTR_DEPTH = 10;
+                    var sb = new System.Text.StringBuilder();
+                    PrintRecursive(args[0], sb, string.Empty, PRINTR_DEPTH);
+                    PrintViaLogger(sb.ToString());
+                }));
+            engine.SetValue("clock", 
+                new Callable(() => System.DateTime.Now.Ticks));
+            engine.SetValue("sleep", 
+                new Callable(1, (args) => System.Threading.Thread.Sleep((int)(double)args[0])));
+            engine.SetValue("abort", 
+                new Callable(() => throw new LoxException("abort")));
         }
 
         private void PrintRecursive(object v, System.Text.StringBuilder sb, string prefix, int remainingDepth)

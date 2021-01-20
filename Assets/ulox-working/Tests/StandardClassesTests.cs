@@ -99,7 +99,7 @@ print (outter.inner.a);",
 outter.inner = POD();
 outter.inner.a = 10;", true);
 
-            Assert.AreEqual(10, test.loxEngine.GetValue("outter.inner.a"));
+            Assert.AreEqual(10, test._engine.GetValue("outter.inner.a"));
         }
 
         [Test]
@@ -109,13 +109,13 @@ outter.inner.a = 10;", true);
             var testValue = "10";
 
             //prefered method for multiple creates
-            var podClass = test.loxEngine.GetClass("POD");
-            test.loxEngine.SetValue("outter", test.loxEngine.CreateInstance(podClass));
+            var podClass = test._engine.GetClass("POD");
+            test._engine.SetValue("outter", test._engine.CreateInstance(podClass));
 
             //convenient method for single shot
-            test.loxEngine.SetValue("outter.inner", test.loxEngine.CreateInstance("POD"));
+            test._engine.SetValue("outter.inner", test._engine.CreateInstance("POD"));
 
-            test.loxEngine.SetValue("outter.inner.a", testValue);
+            test._engine.SetValue("outter.inner.a", testValue);
 
             test.Run(@"print (outter.inner.a);", true);
 
@@ -129,10 +129,10 @@ outter.inner.a = 10;", true);
             var testValue = "10";
 
             //prefered method for multiple creates
-            var podClass = test.loxEngine.GetClass("POD");
-            test.loxEngine.SetValue("collide", test.loxEngine.CreateInstance(podClass));
+            var podClass = test._engine.GetClass("POD");
+            test._engine.SetValue("collide", test._engine.CreateInstance(podClass));
 
-            test.loxEngine.SetValue("collide.a", testValue);
+            test._engine.SetValue("collide.a", testValue);
 
             test.Run(@"var collide = List();", true);
 
@@ -146,11 +146,11 @@ outter.inner.a = 10;", true);
             var testValue = "10";
 
             //prefered method for multiple creates
-            var podClass = test.loxEngine.GetClass("POD");
-            test.loxEngine.SetValue("collide", test.loxEngine.CreateInstance(podClass));
-            test.loxEngine.SetValue("collide.inner", test.loxEngine.CreateInstance(podClass));
+            var podClass = test._engine.GetClass("POD");
+            test._engine.SetValue("collide", test._engine.CreateInstance(podClass));
+            test._engine.SetValue("collide.inner", test._engine.CreateInstance(podClass));
 
-            test.loxEngine.SetValue("collide.inner.a", testValue);
+            test._engine.SetValue("collide.inner.a", testValue);
 
             test.Run(@"print (collide.inner); collide.inner = List(); print (collide.inner);", true);
 

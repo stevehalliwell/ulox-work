@@ -20,7 +20,7 @@
 
     public interface IEnvironment
     {
-        IEnvironment Enclosing { get; }
+        IEnvironment Enclosing { get; set; }
         void AssignSlot(short slot, object val);
         void DefineSlot(string name, short slot, object value);
         short DefineInAvailableSlot(string name, object value);
@@ -56,18 +56,6 @@
             }
 
             throw new LoxException($"Undefined variable {name}");
-        }
-
-        public static object FetchObjectByName(this IEnvironment env, string name)
-        {
-            var loc = env.FindSlot(name);
-
-            if (loc != -1)
-            {
-                return env.FetchObject(loc);
-            }
-
-            return null;
         }
     }
 }

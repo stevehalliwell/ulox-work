@@ -5,7 +5,7 @@ namespace ULox
     public abstract class TestLoxEngine
     {
         public string InterpreterResult { get; private set; } = string.Empty;
-        public LoxEngine loxEngine;
+        public Engine _engine;
         private Resolver resolver;
 
         protected void SetResult(string str) => InterpreterResult += str;
@@ -14,7 +14,7 @@ namespace ULox
         {
             var binders = new ILoxEngineLibraryBinder[] { new LoxCoreLibrary(SetResult) };
             resolver = new Resolver();
-            loxEngine = new LoxEngine(
+            _engine = new Engine(
                 new Scanner(),
                 new Parser() { CatchAndSynch = false },
                 resolver,
@@ -27,9 +27,9 @@ namespace ULox
             try
             {
                 if (REPLPrint != null)
-                    loxEngine.RunREPL(testString, REPLPrint);
+                    _engine.RunREPL(testString, REPLPrint);
                 else
-                    loxEngine.Run(testString);
+                    _engine.Run(testString);
 
                 if (logWarnings)
                 {

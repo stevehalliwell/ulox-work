@@ -2,6 +2,6 @@
 {
     public interface ILoxEngineLibraryBinder
     {
-        void BindToEngine(LoxEngine engine);
+        void BindToEngine(Engine engine);
     }
 }

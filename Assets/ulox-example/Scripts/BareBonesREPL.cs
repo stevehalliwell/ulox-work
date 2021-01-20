@@ -13,11 +13,11 @@ namespace ULox.Demo
         public InputField inputField;
 
         //text item output
-        private LoxEngine loxEngine;
+        private Engine engine;
 
         private void Start()
         {
-            loxEngine = new LoxEngine(
+            engine = new Engine(
                 new Scanner(),
                 new Parser() { CatchAndSynch = false },
                 new Resolver(),
@@ -34,7 +34,7 @@ namespace ULox.Demo
         {
             try
             {
-                loxEngine.RunREPL(arg0, Debug.Log);
+                engine.RunREPL(arg0, Debug.Log);
                 inputField.text = string.Empty;
             }
             catch (Exception e)

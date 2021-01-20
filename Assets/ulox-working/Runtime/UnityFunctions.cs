@@ -16,14 +16,20 @@ namespace ULox
             _availablePrefabs = availablePrefabs;
         }
 
-        public void BindToEngine(LoxEngine engine)
+        public void BindToEngine(Engine engine)
         {
-            engine.SetValue("Rand", new Callable(() => UnityEngine.Random.value));
-            engine.SetValue("RandRange", new Callable(2, (args) => UnityEngine.Random.Range((float)(double)args[0], (float)(double)args[1])));
-            engine.SetValue("GetKey", new Callable(1, (args) => UnityEngine.Input.GetKey((string)args[0])));
-            engine.SetValue("DestroyUnityObject", new Callable(1, (args) => UnityEngine.Object.Destroy((UnityEngine.Object)args[0])));
-            engine.SetValue("ReloadScene", new Callable(() => SceneManager.LoadScene(SceneManager.GetActiveScene().name)));
-            engine.SetValue("CreateFromPrefab", new Callable(1, (args) => CreateFromPrefab((string)args[0])));
+            engine.SetValue("Rand", 
+                new Callable(() => UnityEngine.Random.value));
+            engine.SetValue("RandRange", 
+                new Callable(2, (args) => UnityEngine.Random.Range((float)(double)args[0], (float)(double)args[1])));
+            engine.SetValue("GetKey", 
+                new Callable(1, (args) => UnityEngine.Input.GetKey((string)args[0])));
+            engine.SetValue("DestroyUnityObject", 
+                new Callable(1, (args) => UnityEngine.Object.Destroy((UnityEngine.Object)args[0])));
+            engine.SetValue("ReloadScene", 
+                new Callable(() => SceneManager.LoadScene(SceneManager.GetActiveScene().name)));
+            engine.SetValue("CreateFromPrefab", 
+                new Callable(1, (args) => CreateFromPrefab((string)args[0])));
             engine.SetValue("SetGameObjectPosition",
                 new Callable(3, (args) =>
                 {

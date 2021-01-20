@@ -8,6 +8,10 @@ namespace ULox
         private readonly int _arity;
         public int Arity => _arity;
 
+        //todo test use of adding local/anon env
+        //todo test use of sandbox in disconnect from global environment
+        //todo sandbox with libs ?
+        //todo getting data back out of the sandbox?
         public Callable(int arity, Func<Interpreter, object[], object> func)
         {
             _arity = arity;
@@ -18,6 +22,18 @@ namespace ULox
         {
             _arity = arity;
             _func = (interp, args) => func(args);
+        }
+
+        public Callable(int arity, Action<Interpreter> func)
+        {
+            _arity = arity;
+            _func = (interp, args) => { func(interp); return null; };
+        }
+
+        public Callable(int arity, Action<Interpreter,object[]> func)
+        {
+            _arity = arity;
+            _func = (interp, args) => { func(interp,args); return null; };
         }
 
         public Callable(int arity, Action<object[]> func)

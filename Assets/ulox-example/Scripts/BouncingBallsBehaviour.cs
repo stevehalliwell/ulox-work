@@ -13,13 +13,13 @@ namespace ULox.Demo
     {
         public TextAsset script;
         public Text text;
-        private LoxEngine loxEngine;
+        private Engine engine;
         private ICallable gameUpdateFunction;
         public List<GameObject> availablePrefabs;
 
         private void Start()
         {
-            loxEngine = new LoxEngine(
+            engine = new Engine(
                 new Scanner(),
                 new Parser() { CatchAndSynch = false },
                 new Resolver(),
@@ -28,19 +28,19 @@ namespace ULox.Demo
                 new StandardClasses(),
                 new UnityFunctions(availablePrefabs));
 
-            loxEngine.SetValue("SetUIText",
+            engine.SetValue("SetUIText",
                 new Callable(1, (args) => text.text = (string)args[0]));
             
-            loxEngine.Run(script.text);
+            engine.Run(script.text);
 
-            loxEngine.CallFunction("SetupGame");
-            gameUpdateFunction = loxEngine.GetValue("Update") as ICallable;
+            engine.CallFunction("SetupGame");
+            gameUpdateFunction = engine.GetValue("Update") as ICallable;
         }
 
         private void Update()
         {
-            loxEngine.SetValue("dt", Time.deltaTime);
-            loxEngine.CallFunction(gameUpdateFunction);
+            engine.SetValue("dt", Time.deltaTime);
+            engine.CallFunction(gameUpdateFunction);
         }
     }
 }

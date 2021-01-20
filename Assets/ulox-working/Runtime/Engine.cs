@@ -3,14 +3,14 @@ using System.Linq;
 
 namespace ULox
 {
-    public class LoxEngine
+    public class Engine
     {
         private Interpreter _interpreter;
         private Parser _parser;
         private Resolver _resolver;
         private Scanner _scanner;
 
-        public LoxEngine(
+        public Engine(
             Scanner scanner,
             Parser parser,
             Resolver resolver,

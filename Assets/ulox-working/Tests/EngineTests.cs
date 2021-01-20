@@ -116,7 +116,7 @@ printr (insta);",
             var test = new EngineTestLoxEngine();
             var res = 0;
 
-            test.loxEngine.SetValue("TestAction", new Callable(() => { res = 1; }));
+            test._engine.SetValue("TestAction", new Callable(() => { res = 1; }));
 
             test.Run("TestAction();", true);
 
@@ -129,7 +129,7 @@ printr (insta);",
             var test = new EngineTestLoxEngine();
             object[] arguments = null;
 
-            test.loxEngine.SetValue("TestAction", new Callable(1, (args) =>
+            test._engine.SetValue("TestAction", new Callable(1, (args) =>
             {
                 arguments = args;
                 return (string)args[0] + "World!";
@@ -157,7 +157,7 @@ printr (insta);",
             var test = new EngineTestLoxEngine();
             object res = false;
 
-            test.loxEngine.SetValue("Func", new Callable(() => res = true));
+            test._engine.SetValue("Func", new Callable(() => res = true));
 
             test.Run(@"Func();", true);
 
@@ -170,7 +170,7 @@ printr (insta);",
             var test = new EngineTestLoxEngine();
             object res = false;
 
-            test.loxEngine.SetValue("Func", new Callable(1, (args) => { res = args[0]; }));
+            test._engine.SetValue("Func", new Callable(1, (args) => { res = args[0]; }));
 
             test.Run(@"Func(true);", true);
 
@@ -182,7 +182,7 @@ printr (insta);",
         {
             var test = new EngineTestLoxEngine();
 
-            test.loxEngine.SetValue("Func", new Callable(2, (args) => args[0].ToString() + args[1].ToString()));
+            test._engine.SetValue("Func", new Callable(2, (args) => args[0].ToString() + args[1].ToString()));
 
             test.Run(@"print (Func(1,2));", true);
 
@@ -196,7 +196,7 @@ printr (insta);",
 
             test.Run("var val = 1;", true);
 
-            var val = test.loxEngine.GetValue("val");
+            var val = test._engine.GetValue("val");
 
             Assert.AreEqual(1, val);
         }
@@ -208,7 +208,7 @@ printr (insta);",
 
             test.Run(@"var val = ""hello"";", true);
 
-            var val = test.loxEngine.GetValue("val");
+            var val = test._engine.GetValue("val");
 
             Assert.AreEqual("hello", val);
         }
@@ -219,7 +219,7 @@ printr (insta);",
             var test = new EngineTestLoxEngine();
             bool extVar = true;
 
-            test.loxEngine.SetValue(nameof(extVar), extVar);
+            test._engine.SetValue(nameof(extVar), extVar);
 
             test.Run(@"print (extVar or """");", true);
 
@@ -233,7 +233,7 @@ printr (insta);",
 
             test.Run(@"fun Foo(){print (1);}", true);
 
-            var funcRes = test.loxEngine.CallFunction("Foo");
+            var funcRes = test._engine.CallFunction("Foo");
 
             Assert.AreEqual("1", test.InterpreterResult);
         }
@@ -245,7 +245,7 @@ printr (insta);",
 
             test.Run(@"fun Foo(v){print (v);}", true);
 
-            var funcRes = test.loxEngine.CallFunction("Foo", "hello");
+            var funcRes = test._engine.CallFunction("Foo", "hello");
 
             Assert.AreEqual("hello", test.InterpreterResult);
         }
@@ -257,7 +257,7 @@ printr (insta);",
 
             test.Run(@"fun AddPrint(a,b){print (a+b);}", true);
 
-            var funcRes = test.loxEngine.CallFunction("AddPrint", 7, 3.14);
+            var funcRes = test._engine.CallFunction("AddPrint", 7, 3.14);
 
             Assert.AreEqual("10.14", test.InterpreterResult);
         }
@@ -270,7 +270,7 @@ printr (insta);",
 @"class TestClass{var val = 1;}", true, false);
 
             //create
-            test.loxEngine.SetValue("testInstance", test.loxEngine.CreateInstance("TestClass"));
+            test._engine.SetValue("testInstance", test._engine.CreateInstance("TestClass"));
 
             //use
             test.Run(
@@ -285,7 +285,7 @@ printr (insta);",
             var test = new EngineTestLoxEngine();
             float extVar = 3.14f;
 
-            test.loxEngine.SetValue(nameof(extVar), extVar);
+            test._engine.SetValue(nameof(extVar), extVar);
 
             test.Run(@"print (extVar or """");", true);
 
@@ -298,7 +298,7 @@ printr (insta);",
             var test = new EngineTestLoxEngine();
             int extVar = 7;
 
-            test.loxEngine.SetValue(nameof(extVar), extVar);
+            test._engine.SetValue(nameof(extVar), extVar);
 
             test.Run(@"print (extVar or """");", true);
 
@@ -311,7 +311,7 @@ printr (insta);",
             var test = new EngineTestLoxEngine();
             string extVar = "test";
 
-            test.loxEngine.SetValue(nameof(extVar), extVar);
+            test._engine.SetValue(nameof(extVar), extVar);
 
             test.Run(@"print (extVar or """");", true);
 
@@ -328,61 +328,11 @@ print(v);";
 
             test.Run(initialTestString, true);
 
-            test.loxEngine.SetValue("v", false);
+            test._engine.SetValue("v", false);
 
             test.Run("print (v);", true);
 
             Assert.AreEqual("TrueFalse", test.InterpreterResult);
-        }
-
-        [Test]
-        public void RunSameScript_SameEngine_SeparateEnvironments()
-        {
-            var test = new EngineTestLoxEngine();
-            var initialTestString = @"fun Test(){print(1);}";
-            var envs = new List<IEnvironment>();
-
-            for (int i = 0; i < 3; i++)
-            {
-                envs.Add(test.loxEngine.Interpreter.PushNewEnvironemnt());
-                test.Run(initialTestString, true);
-                test.loxEngine.Interpreter.PopSpecificEnvironemnt(envs.Last());
-            }
-
-            var secondTestString = @"Test();";
-
-            for (int i = 0; i < 3; i++)
-            {
-                test.loxEngine.Interpreter.PushEnvironemnt(envs[i]);
-                test.Run(secondTestString, true);
-                test.loxEngine.Interpreter.PopEnvironemnt();
-            }
-
-            Assert.AreEqual("111", test.InterpreterResult);
-        }
-
-        [Test]
-        public void RunSameScript_SameEngine_SeparateEnvironments_WithCollisions()
-        {
-            var test = new EngineTestLoxEngine();
-            var initialTestString = @"fun Test(){print(1);}";
-            var envs = new List<IEnvironment>();
-
-            for (int i = 0; i < 3; i++)
-            {
-                envs.Add(test.loxEngine.Interpreter.PushNewEnvironemnt());
-                test.Run(initialTestString, true);
-                test.loxEngine.Interpreter.PopSpecificEnvironemnt(envs.Last());
-            }
-
-            for (int i = 0; i < 3; i++)
-            {
-                test.loxEngine.Interpreter.PushEnvironemnt(envs[i]);
-                test.Run(initialTestString, true);
-                test.loxEngine.Interpreter.PopEnvironemnt();
-            }
-
-            Assert.IsTrue(test.InterpreterResult.StartsWith("Environment value redefinition not allowed. Requested Test:1 collided."));
         }
 
         internal class EngineTestLoxEngine : TestLoxEngine

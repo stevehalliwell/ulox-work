@@ -16,7 +16,11 @@ namespace ULox
             _enclosing = enclosing;
         }
 
-        public IEnvironment Enclosing => _enclosing;
+        public IEnvironment Enclosing
+        {
+            get => _enclosing;
+            set => _enclosing = value;
+        }
 
         public void AssignSlot(short slot, object val)
         {

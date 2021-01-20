@@ -14,7 +14,7 @@ namespace ULox.Demo
     {
         public TextAsset script;
         public Text text;
-        private LoxEngine loxEngine;
+        private Engine engine;
         private ICallable gameUpdateFunction;
         private ICallable collisionFunction;
         public List<GameObject> availablePrefabs;
@@ -23,7 +23,7 @@ namespace ULox.Demo
 
         private void Start()
         {
-            loxEngine = new LoxEngine(
+            engine = new Engine(
                 new Scanner(),
                 new Parser() { CatchAndSynch = false },
                 new Resolver(),
@@ -32,30 +32,30 @@ namespace ULox.Demo
                 new StandardClasses(),
                 new UnityFunctions());
 
-            loxEngine.SetValue("SetUIText",
+            engine.SetValue("SetUIText",
                 new Callable(1, (args) => text.text = (string)args[0]));
-            loxEngine.SetValue("GetKey",
+            engine.SetValue("GetKey",
                 new Callable(1, (args) => Input.GetKey((string)args[0])));
-            loxEngine.SetValue("CreateGameObject",
+            engine.SetValue("CreateGameObject",
                 new Callable(1, (args) => CreateGameObject((string)args[0])));
-            loxEngine.SetValue("SetGameObjectPosition",
+            engine.SetValue("SetGameObjectPosition",
                 new Callable(3, (args) => SetGameObjectPosition(Convert.ToInt32(args[0]), Convert.ToSingle(args[1]), Convert.ToSingle(args[2]))));
-            loxEngine.SetValue("SetGameObjectVelocity",
+            engine.SetValue("SetGameObjectVelocity",
                 new Callable(3, (args) => SetGameObjectVelocity(Convert.ToInt32(args[0]), Convert.ToSingle(args[1]), Convert.ToSingle(args[2]))));
-            loxEngine.SetValue("DestroyGameObject",
+            engine.SetValue("DestroyGameObject",
                 new Callable(1, (args) => DestroyGameObject(Convert.ToInt32(args[0]))));
 
-            loxEngine.Run(script.text);
+            engine.Run(script.text);
 
-            loxEngine.CallFunction("SetupGame");
-            gameUpdateFunction = loxEngine.GetValue("Update") as ICallable;
-            collisionFunction = loxEngine.GetValue("OnCollision") as ICallable;
+            engine.CallFunction("SetupGame");
+            gameUpdateFunction = engine.GetValue("Update") as ICallable;
+            collisionFunction = engine.GetValue("OnCollision") as ICallable;
         }
 
         private void Update()
         {
-            loxEngine.SetValue("dt", Time.deltaTime);
-            loxEngine.CallFunction(gameUpdateFunction);
+            engine.SetValue("dt", Time.deltaTime);
+            engine.CallFunction(gameUpdateFunction);
         }
 
         private double CreateGameObject(string name)
@@ -85,7 +85,7 @@ namespace ULox.Demo
 
             if (arg1ID != -1 && arg2ID != -1)
             {
-                loxEngine.CallFunction(collisionFunction, arg1ID, arg2ID);
+                engine.CallFunction(collisionFunction, arg1ID, arg2ID);
             }
         }
 
