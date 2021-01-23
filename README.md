@@ -8,8 +8,9 @@ Beyond a port of jlox, it is now something to toy with, optimize, prototype with
 
 ## Status 
 ulox is no longer a superset of lox. The last point where that was the case is at [this commit](../../tree/core_jlox_varloc)
+
 ![current code coverage](badge_linecoverage.png)
-- [Libraries] (../../tree/ulox_libraries)
+- [Libraries](../../tree/ulox_libraries)
 	- Refactor hardwired parts of LoxEngine into modules/libraries.
 	- print and printr functions added. Removed print statement.
 	- Add REPL demo.
