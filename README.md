@@ -9,12 +9,13 @@ Beyond a port of jlox, it is now something to toy with, optimize, prototype with
 ## Status 
 ulox is no longer a superset of lox. The last point where that was the case is at [this commit](../../tree/core_jlox_varloc)
 ![current code coverage](badge_linecoverage.png)
-- [Libraries] (../../tree/ulox_with_libraries)
+- [Libraries] (../../tree/ulox_libraries)
 	- Refactor hardwired parts of LoxEngine into modules/libraries.
 	- print and printr functions added. Removed print statement.
 	- Add REPL demo.
 	- Add ScriptPerObject Unity Demo.
-	- Handful of additional tests.
+	- Sandboxing, running scripts in a local environment with no access to it's enclosing.
+	- Additional tests.
 - [Use of VarLoc, more QOL, more Tests](../../tree/core_jlox_varloc)
 	- Add support for chainning declarations, see [Class Sugar](#class-sugar).
 	- Each Environemnt now a flat list of objects with a string to index lookup. Used and stored in Exprs (VarLocs).
@@ -65,6 +66,7 @@ ulox is no longer a superset of lox. The last point where that was the case is a
 - [Class Sugar](#class-sugar).
 - An Instance is an Environment.
 - print is no longer a statement. It's now a function in the LoxCoreLibrary. 
+- Globals are in an instance, rather than an environment and bind themselves with the name 'Globals'. Allows for adding to globals from lower deeper scopes.
 
 ## Class Sugar
 The added keywords in class declarations minimise the amount of plumbing required to do basic things.

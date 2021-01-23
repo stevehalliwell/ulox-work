@@ -6,7 +6,7 @@ namespace ULox
     public class Interpreter : Expr.Visitor<Object>,
                                Stmt.Visitor
     {
-        private Environment _globals = new Environment(null);
+        private Environment _globals = new Instance(null, null);
         public IEnvironment CurrentEnvironment => _environmentStack.Peek();
         private Stack<IEnvironment> _environmentStack = new Stack<IEnvironment>();
 
@@ -15,6 +15,7 @@ namespace ULox
         public Interpreter()
         {
             _environmentStack.Push(Globals);
+            Globals.DefineInAvailableSlot("Globals", Globals);
         }
 
         public IEnvironment PushNewEnvironemnt()

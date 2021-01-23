@@ -1,7 +1,4 @@
-﻿//todo there will be a need to get access to the global from a local environment, so user scripts can
-//  add shared functionality
-
-namespace ULox
+﻿namespace ULox
 {
     /// <summary>
     /// Creates a local environment for the script to run inside, allowing for multiple objects

@@ -185,7 +185,6 @@ RunScript(""Test(5);"");";
             Assert.IsTrue(test.InterpreterResult.StartsWith("Environment value redefinition not allowed. Requested Test:1 collided."));
         }
 
-        //todo test with push local add local func refs, run script in local sandbox, takes the local env, disconnects from enclosing, runs, reconnects enclosing
         [Test]
         public void RunInSandbox_GlobalUnchanged_Validate()
         {
@@ -193,6 +192,7 @@ RunScript(""Test(5);"");";
             test.Run(@"
 var myvar = 10;
 PushLocalEnvironment();
+//put a print callable in the local scope
 var print = print;
 var innerScript = ""var myvar = 5; print(myvar); print = null;"";
 RunScriptInLocalSandbox(innerScript);
@@ -202,10 +202,56 @@ print(myvar);", true);
             Assert.AreEqual("510", test.InterpreterResult);
         }
 
+        [Test]
+        public void RunInSandbox_OutterTakesData_Validate()
+        {
+            var test = new CustomEnvironmentTestLoxEngine();
+            test.Run(@"
+var innerScript = ""holder.data = 5;"";
+var pod = POD();
+PushLocalEnvironment();
+var holder = pod;
+RunScriptInLocalSandbox(innerScript);
+PopLocalEnvironment();
+print(pod.data);", true);
+
+            Assert.AreEqual("5", test.InterpreterResult);
+        }
+
+        [Test]
+        public void RunInLocal_AssigningToGlobal_Validate()
+        {
+            var test = new CustomEnvironmentTestLoxEngine();
+            test.Run(@"
+var innerScript = ""Globals.testVar = 5;"";
+PushLocalEnvironment();
+RunScript(innerScript);
+PopLocalEnvironment();
+print(Globals.testVar);
+print(testVar);", true);
+
+            Assert.AreEqual("55", test.InterpreterResult);
+        }
+
+        [Test]
+        public void RunInSandbox_AssigningToGlobal_Fails()
+        {
+            var test = new CustomEnvironmentTestLoxEngine();
+            test.Run(@"
+var innerScript = ""Globals.testVar = 5;"";
+PushLocalEnvironment();
+RunScriptInLocalSandbox(innerScript);
+PopLocalEnvironment();
+print(Globals.testVar);
+print(testVar);", true);
+
+            Assert.IsTrue(test.InterpreterResult.Contains("Undefined variable Globals"));
+        }
+
         internal class CustomEnvironmentTestLoxEngine : TestLoxEngine
         {
             public CustomEnvironmentTestLoxEngine()
-                : base(new EngineFunctions())
+                : base(new StandardClasses(), new EngineFunctions())
             {
             }
         }
