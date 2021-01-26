@@ -54,7 +54,6 @@ namespace ULox
         public object CallFunction(ICallable callable, params object[] objs)
         {
             Interpreter.SantizeObjects(objs);
-            //todo this might need to know what the this is
             return callable.Call(_interpreter, FunctionArguments.New(objs));
         }
 
@@ -66,7 +65,6 @@ namespace ULox
         public Instance CreateInstance(Class @class, params object[] objs)
         {
             Interpreter.SantizeObjects(objs);
-            //todo this might need to know what the this is, but in this case probably not
             return @class?.Call(_interpreter, FunctionArguments.New(objs)) as Instance;
         }
 

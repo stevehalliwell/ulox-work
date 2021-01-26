@@ -436,22 +436,31 @@ namespace ULox
         public object Visit(Expr.Get expr)
         {
             var obj = Evaluate(expr.obj);
-            //todo this comes back as null whe the eval tries to find the this in local and fails
+
+            if(obj == null)
+            {
+                throw new RuntimeAccessException(expr.name, "Evaluation resulted in null.");
+            }
+
             if (obj is Instance objInst)
             {
                 object result = null;
 
-                if (expr.varLoc != EnvironmentVariableLocation.Invalid)
+                //todo this dict lookup in here is still a cause of much perf issues
+                if(expr.knownSlot == EnvironmentVariableLocation.InvalidSlot)
                 {
-                    result = objInst.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
+                    expr.knownSlot = objInst.FindSlot(expr.name.Lexeme);
+                }
+                if(expr.knownSlot != EnvironmentVariableLocation.InvalidSlot)
+                {
+                    result = objInst.FetchObject(expr.knownSlot);
                 }
                 else
                 {
-                    //todo this dict lookup in here is still a cause of much perf issues
                     result = objInst.Get(expr.name);
                 }
 
-                if (result is Function resultFunc)
+                if (result is IFunction resultFunc)
                 {
                     if (resultFunc.IsGetter)
                     {
@@ -474,6 +483,7 @@ namespace ULox
             }
 
             var val = Evaluate(expr.val);
+            //todo this dict lookup in here is still a cause of much perf issues
             obj.Set(expr.name.Lexeme, val);
             return val;
         }

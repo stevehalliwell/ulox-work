@@ -1,8 +1,6 @@
-﻿using System.Linq;
-
-namespace ULox
+﻿namespace ULox
 {
-    public class Function : ICallable
+    public class Function : IFunction
     {
         private string _name;
         private Expr.Function _declaration;
@@ -31,9 +29,12 @@ namespace ULox
             //if doesn't have locals does it need the new env?
             var environment = new Environment(_closure);
             //if we haven't been given a valid this, see if we already have one
-            environment.AssignSlot(Class.ThisSlot, functionArgs.@this == null ? 
-                _closure.FetchObject(Class.ThisSlot) : 
-                functionArgs.@this);
+            environment.DefineSlot(
+                Class.ThisIdentifier, 
+                Class.ThisSlot, 
+                functionArgs.@this == null ? 
+                    _closure.FetchObject(Class.ThisSlot) : 
+                    functionArgs.@this);
             
             if (_declaration.parameters != null)
             {
@@ -57,12 +58,13 @@ namespace ULox
             return null;
         }
 
-        public Function Bind(Instance instance)
+        public Method Bind(Instance instance)
         {
-            //todo would be nice to not have an extra layer of env for this
-            var env = new Environment(_closure);
-            env.DefineSlot(Class.ThisIdentifier, Class.ThisSlot, instance);
-            return new Function(_name, _declaration, env, _isInitializer);
+            //prior to expecting this, there was an empty enclosing env with a this in it, resolver expected it too
+            //var env = new Environment(_closure);
+            //env.DefineSlot(Class.ThisIdentifier, Class.ThisSlot, instance);
+            //return new Method(instance, new Function(_name, _declaration, env, _isInitializer));
+            return new Method(instance, this);
         }
 
         public override string ToString()

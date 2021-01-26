@@ -14,7 +14,7 @@ namespace ULox
             "Assign   : Token name, Expr value, EnvironmentVariableLocation varLoc",
             "Binary   : Expr left, Token op, Expr right",
             "Call     : Expr callee, Token paren, List<Expr> arguments",
-            "Get      : Expr obj, Token name, EnvironmentVariableLocation varLoc",
+            "Get      : Expr obj, Token name, short knownSlot",
             "Grouping : Expr expression",
             "Literal  : object value",
             "Logical  : Expr left, Token op, Expr right",

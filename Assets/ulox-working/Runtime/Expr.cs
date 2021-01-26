@@ -45,15 +45,15 @@ namespace ULox
         }
         public class Get : Expr
         {
-            public Get( Expr obj, Token name, EnvironmentVariableLocation varLoc)
+            public Get( Expr obj, Token name, short knownSlot)
             {
                 this.obj = obj;
                 this.name = name;
-                this.varLoc = varLoc;
+                this.knownSlot = knownSlot;
             }
             public readonly Expr obj;
             public readonly Token name;
-            public EnvironmentVariableLocation varLoc;
+            public short knownSlot;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
         public class Grouping : Expr

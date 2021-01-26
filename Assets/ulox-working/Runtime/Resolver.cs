@@ -296,6 +296,12 @@ namespace ULox
                     Define(param);
                 }
             }
+            else if(functionType == FunctionType.METHOD)
+            {
+                //we are in a get
+                DeclareAt(Class.ThisToken, Class.ThisSlot);
+            }
+
             Resolve(func.body);
 
             func.NeedsClosure = _scopes.Count > 0 ? _scopes.Last().HasClosedOverVars : true;
@@ -396,8 +402,8 @@ namespace ULox
                 DefineManually(Class.SuperIdentifier, Class.SuperSlot);
             }
 
-            BeginScope();
-            DefineManually(Class.ThisIdentifier, Class.ThisSlot);
+            //BeginScope();
+            //DefineManually(Class.ThisIdentifier, Class.ThisSlot);
 
             BeginScope();
             foreach (var item in stmt.fields)
@@ -419,7 +425,7 @@ namespace ULox
                 ResolveFunction(thisMeth.function, declaration);
             }
 
-            EndScope();
+            //EndScope();
 
             if (stmt.superclass != null) EndScope();
 

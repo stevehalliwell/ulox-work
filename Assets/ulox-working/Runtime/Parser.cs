@@ -285,7 +285,7 @@ namespace ULox
                         new Stmt.Return(className.Copy(TokenType.RETURN),
                         new Expr.Get(
                             new Expr.This(className.Copy(TokenType.THIS, Class.ThisIdentifier),
-                                EnvironmentVariableLocation.Invalid), hiddenInternalFieldName, EnvironmentVariableLocation.Invalid))
+                                EnvironmentVariableLocation.Invalid), hiddenInternalFieldName, EnvironmentVariableLocation.InvalidSlot))
                     }, false, false, true)
                 , EnvironmentVariableLocation.InvalidSlot);
         }
@@ -334,7 +334,7 @@ namespace ULox
             if (functionType == FunctionType.Set)
             {
                 var createdValueParam = Previous().Copy(TokenType.IDENTIFIER, "value");
-                parameters = new List<Token>() { Class.ThisToken }; //todo standardise everwhre this is used, param list, autogened etc.
+                parameters = new List<Token>() { Class.ThisToken }; //todo standardise everwhere this is used, param list, autogened etc.
                 parameters.Add(createdValueParam);
             }
 
@@ -694,7 +694,7 @@ namespace ULox
                 {
                     var name = Consume(TokenType.IDENTIFIER,
                         "Expect property name after '.'.");
-                    expr = new Expr.Get(expr, name, EnvironmentVariableLocation.Invalid);
+                    expr = new Expr.Get(expr, name, EnvironmentVariableLocation.InvalidSlot);
                 }
                 else
                 {

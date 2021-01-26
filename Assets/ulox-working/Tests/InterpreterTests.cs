@@ -1006,7 +1006,7 @@ inst.ChildMeth(""is it "");",
             yield return new TestCaseData(
 @"class Base
 {
-    getset foo = ""Foo"";
+    getset foo = ""asdf"";
 }
 class Derived < Base
 {
@@ -1119,6 +1119,24 @@ var inst = Derived();
 inst.Foo(""hi"");",
 @"IDENTIFIER|12:51 Could not find parent class of name 'BassBase' via 'super'.")
                 .SetName("TypoSuperJumpChain");
+
+            yield return new TestCaseData(
+@"class Test
+{
+    var a = 10;
+    Thing(b)
+    {
+        if(b == true) { this.a *= 2; return this.a;}
+        else { this.a /= 2; return this.a; }
+    }
+}
+
+var t = Test();
+print(t.Thing(true));
+print(t.Thing(false));
+",
+@"2010")
+                .SetName("ClassInnerUseOfThis");
 
             yield return new TestCaseData(
 @"print("""");",

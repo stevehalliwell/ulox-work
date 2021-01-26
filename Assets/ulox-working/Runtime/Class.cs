@@ -60,8 +60,7 @@ namespace ULox
             if (_initializer != null)
             {
                 functionArgs.@this = instance;
-                //todo shouldn't need the bind since it's being called
-                _initializer.Bind(instance).Call(interpreter, functionArgs);
+                _initializer.Call(interpreter, functionArgs);
             }
 
             return instance;
