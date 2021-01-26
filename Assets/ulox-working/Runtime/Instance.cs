@@ -3,6 +3,7 @@
     public class Instance : Environment
     {
         private Class _class;
+        public Class Class => _class;
 
         public Instance(Class @class, IEnvironment enclosing)
             : base(enclosing)

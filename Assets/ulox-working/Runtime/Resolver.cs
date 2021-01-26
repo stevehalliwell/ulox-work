@@ -4,7 +4,6 @@ using System.Linq;
 
 namespace ULox
 {
-    //todo warn when a function isn't a meta but doesn't use anything from the closure
     public class Resolver : Expr.Visitor<Object>,
                                 Stmt.Visitor
     {
@@ -248,6 +247,10 @@ namespace ULox
             {
                 if (item.state != VariableUse.State.Read)
                 {
+                    if (item.name.TokenType == TokenType.THIS ||
+                        item.name.TokenType == TokenType.SUPER)
+                        continue;
+
                     Warning(item.name, "Local variable is never read.");
                 }
             }
@@ -275,6 +278,7 @@ namespace ULox
             return null;
         }
 
+        //todo warn when a function isn't a meta but doesn't use anything from the closure
         private void ResolveFunction(Expr.Function func, FunctionType functionType)
         {
             var enclosingFunctionType = _currentFunctionType;
@@ -379,7 +383,7 @@ namespace ULox
             foreach (Stmt.Function metaMeth in stmt.metaMethods)
             {
                 BeginScope();
-                DefineManually("this", Class.ThisSlot);
+                DefineManually(Class.ThisIdentifier, Class.ThisSlot);
                 //Declare(metaMeth.name);
                 //Define(metaMeth.name);
                 ResolveFunction(metaMeth.function, FunctionType.METHOD);
@@ -389,11 +393,11 @@ namespace ULox
             if (stmt.superclass != null)
             {
                 BeginScope();
-                DefineManually("super", Class.SuperSlot);
+                DefineManually(Class.SuperIdentifier, Class.SuperSlot);
             }
 
             BeginScope();
-            DefineManually("this", Class.ThisSlot);
+            DefineManually(Class.ThisIdentifier, Class.ThisSlot);
 
             BeginScope();
             foreach (var item in stmt.fields)
@@ -405,7 +409,7 @@ namespace ULox
             foreach (Stmt.Function thisMeth in stmt.methods)
             {
                 FunctionType declaration = FunctionType.METHOD;
-                if (thisMeth.name.Lexeme == "init")
+                if (thisMeth.name.Lexeme == Class.InitalizerFunctionName)
                 {
                     declaration = FunctionType.INITIALIZER;
                 }
@@ -418,6 +422,12 @@ namespace ULox
             EndScope();
 
             if (stmt.superclass != null) EndScope();
+
+            //todo determine and save offsets of the init params to members by names, saving index
+            //allowing this explicit
+            // class Test{var a,b,c; init(a,b,c){this.a = a; this.b = b; this.c = c;}}
+            // to be this implicitly
+            //class Test{var a,b,c; init(a,b,c){}}
 
             _currentClass = enclosingClass;
         }

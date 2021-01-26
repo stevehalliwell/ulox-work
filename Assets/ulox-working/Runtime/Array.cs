@@ -18,14 +18,14 @@ namespace ULox
                 objs.Add(null);
             }
 
-            base.Set("Get", new Callable(1, (args) => objs[(int)(double)args[0]]));
-            base.Set("Set", new Callable(2, (args) => objs[(int)(double)args[0]] = args[1]));
+            base.Set("Get", new Callable(1, (args) => objs[(int)args.At<double>(0)]));
+            base.Set("Set", new Callable(2, (args) => objs[(int)args.At<double>(0)] = args.At<double>(1)));
             base.Set("Count", new Callable(() => (double)objs.Count));
             if (IsList)
             {
-                base.Set("Add", new Callable(1, (args) => objs.Add(args[0])));
-                base.Set("Remove", new Callable(1, (args) => objs.Remove(args[0])));
-                base.Set("RemoveAt", new Callable(1, (args) => objs.RemoveAt((int)(double)args[0])));
+                base.Set("Add", new Callable(1, (args) => objs.Add(args.At(0))));
+                base.Set("Remove", new Callable(1, (args) => objs.Remove(args.At(0))));
+                base.Set("RemoveAt", new Callable(1, (args) => objs.RemoveAt((int)args.At<double>(0))));
             }
         }
 
@@ -50,7 +50,7 @@ namespace ULox
             sb.Append(IsList ? "<list [" : "<array [");
             foreach (var item in objs)
             {
-                sb.Append(item?.ToString() ?? "null");
+                sb.Append(item?.ToString() ?? Interpreter.NulIdentifier);
                 sb.Append(",");
             }
             sb.Append("]>");

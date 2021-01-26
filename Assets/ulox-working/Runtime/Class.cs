@@ -1,15 +1,19 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace ULox
 {
     public class Class : Instance, ICallable
     {
+        public const string InitalizerFunctionName = "init";
+        public const string ThisIdentifier = "this";
+        public const string SuperIdentifier = "super";
+        public static Token ThisToken = new Token(TokenType.THIS, "this", null, -1, -1);
+
         //presently closures go super->this->members
         //  These offsets exist so that if/when this changes, it's less tiresome to do so
         public const short ThisSlot = 0;
-
         public const short SuperSlot = 0;
-        public const int StartingMemberSlot = 0;
 
         private string _name;
         private Dictionary<string, Function> _methods;
@@ -17,6 +21,7 @@ namespace ULox
         private Class _superclass;
         public Class Super => _superclass;
         private List<Stmt.Var> _vars;
+        private Function _initializer;
 
         public string Name => _name;
 
@@ -33,11 +38,17 @@ namespace ULox
             _methods = methods;
             _superclass = superclass;
             _vars = fields;
+            GenerateInitializerData();
         }
 
-        public virtual int Arity => FindMethod("init")?.Arity ?? 0;
+        private void GenerateInitializerData()
+        {
+            _initializer = FindMethod(InitalizerFunctionName);
+        }
 
-        public virtual object Call(Interpreter interpreter, object[] args)
+        public virtual int Arity => (_initializer?.Arity ?? Function.StartingParamSlot);
+
+        public virtual object Call(Interpreter interpreter, FunctionArguments functionArgs)
         {
             var instance = new Instance(this, interpreter.CurrentEnvironment);
 
@@ -46,10 +57,11 @@ namespace ULox
             //  order is stable
             CreateFields(interpreter, instance, this);
 
-            var initializer = FindMethod("init");
-            if (initializer != null)
+            if (_initializer != null)
             {
-                initializer.Bind(instance).Call(interpreter, args);
+                functionArgs.@this = instance;
+                //todo shouldn't need the bind since it's being called
+                _initializer.Bind(instance).Call(interpreter, functionArgs);
             }
 
             return instance;

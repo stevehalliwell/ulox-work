@@ -29,7 +29,7 @@ namespace ULox.Demo
                 new UnityFunctions(availablePrefabs));
 
             engine.SetValue("SetUIText",
-                new Callable(1, (args) => text.text = (string)args[0]));
+                new Callable(1, (args) => text.text = args.At<string>(0)));
             
             engine.Run(script.text);
 

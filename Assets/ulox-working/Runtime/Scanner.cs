@@ -13,7 +13,6 @@ namespace ULox
         private StringReader _stringReader;
         private StringBuilder workingSpaceStringBuilder;
         private Char _currentChar;
-        private Action<string> _logger;
 
         private Dictionary<string, TokenType> keywords = new Dictionary<string, TokenType>()
         {
@@ -33,12 +32,12 @@ namespace ULox
             { "continue", TokenType.CONTINUE},
             { "true",   TokenType.TRUE},
             { "false",  TokenType.FALSE},
-            { "null",   TokenType.NULL},
+            { Interpreter.NulIdentifier,   TokenType.NULL},
             { "fun",    TokenType.FUNCTION},
             { "class",  TokenType.CLASS},
             { ".",      TokenType.DOT},
-            { "this",   TokenType.THIS},
-            { "super",  TokenType.SUPER},
+            { Class.ThisIdentifier,   TokenType.THIS},
+            { Class.SuperIdentifier,  TokenType.SUPER},
             { "get",    TokenType.GET},
             { "set",    TokenType.SET},
             { "getset", TokenType.GETSET},

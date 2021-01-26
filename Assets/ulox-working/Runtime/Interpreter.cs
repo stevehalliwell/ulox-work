@@ -6,6 +6,9 @@ namespace ULox
     public class Interpreter : Expr.Visitor<Object>,
                                Stmt.Visitor
     {
+        public const string GlobalsIdentifier = "Globals";
+        public const string NulIdentifier = "null";
+
         private Environment _globals = new Instance(null, null);
         public IEnvironment CurrentEnvironment => _environmentStack.Peek();
         private Stack<IEnvironment> _environmentStack = new Stack<IEnvironment>();
@@ -15,7 +18,7 @@ namespace ULox
         public Interpreter()
         {
             _environmentStack.Push(Globals);
-            Globals.DefineInAvailableSlot("Globals", Globals);
+            Globals.DefineInAvailableSlot(GlobalsIdentifier, Globals);
         }
 
         public IEnvironment PushNewEnvironemnt()
@@ -60,7 +63,7 @@ namespace ULox
                 if (item is Stmt.Expression stmtExpr)
                 {
                     var res = Evaluate(stmtExpr.expression);
-                    output?.Invoke(res?.ToString() ?? "null");
+                    output?.Invoke(res?.ToString() ?? NulIdentifier);
                 }
                 else
                 {
@@ -312,11 +315,12 @@ namespace ULox
 
             if (callee is ICallable calleeCallable)
             {
-                if (args.Length != calleeCallable.Arity)
+                if (args.Length + Function.StartingParamSlot != calleeCallable.Arity)
                     throw new RuntimeCallException(expr.paren,
                         $"Expected { calleeCallable.Arity} args but got { args.Length }");
 
-                return calleeCallable.Call(this, args);
+                //todo ! this should know if there's an inst or not
+                return calleeCallable.Call(this, FunctionArguments.New(args));
             }
 
             throw new RuntimeTypeException(expr.paren, "Can only call function types");
@@ -381,7 +385,7 @@ namespace ULox
             if (stmt.superclass != null)
             {
                 _environmentStack.Push(new Environment(CurrentEnvironment));
-                CurrentEnvironment.DefineSlot("super", Class.SuperSlot, superclass);
+                CurrentEnvironment.DefineSlot(Class.SuperIdentifier, Class.SuperSlot, superclass);
             }
 
             var classMethods = new Dictionary<string, Function>();
@@ -400,7 +404,7 @@ namespace ULox
                     method.name.Lexeme,
                     method.function,
                     CurrentEnvironment,
-                    method.name.Lexeme == "init");
+                    method.name.Lexeme == Class.InitalizerFunctionName);
 
                 methods[method.name.Lexeme] = function;
             }
@@ -432,6 +436,7 @@ namespace ULox
         public object Visit(Expr.Get expr)
         {
             var obj = Evaluate(expr.obj);
+            //todo this comes back as null whe the eval tries to find the this in local and fails
             if (obj is Instance objInst)
             {
                 object result = null;
@@ -442,6 +447,7 @@ namespace ULox
                 }
                 else
                 {
+                    //todo this dict lookup in here is still a cause of much perf issues
                     result = objInst.Get(expr.name);
                 }
 
@@ -449,7 +455,7 @@ namespace ULox
                 {
                     if (resultFunc.IsGetter)
                     {
-                        result = resultFunc.Call(this, null);
+                        result = resultFunc.Call(this, FunctionArguments.New(objInst));
                     }
                 }
                 return result;
@@ -491,9 +497,15 @@ namespace ULox
         //todo super and this behave very differently, can they be uniformed
         public object Visit(Expr.Super expr)
         {
-            if (expr.superVarLoc == EnvironmentVariableLocation.Invalid)
-                expr.superVarLoc = CurrentEnvironment.FindLocation("super");
+            if (expr.thisVarLoc == EnvironmentVariableLocation.Invalid)
+                expr.thisVarLoc = CurrentEnvironment.FindLocation(Class.ThisIdentifier);
 
+            var inst = (Instance)CurrentEnvironment.Ancestor(expr.thisVarLoc.depth).FetchObject(expr.thisVarLoc.slot);
+
+            if (expr.superVarLoc == EnvironmentVariableLocation.Invalid)
+                expr.superVarLoc = CurrentEnvironment.FindLocation(Class.SuperIdentifier);
+
+            //todo cthis, or current class stored anywhere, would mean we don't need the empty super environments littering the landscape
             var superclass = (Class)CurrentEnvironment.Ancestor(expr.superVarLoc.depth).FetchObject(expr.superVarLoc.slot);
 
             if (!string.IsNullOrEmpty(expr.classNameToken.Lexeme))
@@ -509,11 +521,6 @@ namespace ULox
                         $"Could not find parent class of name '{expr.classNameToken.Lexeme}' via 'super'.");
                 }
             }
-
-            if (expr.thisVarLoc == EnvironmentVariableLocation.Invalid)
-                expr.thisVarLoc = CurrentEnvironment.FindLocation("this");
-
-            var inst = (Instance)CurrentEnvironment.Ancestor(expr.thisVarLoc.depth).FetchObject(expr.thisVarLoc.slot);
 
             var method = superclass.FindMethod(expr.method.Lexeme);
 

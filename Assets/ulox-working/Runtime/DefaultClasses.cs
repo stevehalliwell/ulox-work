@@ -12,11 +12,11 @@
         public ArrayClass(Environment enclosing)
             : base(null, "Array", null, null, null, enclosing) { }
 
-        public override int Arity => 1;
+        public override int Arity => 1 + Function.StartingParamSlot;
 
-        public override object Call(Interpreter interpreter, object[] args)
+        public override object Call(Interpreter interpreter, FunctionArguments functionArgs)
         {
-            return Array.CreateArray((int)(double)args[0], this, interpreter.CurrentEnvironment);
+            return Array.CreateArray((int)functionArgs.At<double>(0), this, interpreter.CurrentEnvironment);
         }
     }
 
@@ -25,9 +25,9 @@
         public ListClass(Environment enclosing)
             : base(null, "List", null, null, null, enclosing) { }
 
-        public override int Arity => 0;
+        public override int Arity => 0 + Function.StartingParamSlot;
 
-        public override object Call(Interpreter interpreter, object[] args)
+        public override object Call(Interpreter interpreter, FunctionArguments functionArgs)
         {
             return Array.CreateList(this, interpreter.CurrentEnvironment);
         }

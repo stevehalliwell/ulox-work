@@ -1,4 +1,6 @@
-﻿namespace ULox
+﻿using System.Linq;
+
+namespace ULox
 {
     public class Function : ICallable
     {
@@ -6,7 +8,7 @@
         private Expr.Function _declaration;
         private IEnvironment _closure;
         private bool _isInitializer;
-        public const short StartingParamSlot = 0;
+        public const short StartingParamSlot = 1;
 
         public Function(
             string name,
@@ -20,19 +22,24 @@
             _isInitializer = isInitializer;
         }
 
-        public int Arity => _declaration?.parameters?.Count ?? 0;
+        public int Arity => _declaration?.parameters?.Count ?? Function.StartingParamSlot;
 
         public bool IsGetter => _declaration.parameters == null;
 
-        public object Call(Interpreter interpreter, object[] args)
+        public object Call(Interpreter interpreter, FunctionArguments functionArgs)
         {
             //if doesn't have locals does it need the new env?
             var environment = new Environment(_closure);
+            //if we haven't been given a valid this, see if we already have one
+            environment.AssignSlot(Class.ThisSlot, functionArgs.@this == null ? 
+                _closure.FetchObject(Class.ThisSlot) : 
+                functionArgs.@this);
+            
             if (_declaration.parameters != null)
             {
-                for (int i = 0; i < _declaration.parameters.Count; i++)
+                for (int i = Function.StartingParamSlot; i < _declaration.parameters.Count; i++)
                 {
-                    environment.DefineSlot(_declaration.parameters[i].Lexeme, (short)(i + StartingParamSlot), args[i]);
+                    environment.DefineSlot(_declaration.parameters[i].Lexeme, (short)i, functionArgs.args[i - Function.StartingParamSlot]);
                 }
             }
 
@@ -42,8 +49,6 @@
             }
             catch (Return exp)
             {
-                if (_isInitializer) return _closure.FetchObject(Class.ThisSlot);
-
                 return exp.Value;
             }
 
@@ -56,7 +61,7 @@
         {
             //todo would be nice to not have an extra layer of env for this
             var env = new Environment(_closure);
-            env.DefineSlot("this", Class.ThisSlot, instance);
+            env.DefineSlot(Class.ThisIdentifier, Class.ThisSlot, instance);
             return new Function(_name, _declaration, env, _isInitializer);
         }
 

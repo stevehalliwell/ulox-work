@@ -127,12 +127,12 @@ printr (insta);",
         public void CallableFullFunc_Validate()
         {
             var test = new EngineTestLoxEngine();
-            object[] arguments = null;
+            FunctionArguments arguments = default;
 
             test._engine.SetValue("TestAction", new Callable(1, (args) =>
             {
                 arguments = args;
-                return (string)args[0] + "World!";
+                return args.At<string>(0) + "World!";
             }));
 
             test.Run(@"print( TestAction(""Hello ""));", true);
@@ -170,7 +170,7 @@ printr (insta);",
             var test = new EngineTestLoxEngine();
             object res = false;
 
-            test._engine.SetValue("Func", new Callable(1, (args) => { res = args[0]; }));
+            test._engine.SetValue("Func", new Callable(1, (args) => { res = args.At(0); }));
 
             test.Run(@"Func(true);", true);
 
@@ -182,7 +182,7 @@ printr (insta);",
         {
             var test = new EngineTestLoxEngine();
 
-            test._engine.SetValue("Func", new Callable(2, (args) => args[0].ToString() + args[1].ToString()));
+            test._engine.SetValue("Func", new Callable(2, (args) => args.At(0).ToString() + args.At(1).ToString()));
 
             test.Run(@"print (Func(1,2));", true);
 

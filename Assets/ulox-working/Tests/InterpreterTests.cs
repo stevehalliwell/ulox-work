@@ -427,7 +427,7 @@ var a = -Func;",
             yield return new TestCaseData(
 @"fun Func(a,b){}
 Func(7);",
-@"CLOSE_PAREN|2:7 Expected 2 args but got 1")
+@"CLOSE_PAREN|2:7 Expected 3 args but got 1")
                 .SetName("CannotCallFunctionWithIncorrectParamCount");
 
             yield return new TestCaseData(

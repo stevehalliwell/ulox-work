@@ -265,11 +265,11 @@ namespace ULox
             var setFuncName = writtenFieldName.Copy(TokenType.IDENTIFIER, "Set" + writtenFieldName.Lexeme);
             var valueName = writtenFieldName.Copy(TokenType.IDENTIFIER, "value");
             return new Stmt.Function(setFuncName,
-                new Expr.Function(new List<Token>() { valueName },
+                new Expr.Function(new List<Token>() { Class.ThisToken, valueName },
                     new List<Stmt>()
                     {
                         new Stmt.Expression(new Expr.Set(
-                            new Expr.This(name.Copy(TokenType.THIS, "this"), EnvironmentVariableLocation.Invalid),
+                            new Expr.This(name.Copy(TokenType.THIS, Class.ThisIdentifier), EnvironmentVariableLocation.Invalid),
                             hiddenInternalFieldName,
                             new Expr.Variable(valueName, EnvironmentVariableLocation.Invalid)))
                     }, false, false, false),
@@ -284,7 +284,7 @@ namespace ULox
                     {
                         new Stmt.Return(className.Copy(TokenType.RETURN),
                         new Expr.Get(
-                            new Expr.This(className.Copy(TokenType.THIS, "this"),
+                            new Expr.This(className.Copy(TokenType.THIS, Class.ThisIdentifier),
                                 EnvironmentVariableLocation.Invalid), hiddenInternalFieldName, EnvironmentVariableLocation.Invalid))
                     }, false, false, true)
                 , EnvironmentVariableLocation.InvalidSlot);
@@ -302,7 +302,7 @@ namespace ULox
 
             if (functionType == FunctionType.Function || Check(TokenType.OPEN_PAREN))
             {
-                parameters = new List<Token>();
+                parameters = new List<Token>() { Class.ThisToken };
                 Consume(TokenType.OPEN_PAREN, $"Expect '(' after {functionType} name.");
                 if (!Check(TokenType.CLOSE_PAREN))
                 {
@@ -334,7 +334,7 @@ namespace ULox
             if (functionType == FunctionType.Set)
             {
                 var createdValueParam = Previous().Copy(TokenType.IDENTIFIER, "value");
-                parameters = new List<Token>();
+                parameters = new List<Token>() { Class.ThisToken }; //todo standardise everwhre this is used, param list, autogened etc.
                 parameters.Add(createdValueParam);
             }
 

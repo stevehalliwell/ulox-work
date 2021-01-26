@@ -33,17 +33,17 @@ namespace ULox.Demo
                 new UnityFunctions());
 
             engine.SetValue("SetUIText",
-                new Callable(1, (args) => text.text = (string)args[0]));
+                new Callable(1, (args) => text.text = args.At<string>(0)));
             engine.SetValue("GetKey",
-                new Callable(1, (args) => Input.GetKey((string)args[0])));
+                new Callable(1, (args) => Input.GetKey(args.At<string>(0))));
             engine.SetValue("CreateGameObject",
-                new Callable(1, (args) => CreateGameObject((string)args[0])));
+                new Callable(1, (args) => CreateGameObject(args.At<string>(0))));
             engine.SetValue("SetGameObjectPosition",
-                new Callable(3, (args) => SetGameObjectPosition(Convert.ToInt32(args[0]), Convert.ToSingle(args[1]), Convert.ToSingle(args[2]))));
+                new Callable(3, (args) => SetGameObjectPosition(Convert.ToInt32(args.At<double>(0)), Convert.ToSingle(args.At<double>(1)), Convert.ToSingle(args.At<double>(2)))));
             engine.SetValue("SetGameObjectVelocity",
-                new Callable(3, (args) => SetGameObjectVelocity(Convert.ToInt32(args[0]), Convert.ToSingle(args[1]), Convert.ToSingle(args[2]))));
+                new Callable(3, (args) => SetGameObjectVelocity(Convert.ToInt32(args.At<double>(0)), Convert.ToSingle(args.At<double>(1)), Convert.ToSingle(args.At<double>(2)))));
             engine.SetValue("DestroyGameObject",
-                new Callable(1, (args) => DestroyGameObject(Convert.ToInt32(args[0]))));
+                new Callable(1, (args) => DestroyGameObject(Convert.ToInt32(args.At<double>(0)))));
 
             engine.Run(script.text);
 
