@@ -13,11 +13,12 @@ namespace ULox.Demo
     {
         [SerializeField] private TextAsset script;
         private ICallable _anonymousOnCollision;
-        private ULoxScriptEnvironment uLoxScriptEnvironment;
+        private ICallable _gameUpdateFunction;
+        private ULoxScriptEnvironment _uLoxScriptEnvironment;
 
         private void Start()
         {
-            uLoxScriptEnvironment = new ULoxScriptEnvironment(
+            _uLoxScriptEnvironment = new ULoxScriptEnvironment(
                 FindObjectOfType<ULoxSharedEnvironment>().Engine);
 
             BindToScript();
@@ -26,21 +27,31 @@ namespace ULox.Demo
         private void OnCollisionEnter(Collision collision)
         {
             if (_anonymousOnCollision != null)
-                uLoxScriptEnvironment.CallFunction(_anonymousOnCollision);
+                _uLoxScriptEnvironment.CallFunction(_anonymousOnCollision);
         }
 
         private void BindToScript()
         {
-            uLoxScriptEnvironment.RunScript(script.text);
+            _uLoxScriptEnvironment.RunScript(script.text);
 
             //get our own closure to run in
-            uLoxScriptEnvironment.LocalEnvironemnt.DefineInAvailableSlot("thisGameObject", gameObject);
+            _uLoxScriptEnvironment.LocalEnvironemnt.DefineInAvailableSlot("thisGameObject", gameObject);
 
-            var atSlot = uLoxScriptEnvironment.FetchLocalByName("OnCollision");
+            var atSlot = _uLoxScriptEnvironment.FetchLocalByName("OnCollision");
             if (atSlot is ICallable slotCallable &&
-                slotCallable.Arity == 0)
+                slotCallable.Arity == Function.StartingParamSlot)   //todo this is ugly, ext users shouldn't have to deal with this
             {
                 _anonymousOnCollision = slotCallable;
+            }
+            _gameUpdateFunction = _uLoxScriptEnvironment.FetchLocalByName("Update") as ICallable;
+        }
+
+        private void Update()
+        {
+            if (_gameUpdateFunction != null)
+            {
+                _uLoxScriptEnvironment.AssignLocalByName("dt", Time.deltaTime);
+                _uLoxScriptEnvironment.CallFunction(_gameUpdateFunction);
             }
         }
     }

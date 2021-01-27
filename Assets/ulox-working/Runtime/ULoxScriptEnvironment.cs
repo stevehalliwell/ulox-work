@@ -52,5 +52,15 @@
 
             return null;
         }
+
+        public void AssignLocalByName(string name, object val)
+        {
+            var loc = _ourEnvironment.FindSlot(name);
+
+            if (loc != -1)
+            {
+                _ourEnvironment.AssignSlot(loc, Interpreter.SantizeObject(val));
+            }
+        }
     }
 }

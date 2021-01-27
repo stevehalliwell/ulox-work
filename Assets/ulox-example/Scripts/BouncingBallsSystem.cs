@@ -9,7 +9,7 @@ namespace ULox.Demo
     /// This demo uses lox to move objects, unity just draws things.
     /// This demo also uses direct gameobject referenes in script rather than ids.
     /// </summary>
-    public class BouncingBallsBehaviour : MonoBehaviour
+    public class BouncingBallsSystem : MonoBehaviour
     {
         public TextAsset script;
         public Text text;

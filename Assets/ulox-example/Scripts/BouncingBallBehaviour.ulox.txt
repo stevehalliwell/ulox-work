@@ -1,0 +1,21 @@
+var dt = 0;
+var limit = 5;
+
+var x = RandRange(-3,3);
+var y = RandRange(-3,3);
+var vx = RandRange(-3,3);
+var vy = RandRange(-3,3);
+
+fun Update()
+{
+	x += vx * dt;
+	y += vy * dt;
+
+	//bounds
+	if(x < -limit and vx < 0) { vx *= -1; }
+	if(x > limit  and vx > 0) { vx *= -1; }
+	if(y < -limit and vy < 0) { vy *= -1; }
+	if(y > limit  and vy > 0) { vy *= -1; }
+
+	SetGameObjectPosition(thisGameObject, x, y);
+}

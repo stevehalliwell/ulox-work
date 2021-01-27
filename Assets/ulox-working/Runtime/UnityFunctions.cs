@@ -55,6 +55,7 @@ namespace ULox
             {
                 return UnityEngine.Object.Instantiate(loc);
             }
+            Debug.LogWarning($"Unable to find prefab in {nameof(UnityFunctions)} named {name}");
             return null;
         }
     }

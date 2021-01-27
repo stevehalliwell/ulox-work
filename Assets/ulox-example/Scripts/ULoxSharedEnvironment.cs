@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace ULox.Demo
 {
@@ -8,6 +9,8 @@ namespace ULox.Demo
     /// </summary>
     public class ULoxSharedEnvironment : MonoBehaviour
     {
+        [SerializeField] private List<GameObject> availablePrefabs;
+
         private Engine _engine;
         public Engine Engine => _engine;
 
@@ -20,7 +23,7 @@ namespace ULox.Demo
                 new Interpreter(),
                 new LoxCoreLibrary(Debug.Log),
                 new StandardClasses(),
-                new UnityFunctions());
+                new UnityFunctions(availablePrefabs));
         }
     }
 }

@@ -1,0 +1,11 @@
+var numBallsToSpawn = 100;
+
+var ballName = "BouncyBallwULoxBehaviour";
+
+
+print ("Setting Up Game");
+
+for(var i = 0; i < numBallsToSpawn; i += 1)
+{
+	CreateFromPrefab(ballName);
+}

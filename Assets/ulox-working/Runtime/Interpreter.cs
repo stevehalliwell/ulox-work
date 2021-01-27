@@ -238,6 +238,8 @@ namespace ULox
                 }
                 catch (LoxException)
                 {
+                    //if we had a this related knownslot, we could grab the this and use it
+                    //  OR we can become a proxy and hold a set
                     throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
                 }
             }
