@@ -395,7 +395,7 @@ namespace ULox
                 classMethods[method.name.Lexeme] = func;
             }
 
-            var metaClass = new Class(null, stmt.name.Lexeme + "_meta", null, classMethods, null, null);
+            var metaClass = new Class(null, stmt.name.Lexeme + "_meta", null, classMethods, null, null,null);
 
             var methods = new Dictionary<string, Function>();
             foreach (Stmt.Function method in stmt.methods)
@@ -415,7 +415,8 @@ namespace ULox
                 superclass,
                 methods,
                 stmt.fields,
-                CurrentEnvironment);
+                CurrentEnvironment,
+                stmt.indexFieldMatches);
 
             if (stmt.metaFields != null)
             {
@@ -457,7 +458,7 @@ namespace ULox
                 }
                 else
                 {
-                    result = objInst.Get(expr.name);
+                    result = objInst.GetMethod(expr.name);
                 }
 
                 if (result is IFunction resultFunc)

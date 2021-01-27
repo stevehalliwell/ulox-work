@@ -10,6 +10,9 @@ Beyond a port of jlox, it is now something to toy with, optimize, prototype with
 ulox is no longer a superset of lox. The last point where that was the case is at [this commit](../../tree/core_jlox_varloc)
 
 ![current code coverage](badge_linecoverage.png)
+- [](../../tree/ulox_)
+	- Cache slot indicies on get and set expressions. Greatly improves performance of methods that operate on instance fields.
+	- Class init params that match field names are automatically assigned before init body is run, see [Class Sugar](#class-sugar).
 - [Libraries](../../tree/ulox_libraries)
 	- Refactor hardwired parts of LoxEngine into modules/libraries.
 	- print and printr functions added. Removed print statement.
@@ -61,6 +64,8 @@ ulox is no longer a superset of lox. The last point where that was the case is a
 - Add Performance tests.
 - Add/port tests from (craftinginterpreters)[https://github.com/munificent/craftinginterpreters/tree/master/test]
 - Add Testing and Asserting library to lox.
+- Multiple return values.
+- Implicit this within methods.
 
 ## Differences
 - null instead of nil.
@@ -144,4 +149,32 @@ class Foo
 	getset d;
 }
 ```
+
+Class init arguments that match name of a class field and located in resolver and automatically assigned by index during class instance creation.
+Allows for the removal of ```this.x = x;``` that would clutter an init method when default values are not know to the class.
+```
+class Foo
+{
+	var a, b, c;
+	
+	init(a,b,c)
+	{
+		this.a = a;
+		this.b = b;
+		this.c = c;
+	}
+}
+```
+Can be simplified to
+```
+class Foo
+{
+	var a, b, c;
+	
+	init(a,b,c)
+	{
+	}
+}
+```
+and the field assignment from params will happen automatically.
 

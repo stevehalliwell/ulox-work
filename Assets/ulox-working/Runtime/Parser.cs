@@ -207,7 +207,8 @@ namespace ULox
                 methods,
                 metaMethods,
                 fields,
-                metaFields);
+                metaFields,
+                null);
         }
 
         private void HandleGetSetGeneration(
@@ -271,7 +272,7 @@ namespace ULox
                         new Stmt.Expression(new Expr.Set(
                             new Expr.This(name.Copy(TokenType.THIS, Class.ThisIdentifier), EnvironmentVariableLocation.Invalid),
                             hiddenInternalFieldName,
-                            new Expr.Variable(valueName, EnvironmentVariableLocation.Invalid)))
+                            new Expr.Variable(valueName, EnvironmentVariableLocation.Invalid), EnvironmentVariableLocation.InvalidSlot))
                     }, false, false, false),
                 EnvironmentVariableLocation.InvalidSlot);
         }
@@ -567,12 +568,12 @@ namespace ULox
                     Token name = exprGet.name;
                     switch (equals.TokenType)
                     {
-                        case TokenType.MINUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value));
-                        case TokenType.PLUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value));
-                        case TokenType.STAR_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value));
-                        case TokenType.SLASH_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value));
-                        case TokenType.PERCENT_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value));
-                        case TokenType.ASSIGN: return new Expr.Set(obj, name, value);
+                        case TokenType.MINUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value), EnvironmentVariableLocation.InvalidSlot);
+                        case TokenType.PLUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value), EnvironmentVariableLocation.InvalidSlot);
+                        case TokenType.STAR_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value), EnvironmentVariableLocation.InvalidSlot);
+                        case TokenType.SLASH_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value), EnvironmentVariableLocation.InvalidSlot);
+                        case TokenType.PERCENT_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value), EnvironmentVariableLocation.InvalidSlot);
+                        case TokenType.ASSIGN: return new Expr.Set(obj, name, value, EnvironmentVariableLocation.InvalidSlot);
                     }
                 }
 

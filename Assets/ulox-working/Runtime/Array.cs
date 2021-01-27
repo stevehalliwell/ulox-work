@@ -39,11 +39,6 @@ namespace ULox
             return new Array(0, true, @class, enclosing);
         }
 
-        public override void Set(string name, object val)
-        {
-            throw new RuntimeAccessException(new Token(TokenType.NONE, null, null, -1, -1), "Can't add properties to arrays.");
-        }
-
         public override string ToString()
         {
             var sb = new StringBuilder();

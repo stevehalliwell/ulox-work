@@ -277,7 +277,7 @@ print(Func());",
 }
 
 print(Undef().a);",
-@"IDENTIFIER|5:15 Undefined property 'a'.")
+@"IDENTIFIER|5:15 Undefined method 'a'.")
                 .SetName("UndefinedProperty");
 
             yield return new TestCaseData(
@@ -704,7 +704,7 @@ print(sq.Area);",
 }
 var sq = Square();
 print(sq.Arae);",
-@"IDENTIFIER|7:13 Undefined property 'Arae'.")
+@"IDENTIFIER|7:13 Undefined method 'Arae'.")
                 .SetName("ClassGetSet_Typo_Error");
 
             yield return new TestCaseData(
@@ -1139,6 +1139,36 @@ print(t.Thing(false));
                 .SetName("ClassInnerUseOfThis");
 
             yield return new TestCaseData(
+@"class Test
+{
+    var a,b,c=10;
+    init(a,c){}
+}
+
+var t = Test(1,2);
+printr(t);",
+@"<inst Test>
+  a : 1
+  b : null
+  c : 2")
+                .SetName("ClassAutoInitVars");
+
+            yield return new TestCaseData(
+@"class Test
+{
+    getset a,b,c=10;
+    init(_a,_c){}
+}
+
+var t = Test(1,2);
+printr(t);",
+@"<inst Test>
+  _a : 1
+  _b : null
+  _c : 2")
+                .SetName("ClassAutoInitGetSet");
+
+            yield return new TestCaseData(
 @"print("""");",
 @"")
                 .SetName("Empty");
@@ -1152,6 +1182,7 @@ print(t.Thing(false));
 
             engine.Run(testString, true);
 
+            Assert.IsTrue(string.IsNullOrEmpty(requiredResult) == string.IsNullOrEmpty(engine.InterpreterResult));
             Assert.IsTrue(engine.InterpreterResult.StartsWith(requiredResult), $"Expected:{requiredResult} but got {engine.InterpreterResult}");
         }
 

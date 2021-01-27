@@ -38,12 +38,6 @@ Parameter name: index")
                 .SetName("ArrayBoundsError");
 
             yield return new TestCaseData(
-@"var arr = Array(5);
-arr.a = 2;",
-@"NONE|-1:-1 Can't add properties to arrays.")
-                .SetName("Array_CannotSet");
-
-            yield return new TestCaseData(
 @"var list = List();
 for(var i = 0; i < 10; i += 1) { list.Add(i); }
 

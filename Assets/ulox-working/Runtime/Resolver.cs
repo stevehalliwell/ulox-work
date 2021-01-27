@@ -28,7 +28,7 @@ namespace ULox
         {
             public Dictionary<string, VariableUse> localVariables = new Dictionary<string, VariableUse>();
             public List<int> fetchedVariableDistances = new List<int>();
-            public bool HasLocals => localVariables.Count > 0;
+            public bool HasLocals => localVariables.Count(x => x.Value.state == VariableUse.State.Read) > 0;
             public bool HasClosedOverVars => fetchedVariableDistances.Count(x => x > 0) > 0;
         }
 
@@ -90,7 +90,7 @@ namespace ULox
         public object Visit(Expr.Assign expr)
         {
             Resolve(expr.value);
-            expr.varLoc = ResolveLocal(expr, expr.name, false);
+            expr.varLoc = ResolveLocal(expr.name, false);
             return null;
         }
 
@@ -145,7 +145,7 @@ namespace ULox
                 throw new ResolverException(expr.name, "Can't read local variable in its own initializer.");
             }
 
-            expr.varLoc = ResolveLocal(expr, expr.name, true);
+            expr.varLoc = ResolveLocal(expr.name, true);
             return null;
         }
 
@@ -156,7 +156,7 @@ namespace ULox
             EndScope();
         }
 
-        private EnvironmentVariableLocation ResolveLocal(Expr expr, Token name, bool isRead)
+        private EnvironmentVariableLocation ResolveLocal(Token name, bool isRead)
         {
             EnvironmentVariableLocation retval = EnvironmentVariableLocation.Invalid;
             for (int i = _scopes.Count - 1; i >= 0; i--)
@@ -304,6 +304,30 @@ namespace ULox
 
             Resolve(func.body);
 
+            if (functionType == FunctionType.INITIALIZER)
+            {
+                //match params to the init to fiels we know we have to allow auto assigning
+                var initArgPair = new List<short>();
+                var initMethod = _currentClass.methods.FirstOrDefault(x => x.name.Lexeme == Class.InitalizerFunctionName);
+                if (initMethod != null)
+                {
+                    var initParams = initMethod.function.parameters;
+                    for (int paramIndex = Function.StartingParamSlot; paramIndex < initParams.Count; paramIndex++)
+                    {
+
+                        var item = initParams[paramIndex];
+                        var matchingLoc = _currentClass.fields.FindIndex(x => x.name.Lexeme == item.Lexeme);
+                        if (matchingLoc >= 0)
+                        {
+                            ResolveLocal(item, true);
+                            initArgPair.Add((short)(paramIndex - Function.StartingParamSlot));
+                            initArgPair.Add((short)matchingLoc);
+                        }
+                    }
+                }
+                _currentClass.indexFieldMatches = initArgPair;
+            }
+
             func.NeedsClosure = _scopes.Count > 0 ? _scopes.Last().HasClosedOverVars : true;
             func.HasLocals = _scopes.Count > 0 ? _scopes.Last().HasLocals : true;
             EndScope();
@@ -421,7 +445,6 @@ namespace ULox
                 }
                 //Declare(thisMeth.name);
                 //Define(thisMeth.name);
-                //todo can potentially locate and optimise this->get and this->set since we know some of the offsets
                 ResolveFunction(thisMeth.function, declaration);
             }
 
@@ -429,28 +452,18 @@ namespace ULox
 
             if (stmt.superclass != null) EndScope();
 
-            //todo determine and save offsets of the init params to members by names, saving index
-            //allowing this explicit
-            // class Test{var a,b,c; init(a,b,c){this.a = a; this.b = b; this.c = c;}}
-            // to be this implicitly
-            //class Test{var a,b,c; init(a,b,c){}}
-
             _currentClass = enclosingClass;
         }
 
         public object Visit(Expr.Get expr)
         {
-            //todo if in class and method and obj is this, we can attempt to cache the offset to this in the env and the offset from
-            //  the instance to the variable
             Resolve(expr.obj);
-            ResolveLocal(expr, expr.name, true);
+            ResolveLocal(expr.name, true);
             return null;
         }
 
         public object Visit(Expr.Set expr)
         {
-            //todo if in class and method and obj is this, we can attempt to cache the offset to this in the env and the offset from
-            //  the instance to the variable
             Resolve(expr.val);
             Resolve(expr.obj);
             return null;
@@ -461,7 +474,7 @@ namespace ULox
             if (_currentClass == null)
                 throw new ResolverException(expr.keyword, "Cannot use 'this' outside of a class.");
 
-            expr.varLoc = ResolveLocal(expr, expr.keyword, false);
+            expr.varLoc = ResolveLocal(expr.keyword, false);
             return null;
         }
 
@@ -474,7 +487,7 @@ namespace ULox
 
             //todo it would be possible to keep a class tree and confirm if the method identifier exists on the super
 
-            ResolveLocal(expr, expr.keyword, false);
+            ResolveLocal(expr.keyword, false);
             return null;
         }
 

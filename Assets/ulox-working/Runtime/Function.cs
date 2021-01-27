@@ -26,7 +26,8 @@
 
         public object Call(Interpreter interpreter, FunctionArguments functionArgs)
         {
-            //if doesn't have locals does it need the new env?
+            //if doesn't have locals does it need the new env? since we don't know if we are going to be 
+            //  used by a closure, yes we do
             var environment = new Environment(_closure);
             //if we haven't been given a valid this, see if we already have one
             environment.DefineSlot(

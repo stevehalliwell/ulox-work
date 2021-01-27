@@ -2,7 +2,7 @@
 {
     public class PODClass : Class
     {
-        public PODClass(Environment enclosing) : base(null, "POD", null, null, null, enclosing)
+        public PODClass(Environment enclosing) : base(null, "POD", null, null, null, enclosing, null)
         {
         }
     }
@@ -10,7 +10,7 @@
     public class ArrayClass : Class
     {
         public ArrayClass(Environment enclosing)
-            : base(null, "Array", null, null, null, enclosing) { }
+            : base(null, "Array", null, null, null, enclosing, null) { }
 
         public override int Arity => 1 + Function.StartingParamSlot;
 
@@ -23,7 +23,7 @@
     public class ListClass : Class
     {
         public ListClass(Environment enclosing)
-            : base(null, "List", null, null, null, enclosing) { }
+            : base(null, "List", null, null, null, enclosing, null) { }
 
         public override int Arity => 0 + Function.StartingParamSlot;
 

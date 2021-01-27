@@ -26,7 +26,7 @@ namespace ULox
         }
         public class Class : Stmt
         {
-            public Class( Token name, short knownSlot, Expr.Variable superclass, List<Stmt.Function> methods, List<Stmt.Function> metaMethods, List<Stmt.Var> fields, List<Stmt.Var> metaFields)
+            public Class( Token name, short knownSlot, Expr.Variable superclass, List<Stmt.Function> methods, List<Stmt.Function> metaMethods, List<Stmt.Var> fields, List<Stmt.Var> metaFields, List<short> indexFieldMatches)
             {
                 this.name = name;
                 this.knownSlot = knownSlot;
@@ -35,6 +35,7 @@ namespace ULox
                 this.metaMethods = metaMethods;
                 this.fields = fields;
                 this.metaFields = metaFields;
+                this.indexFieldMatches = indexFieldMatches;
             }
             public readonly Token name;
             public short knownSlot;
@@ -43,6 +44,7 @@ namespace ULox
             public readonly List<Stmt.Function> metaMethods;
             public readonly List<Stmt.Var> fields;
             public readonly List<Stmt.Var> metaFields;
+            public List<short> indexFieldMatches;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
         public class Expression : Stmt

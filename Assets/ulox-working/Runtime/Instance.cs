@@ -11,17 +11,12 @@
             _class = @class;
         }
 
-        public virtual object Get(Token name)
+        public object GetMethod(Token name)
         {
-            if (valueIndicies.TryGetValue(name.Lexeme, out short index))
-            {
-                return objectList[index];
-            }
-
             var method = _class?.FindMethod(name.Lexeme);
             if (method != null) return method.Bind(this);
 
-            throw new InstanceException(name, "Undefined property '" + name.Lexeme + "'.");
+            throw new InstanceException(name, "Undefined method '" + name.Lexeme + "'.");
         }
 
         public virtual void Set(string name, object val)

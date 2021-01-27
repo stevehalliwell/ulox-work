@@ -21,6 +21,7 @@ namespace ULox
         private Class _superclass;
         public Class Super => _superclass;
         private List<Stmt.Var> _vars;
+        private List<short> _initVarIndexMatches;
         private Function _initializer;
 
         public string Name => _name;
@@ -31,13 +32,15 @@ namespace ULox
             Class superclass,
             Dictionary<string, Function> methods,
             List<Stmt.Var> fields,
-            IEnvironment enclosing)
+            IEnvironment enclosing,
+            List<short> initVarIndexMatches)
             : base(metaClass, enclosing)
         {
             _name = name;
             _methods = methods;
             _superclass = superclass;
             _vars = fields;
+            _initVarIndexMatches = initVarIndexMatches;
             GenerateInitializerData();
         }
 
@@ -59,6 +62,17 @@ namespace ULox
 
             if (_initializer != null)
             {
+                //todo ! actually use the indicies
+
+                // class Test{var a,b,c; init(a,b,c){this.a = a; this.b = b; this.c = c;}}
+                // to be this implicitly
+                //class Test{var a,b,c; init(a,b,c){}}
+
+                for (int i = 0; i < _initVarIndexMatches?.Count; i += 2)
+                {
+                    instance.AssignSlot(_initVarIndexMatches[i + 1], functionArgs.At(_initVarIndexMatches[i]));
+                }
+
                 functionArgs.@this = instance;
                 _initializer.Call(interpreter, functionArgs);
             }
@@ -78,6 +92,8 @@ namespace ULox
                 foreach (var item in fromClass._vars)
                 {
                     inst.Set(item.name.Lexeme, interpreter.Evaluate(item.initializer));
+                    //this can be direct as there shouldn't be dups
+                    //inst.DefineInAvailableSlot(item.name.Lexeme, interpreter.Evaluate(item.initializer));
                 }
             }
         }

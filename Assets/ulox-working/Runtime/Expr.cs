@@ -89,15 +89,17 @@ namespace ULox
         }
         public class Set : Expr
         {
-            public Set( Expr obj, Token name, Expr val)
+            public Set( Expr obj, Token name, Expr val, short knownSlot)
             {
                 this.obj = obj;
                 this.name = name;
                 this.val = val;
+                this.knownSlot = knownSlot;
             }
             public readonly Expr obj;
             public readonly Token name;
             public readonly Expr val;
+            public short knownSlot;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
         public class Super : Expr

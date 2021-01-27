@@ -18,7 +18,7 @@ namespace ULox
             "Grouping : Expr expression",
             "Literal  : object value",
             "Logical  : Expr left, Token op, Expr right",
-            "Set      : Expr obj, Token name, Expr val",
+            "Set      : Expr obj, Token name, Expr val, short knownSlot",
             "Super    : Token keyword, Token classNameToken, Token method, " +
                       " EnvironmentVariableLocation superVarLoc," +
                       " EnvironmentVariableLocation thisVarLoc",
@@ -26,7 +26,7 @@ namespace ULox
             "Unary    : Token op, Expr right",
             "Variable : Token name, EnvironmentVariableLocation varLoc",
             "Conditional : Expr condition, Expr ifTrue, Expr ifFalse",
-            "Function : List<Token> parameters, List<Stmt> body,"+
+            "Function : List<Token> parameters, List<Stmt> body," +
                       " bool HasLocals, bool NeedsClosure, " +
                       " bool HasReturns",
         };
@@ -39,7 +39,8 @@ namespace ULox
                         " List<Stmt.Function> methods," +
                         " List<Stmt.Function> metaMethods," +
                         " List<Stmt.Var> fields," +
-                        " List<Stmt.Var> metaFields",
+                        " List<Stmt.Var> metaFields," +
+                        " List<short> indexFieldMatches",
             "Expression : Expr expression",
             "Function   : Token name, Expr.Function function, short knownSlot",
             "If         : Expr condition, Stmt thenBranch," +
@@ -156,7 +157,9 @@ namespace ULox
         {
             return !(fieldItem.Contains("EnvironmentVariableLocation") ||
                                         fieldItem.Contains("Slot") ||
-                                        fieldItem.Contains("bool"));
+                                        fieldItem.Contains("bool") ||
+                                        fieldItem.Contains("indexFieldMatches")
+                                        );
         }
     }
 }
