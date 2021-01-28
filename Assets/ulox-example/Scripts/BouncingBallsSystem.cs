@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -30,7 +29,7 @@ namespace ULox.Demo
 
             engine.SetValue("SetUIText",
                 new Callable(1, (args) => text.text = args.At<string>(0)));
-            
+
             engine.Run(script.text);
 
             engine.CallFunction("SetupGame");
