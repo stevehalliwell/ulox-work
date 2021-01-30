@@ -5,8 +5,6 @@ using UnityEditor;
 
 namespace ULox
 {
-    //todo get and variable are very similar as are 
-    //  set and assign
     public static class GenerateASTClasses
     {
         private static string _outputLocation = "Assets\\ulox-working\\Runtime\\";

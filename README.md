@@ -10,9 +10,11 @@ Beyond a port of jlox, it is now something to toy with, optimize, prototype with
 ulox is no longer a superset of lox. The last point where that was the case is at [this commit](../../tree/core_jlox_varloc)
 
 ![current code coverage](badge_linecoverage.png)
-- [](../../tree/ulox_)
+- [Cache Gets](../../tree/ulox_assign_variable_collapse)
 	- Cache slot indicies on get and set expressions. Greatly improves performance of methods that operate on instance fields.
 	- Class init params that match field names are automatically assigned before init body is run, see [Class Sugar](#class-sugar).
+	- Add bouncing ball variants, using ulox and monobehaviours in different ways to give performance comparisons.
+	- Collapse Expr.Assign into Expr.Set and Expr.Variable into Expr.Get.
 - [Libraries](../../tree/ulox_libraries)
 	- Refactor hardwired parts of LoxEngine into modules/libraries.
 	- print and printr functions added. Removed print statement.
