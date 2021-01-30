@@ -210,23 +210,6 @@ namespace ULox
 
         public void Visit(Stmt.Expression stmt) => Evaluate(stmt.expression);
 
-        public object Visit(Expr.Variable expr)
-        {
-            if (expr.varLoc == EnvironmentVariableLocation.Invalid)
-            {
-                try
-                {
-                    expr.varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
-                }
-                catch (LoxException)
-                {
-                    throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
-                }
-            }
-
-            return CurrentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
-        }
-
         public void Visit(Stmt.Block stmt) => ExecuteBlock(stmt.statements, new Environment(CurrentEnvironment));
 
         public void Visit(Stmt.If stmt)
@@ -418,6 +401,24 @@ namespace ULox
 
         public object Visit(Expr.Get expr)
         {
+            if (expr.obj == null)
+            {
+                //trating it as a variable
+                if (expr.varLoc == EnvironmentVariableLocation.Invalid)
+                {
+                    try
+                    {
+                        expr.varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
+                    }
+                    catch (LoxException)
+                    {
+                        throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
+                    }
+                }
+
+                return CurrentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
+            }
+
             var obj = Evaluate(expr.obj);
 
             if(obj == null)
@@ -429,13 +430,13 @@ namespace ULox
             {
                 object result = null;
 
-                if(expr.knownSlot == EnvironmentVariableLocation.InvalidSlot)
+                if(expr.varLoc.slot == EnvironmentVariableLocation.InvalidSlot)
                 {
-                    expr.knownSlot = objInst.FindSlot(expr.name.Lexeme);
+                    expr.varLoc.slot = objInst.FindSlot(expr.name.Lexeme);
                 }
-                if(expr.knownSlot != EnvironmentVariableLocation.InvalidSlot)
+                if(expr.varLoc.slot != EnvironmentVariableLocation.InvalidSlot)
                 {
-                    result = objInst.FetchObject(expr.knownSlot);
+                    result = objInst.FetchObject(expr.varLoc.slot);
                 }
                 else
                 {

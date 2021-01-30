@@ -26,7 +26,7 @@ namespace ULox
         }
         public class Class : Stmt
         {
-            public Class( Token name, short knownSlot, Expr.Variable superclass, List<Stmt.Function> methods, List<Stmt.Function> metaMethods, List<Stmt.Var> fields, List<Stmt.Var> metaFields, List<short> indexFieldMatches)
+            public Class( Token name, short knownSlot, Expr.Get superclass, List<Stmt.Function> methods, List<Stmt.Function> metaMethods, List<Stmt.Var> fields, List<Stmt.Var> metaFields, List<short> indexFieldMatches)
             {
                 this.name = name;
                 this.knownSlot = knownSlot;
@@ -39,7 +39,7 @@ namespace ULox
             }
             public readonly Token name;
             public short knownSlot;
-            public readonly Expr.Variable superclass;
+            public readonly Expr.Get superclass;
             public readonly List<Stmt.Function> methods;
             public readonly List<Stmt.Function> metaMethods;
             public readonly List<Stmt.Var> fields;

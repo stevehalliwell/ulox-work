@@ -129,19 +129,6 @@ namespace ULox
             return null;
         }
 
-        public object Visit(Expr.Variable expr)
-        {
-            if (_scopes.Count > 0 &&
-                _scopes.Last().localVariables.TryGetValue(expr.name.Lexeme, out var existingFlag) &&
-                existingFlag.state == VariableUse.State.Declared)
-            {
-                throw new ResolverException(expr.name, "Can't read local variable in its own initializer.");
-            }
-
-            expr.varLoc = ResolveLocal(expr.name, true);
-            return null;
-        }
-
         public void Visit(Stmt.Block stmt)
         {
             BeginScope();
@@ -450,6 +437,19 @@ namespace ULox
 
         public object Visit(Expr.Get expr)
         {
+            if(expr.obj == null)
+            {
+                if (_scopes.Count > 0 &&
+                    _scopes.Last().localVariables.TryGetValue(expr.name.Lexeme, out var existingFlag) &&
+                    existingFlag.state == VariableUse.State.Declared)
+                {
+                    throw new ResolverException(expr.name, "Can't read local variable in its own initializer.");
+                }
+
+                expr.varLoc = ResolveLocal(expr.name, true);
+                return null;
+            }
+
             Resolve(expr.obj);
             ResolveLocal(expr.name, true);
             return null;

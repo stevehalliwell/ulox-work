@@ -47,24 +47,13 @@ namespace ULox
         }
         public class Get : Expr
         {
-            public Get( Expr obj, Token name, short knownSlot)
+            public Get( Expr obj, Token name, EnvironmentVariableLocation varLoc)
             {
                 this.obj = obj;
                 this.name = name;
-                this.knownSlot = knownSlot;
-            }
-            public readonly Expr obj;
-            public readonly Token name;
-            public short knownSlot;
-            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
-        }
-        public class Variable : Expr
-        {
-            public Variable( Token name, EnvironmentVariableLocation varLoc)
-            {
-                this.name = name;
                 this.varLoc = varLoc;
             }
+            public readonly Expr obj;
             public readonly Token name;
             public EnvironmentVariableLocation varLoc;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
@@ -178,7 +167,6 @@ namespace ULox
             T Visit(Binary expr);
             T Visit(Call expr);
             T Visit(Get expr);
-            T Visit(Variable expr);
             T Visit(Grouping expr);
             T Visit(Literal expr);
             T Visit(Logical expr);

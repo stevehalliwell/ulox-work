@@ -69,11 +69,11 @@ namespace ULox
             var previousClassToken = _currentClassToken;
             _currentClassToken = className;
 
-            Expr.Variable superclass = null;
+            Expr.Get superclass = null;
             if (Match(TokenType.LESS))
             {
                 Consume(TokenType.IDENTIFIER, "Expect superclass name.");
-                superclass = new Expr.Variable(Previous(), EnvironmentVariableLocation.Invalid);
+                superclass = new Expr.Get(null, Previous(), EnvironmentVariableLocation.Invalid);
             }
 
             Consume(TokenType.OPEN_BRACE, "Expect { befefore class body.");
@@ -272,7 +272,7 @@ namespace ULox
                         new Stmt.Expression(new Expr.Set(
                             new Expr.This(name.Copy(TokenType.THIS, Class.ThisIdentifier), EnvironmentVariableLocation.Invalid),
                             hiddenInternalFieldName,
-                            new Expr.Variable(valueName, EnvironmentVariableLocation.Invalid), EnvironmentVariableLocation.Invalid))
+                            new Expr.Get(null, valueName, EnvironmentVariableLocation.Invalid), EnvironmentVariableLocation.Invalid))
                     }, false, false, false),
                 EnvironmentVariableLocation.InvalidSlot);
         }
@@ -286,7 +286,7 @@ namespace ULox
                         new Stmt.Return(className.Copy(TokenType.RETURN),
                         new Expr.Get(
                             new Expr.This(className.Copy(TokenType.THIS, Class.ThisIdentifier),
-                                EnvironmentVariableLocation.Invalid), hiddenInternalFieldName, EnvironmentVariableLocation.InvalidSlot))
+                                EnvironmentVariableLocation.Invalid), hiddenInternalFieldName, EnvironmentVariableLocation.Invalid))
                     }, false, false, true)
                 , EnvironmentVariableLocation.InvalidSlot);
         }
@@ -548,32 +548,27 @@ namespace ULox
             {
                 Token equals = Previous();
                 Expr value = Assignment();
-                Token name = default;
-                Expr obj = null;
+                
 
-                if (expr is Expr.Variable varExpr)
+                if (expr is Expr.Get exprGet)
                 {
-                    name = varExpr.name;
-                }
-                else if (expr is Expr.Get exprGet)
-                {
-                    obj = exprGet.obj;
-                    name = exprGet.name;
+                    Token name = exprGet.name;
+                    Expr obj = exprGet.obj;
+
+                    switch (equals.TokenType)
+                    {
+                        case TokenType.MINUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value), EnvironmentVariableLocation.Invalid);
+                        case TokenType.PLUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value), EnvironmentVariableLocation.Invalid);
+                        case TokenType.STAR_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value), EnvironmentVariableLocation.Invalid);
+                        case TokenType.SLASH_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value), EnvironmentVariableLocation.Invalid);
+                        case TokenType.PERCENT_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value), EnvironmentVariableLocation.Invalid);
+                        case TokenType.ASSIGN: return new Expr.Set(obj, name, value, EnvironmentVariableLocation.Invalid);
+                    }
                 }
                 else
                 {
                     //a 'super.a = 1;' ends up in here unhandled
                     throw new ParseException(equals, "Invalid assignment target.");
-                }
-
-                switch (equals.TokenType)
-                {
-                    case TokenType.MINUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value), EnvironmentVariableLocation.Invalid);
-                    case TokenType.PLUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value), EnvironmentVariableLocation.Invalid);
-                    case TokenType.STAR_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value), EnvironmentVariableLocation.Invalid);
-                    case TokenType.SLASH_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value), EnvironmentVariableLocation.Invalid);
-                    case TokenType.PERCENT_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value), EnvironmentVariableLocation.Invalid);
-                    case TokenType.ASSIGN: return new Expr.Set(obj, name, value, EnvironmentVariableLocation.Invalid);
                 }
             }
 
@@ -690,7 +685,7 @@ namespace ULox
                 {
                     var name = Consume(TokenType.IDENTIFIER,
                         "Expect property name after '.'.");
-                    expr = new Expr.Get(expr, name, EnvironmentVariableLocation.InvalidSlot);
+                    expr = new Expr.Get(expr, name, EnvironmentVariableLocation.Invalid);
                 }
                 else
                 {
@@ -758,7 +753,7 @@ namespace ULox
 
             if (Match(TokenType.IDENTIFIER))
             {
-                return new Expr.Variable(Previous(), EnvironmentVariableLocation.Invalid);
+                return new Expr.Get(null, Previous(), EnvironmentVariableLocation.Invalid);
             }
 
             if (Match(TokenType.OPEN_PAREN))
