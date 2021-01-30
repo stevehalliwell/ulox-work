@@ -103,15 +103,6 @@ namespace ULox.Tests
             stringBuilder.Append(str);
         }
 
-        public Object Visit(Expr.Assign expr)
-        {
-            Print("assign ");
-            Print(expr.name);
-            Print(expr.value);
-
-            return null;
-        }
-
         public Object Visit(Expr.Binary expr)
         {
             Print(expr.op);
@@ -168,7 +159,11 @@ namespace ULox.Tests
 
         public Object Visit(Expr.Set expr)
         {
-            Print(expr.obj);
+            if(expr.obj != null)
+                Print(expr.obj);
+            else
+                Print("assign ");
+            
             Print(expr.name);
             Print(expr.val);
             return null;

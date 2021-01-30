@@ -5,26 +5,27 @@ using UnityEditor;
 
 namespace ULox
 {
+    //todo get and variable are very similar as are 
+    //  set and assign
     public static class GenerateASTClasses
     {
         private static string _outputLocation = "Assets\\ulox-working\\Runtime\\";
 
         private static string[] _requiredExprTypes = new string[]
         {
-            "Assign   : Token name, Expr value, EnvironmentVariableLocation varLoc",
+            "Set      : Expr obj, Token name, Expr val, EnvironmentVariableLocation varLoc",//if obj is null uses slot if not use full varloc
             "Binary   : Expr left, Token op, Expr right",
             "Call     : Expr callee, Token paren, List<Expr> arguments",
             "Get      : Expr obj, Token name, short knownSlot",
+            "Variable : Token name, EnvironmentVariableLocation varLoc",
             "Grouping : Expr expression",
             "Literal  : object value",
             "Logical  : Expr left, Token op, Expr right",
-            "Set      : Expr obj, Token name, Expr val, short knownSlot",
             "Super    : Token keyword, Token classNameToken, Token method, " +
                       " EnvironmentVariableLocation superVarLoc," +
                       " EnvironmentVariableLocation thisVarLoc",
             "This     : Token keyword, EnvironmentVariableLocation varLoc",
             "Unary    : Token op, Expr right",
-            "Variable : Token name, EnvironmentVariableLocation varLoc",
             "Conditional : Expr condition, Expr ifTrue, Expr ifFalse",
             "Function : List<Token> parameters, List<Stmt> body," +
                       " bool HasLocals, bool NeedsClosure, " +

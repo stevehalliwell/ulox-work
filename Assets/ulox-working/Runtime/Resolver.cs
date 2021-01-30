@@ -87,13 +87,6 @@ namespace ULox
             expr.Accept(this);
         }
 
-        public object Visit(Expr.Assign expr)
-        {
-            Resolve(expr.value);
-            expr.varLoc = ResolveLocal(expr.name, false);
-            return null;
-        }
-
         public object Visit(Expr.Binary expr)
         {
             Resolve(expr.left);
@@ -465,7 +458,11 @@ namespace ULox
         public object Visit(Expr.Set expr)
         {
             Resolve(expr.val);
-            Resolve(expr.obj);
+            if(expr.obj != null)
+                Resolve(expr.obj);
+            else
+                expr.varLoc = ResolveLocal(expr.name, false);
+            
             return null;
         }
 

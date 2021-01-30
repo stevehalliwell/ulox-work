@@ -4,16 +4,18 @@ namespace ULox
 {
     public abstract class Expr
     {
-        public class Assign : Expr
+        public class Set : Expr
         {
-            public Assign( Token name, Expr value, EnvironmentVariableLocation varLoc)
+            public Set( Expr obj, Token name, Expr val, EnvironmentVariableLocation varLoc)
             {
+                this.obj = obj;
                 this.name = name;
-                this.value = value;
+                this.val = val;
                 this.varLoc = varLoc;
             }
+            public readonly Expr obj;
             public readonly Token name;
-            public readonly Expr value;
+            public readonly Expr val;
             public EnvironmentVariableLocation varLoc;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
@@ -56,6 +58,17 @@ namespace ULox
             public short knownSlot;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
+        public class Variable : Expr
+        {
+            public Variable( Token name, EnvironmentVariableLocation varLoc)
+            {
+                this.name = name;
+                this.varLoc = varLoc;
+            }
+            public readonly Token name;
+            public EnvironmentVariableLocation varLoc;
+            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
+        }
         public class Grouping : Expr
         {
             public Grouping( Expr expression)
@@ -85,21 +98,6 @@ namespace ULox
             public readonly Expr left;
             public readonly Token op;
             public readonly Expr right;
-            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
-        }
-        public class Set : Expr
-        {
-            public Set( Expr obj, Token name, Expr val, short knownSlot)
-            {
-                this.obj = obj;
-                this.name = name;
-                this.val = val;
-                this.knownSlot = knownSlot;
-            }
-            public readonly Expr obj;
-            public readonly Token name;
-            public readonly Expr val;
-            public short knownSlot;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
         public class Super : Expr
@@ -141,17 +139,6 @@ namespace ULox
             public readonly Expr right;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
-        public class Variable : Expr
-        {
-            public Variable( Token name, EnvironmentVariableLocation varLoc)
-            {
-                this.name = name;
-                this.varLoc = varLoc;
-            }
-            public readonly Token name;
-            public EnvironmentVariableLocation varLoc;
-            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
-        }
         public class Conditional : Expr
         {
             public Conditional( Expr condition, Expr ifTrue, Expr ifFalse)
@@ -187,18 +174,17 @@ namespace ULox
 
         public interface Visitor<T>
         {
-            T Visit(Assign expr);
+            T Visit(Set expr);
             T Visit(Binary expr);
             T Visit(Call expr);
             T Visit(Get expr);
+            T Visit(Variable expr);
             T Visit(Grouping expr);
             T Visit(Literal expr);
             T Visit(Logical expr);
-            T Visit(Set expr);
             T Visit(Super expr);
             T Visit(This expr);
             T Visit(Unary expr);
-            T Visit(Variable expr);
             T Visit(Conditional expr);
             T Visit(Function expr);
         }

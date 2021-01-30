@@ -272,7 +272,7 @@ namespace ULox
                         new Stmt.Expression(new Expr.Set(
                             new Expr.This(name.Copy(TokenType.THIS, Class.ThisIdentifier), EnvironmentVariableLocation.Invalid),
                             hiddenInternalFieldName,
-                            new Expr.Variable(valueName, EnvironmentVariableLocation.Invalid), EnvironmentVariableLocation.InvalidSlot))
+                            new Expr.Variable(valueName, EnvironmentVariableLocation.Invalid), EnvironmentVariableLocation.Invalid))
                     }, false, false, false),
                 EnvironmentVariableLocation.InvalidSlot);
         }
@@ -548,38 +548,33 @@ namespace ULox
             {
                 Token equals = Previous();
                 Expr value = Assignment();
+                Token name = default;
+                Expr obj = null;
 
                 if (expr is Expr.Variable varExpr)
                 {
-                    Token name = varExpr.name;
-                    switch (equals.TokenType)
-                    {
-                        case TokenType.MINUS_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value), EnvironmentVariableLocation.Invalid);
-                        case TokenType.PLUS_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value), EnvironmentVariableLocation.Invalid);
-                        case TokenType.STAR_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value), EnvironmentVariableLocation.Invalid);
-                        case TokenType.SLASH_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value), EnvironmentVariableLocation.Invalid);
-                        case TokenType.PERCENT_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value), EnvironmentVariableLocation.Invalid);
-                        case TokenType.ASSIGN: return new Expr.Assign(name, value, EnvironmentVariableLocation.Invalid);
-                    }
+                    name = varExpr.name;
                 }
                 else if (expr is Expr.Get exprGet)
                 {
-                    Expr obj = exprGet.obj;
-                    Token name = exprGet.name;
-                    switch (equals.TokenType)
-                    {
-                        case TokenType.MINUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value), EnvironmentVariableLocation.InvalidSlot);
-                        case TokenType.PLUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value), EnvironmentVariableLocation.InvalidSlot);
-                        case TokenType.STAR_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value), EnvironmentVariableLocation.InvalidSlot);
-                        case TokenType.SLASH_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value), EnvironmentVariableLocation.InvalidSlot);
-                        case TokenType.PERCENT_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value), EnvironmentVariableLocation.InvalidSlot);
-                        case TokenType.ASSIGN: return new Expr.Set(obj, name, value, EnvironmentVariableLocation.InvalidSlot);
-                    }
+                    obj = exprGet.obj;
+                    name = exprGet.name;
+                }
+                else
+                {
+                    //a 'super.a = 1;' ends up in here unhandled
+                    throw new ParseException(equals, "Invalid assignment target.");
                 }
 
-                //a 'super.a = 1;' ends up in here unhandled
-
-                throw new ParseException(equals, "Invalid assignment target.");
+                switch (equals.TokenType)
+                {
+                    case TokenType.MINUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value), EnvironmentVariableLocation.Invalid);
+                    case TokenType.PLUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value), EnvironmentVariableLocation.Invalid);
+                    case TokenType.STAR_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value), EnvironmentVariableLocation.Invalid);
+                    case TokenType.SLASH_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value), EnvironmentVariableLocation.Invalid);
+                    case TokenType.PERCENT_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value), EnvironmentVariableLocation.Invalid);
+                    case TokenType.ASSIGN: return new Expr.Set(obj, name, value, EnvironmentVariableLocation.Invalid);
+                }
             }
 
             return expr;

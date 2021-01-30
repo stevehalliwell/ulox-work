@@ -227,26 +227,6 @@ namespace ULox
             return CurrentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
         }
 
-        public object Visit(Expr.Assign expr)
-        {
-            var val = Evaluate(expr.value);
-            if (expr.varLoc == EnvironmentVariableLocation.Invalid)
-            {
-                try
-                {
-                    expr.varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
-                }
-                catch (LoxException)
-                {
-                    //if we had a this related knownslot, we could grab the this and use it
-                    //  OR we can become a proxy and hold a set
-                    throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
-                }
-            }
-            CurrentEnvironment.Ancestor(expr.varLoc.depth).AssignSlot(expr.varLoc.slot, val);
-            return val;
-        }
-
         public void Visit(Stmt.Block stmt) => ExecuteBlock(stmt.statements, new Environment(CurrentEnvironment));
 
         public void Visit(Stmt.If stmt)
@@ -321,7 +301,7 @@ namespace ULox
                     throw new RuntimeCallException(expr.paren,
                         $"Expected { calleeCallable.Arity} args but got { args.Length }");
 
-                //todo ! this should know if there's an inst or not
+                //the callee will be a Method if it has a this
                 return calleeCallable.Call(this, FunctionArguments.New(args));
             }
 
@@ -449,7 +429,6 @@ namespace ULox
             {
                 object result = null;
 
-                //todo this dict lookup in here is still a cause of much perf issues
                 if(expr.knownSlot == EnvironmentVariableLocation.InvalidSlot)
                 {
                     expr.knownSlot = objInst.FindSlot(expr.name.Lexeme);
@@ -460,6 +439,7 @@ namespace ULox
                 }
                 else
                 {
+                    //todo this dict lookup in here is still a cause of much perf issues
                     result = objInst.GetMethod(expr.name);
                 }
 
@@ -478,14 +458,36 @@ namespace ULox
 
         public object Visit(Expr.Set expr)
         {
+            if (expr.obj == null)
+            {
+                //attempt to use as an assign
+                if (expr.varLoc == EnvironmentVariableLocation.Invalid)
+                {
+                    try
+                    {
+                        expr.varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
+                    }
+                    catch (LoxException)
+                    {
+                        //todo if we had a this related knownslot, we could grab the this and use it
+                        //  OR we can become a proxy and hold a set
+                        //  Or we can merge assign and set into the same thing
+                        throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
+                    }
+                }
+                var assignVal = Evaluate(expr.val);
+                CurrentEnvironment.Ancestor(expr.varLoc.depth).AssignSlot(expr.varLoc.slot, assignVal);
+                return assignVal;
+            }
+
             var obj = Evaluate(expr.obj) as Instance;
+            var val = Evaluate(expr.val);
 
             if (obj == null)
             {
                 throw new RuntimeTypeException(expr.name, "Only instances have fields.");
             }
 
-            var val = Evaluate(expr.val);
             //todo this dict lookup in here is still a cause of much perf issues
             obj.Set(expr.name.Lexeme, val);
             return val;

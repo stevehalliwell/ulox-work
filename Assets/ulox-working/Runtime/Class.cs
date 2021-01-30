@@ -62,14 +62,9 @@ namespace ULox
 
             if (_initializer != null)
             {
-                //todo ! actually use the indicies
-
-                // class Test{var a,b,c; init(a,b,c){this.a = a; this.b = b; this.c = c;}}
-                // to be this implicitly
-                //class Test{var a,b,c; init(a,b,c){}}
-
                 for (int i = 0; i < _initVarIndexMatches?.Count; i += 2)
                 {
+                    //todo why the plus 1, is it starting params or not?
                     instance.AssignSlot(_initVarIndexMatches[i + 1], functionArgs.At(_initVarIndexMatches[i]));
                 }
 
