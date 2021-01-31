@@ -11,7 +11,7 @@ namespace ULox
 
         private static string[] _requiredExprTypes = new string[]
         {
-            "Set      : Expr obj, Token name, Expr val, EnvironmentVariableLocation varLoc",//if obj is null uses slot if not use full varloc
+            "Set      : Expr targetObj, Token name, Expr val, EnvironmentVariableLocation varLoc",//if obj is null uses slot if not use full varloc
             "Binary   : Expr left, Token op, Expr right",
             "Call     : Expr callee, Token paren, List<Expr> arguments",
             "Get      : Expr obj, Token name, EnvironmentVariableLocation varLoc",//if obj is null uses slot if not use full varloc
@@ -156,6 +156,7 @@ namespace ULox
             return !(fieldItem.Contains("EnvironmentVariableLocation") ||
                                         fieldItem.Contains("Slot") ||
                                         fieldItem.Contains("bool") ||
+                                        fieldItem.Contains("targetObj") ||
                                         fieldItem.Contains("indexFieldMatches")
                                         );
         }

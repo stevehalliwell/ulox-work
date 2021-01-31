@@ -180,3 +180,4 @@ class Foo
 ```
 and the field assignment from params will happen automatically.
 
+

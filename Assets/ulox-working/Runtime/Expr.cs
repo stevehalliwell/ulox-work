@@ -8,12 +8,12 @@ namespace ULox
         {
             public Set( Expr obj, Token name, Expr val, EnvironmentVariableLocation varLoc)
             {
-                this.obj = obj;
+                this.targetObj = obj;
                 this.name = name;
                 this.val = val;
                 this.varLoc = varLoc;
             }
-            public readonly Expr obj;
+            public Expr targetObj;
             public readonly Token name;
             public readonly Expr val;
             public EnvironmentVariableLocation varLoc;
@@ -49,11 +49,11 @@ namespace ULox
         {
             public Get( Expr obj, Token name, EnvironmentVariableLocation varLoc)
             {
-                this.obj = obj;
+                this.targetObj = obj;
                 this.name = name;
                 this.varLoc = varLoc;
             }
-            public readonly Expr obj;
+            public Expr targetObj;
             public readonly Token name;
             public EnvironmentVariableLocation varLoc;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);

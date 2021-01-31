@@ -314,7 +314,7 @@ return a;",
             yield return new TestCaseData(
 @"var a = 1;
 var a = 2;",
-@"Environment value redefinition not allowed. Requested a")
+@"Environment value redefinition not allowed. Requested a:7 collided.")
                 .SetName("CannotHaveDuplicateGlobals");
 
             yield return new TestCaseData(
@@ -1169,6 +1169,40 @@ printr(t);",
                 .SetName("ClassAutoInitGetSet");
 
             yield return new TestCaseData(
+@"class Test
+{
+    var a,b,c;
+    getset d;
+    Meth(p)
+    {
+        a = p;
+        _d = p;
+    }
+}
+
+var t = Test();
+t.Meth(""Hello World"");
+print(t.a);
+print(t.d);",
+@"Hello WorldHello World")
+                .SetName("MethodSetImplicitThis");
+
+            yield return new TestCaseData(
+@"class Test
+{
+    var a=5,b;
+    init()
+    {
+        b = a*a;
+    }
+}
+
+var t = Test();
+print(t.b);",
+@"25")
+                .SetName("MethodGetImplicitThis");
+
+            yield return new TestCaseData(
 @"print("""");",
 @"")
                 .SetName("Empty");
@@ -1183,7 +1217,7 @@ printr(t);",
             engine.Run(testString, true);
 
             Assert.IsTrue(string.IsNullOrEmpty(requiredResult) == string.IsNullOrEmpty(engine.InterpreterResult));
-            Assert.IsTrue(engine.InterpreterResult.StartsWith(requiredResult), $"Expected:{requiredResult} but got {engine.InterpreterResult}");
+            Assert.AreEqual(requiredResult, engine.InterpreterResult);
         }
 
         internal class InterpreterTestLoxEngine : TestLoxEngine

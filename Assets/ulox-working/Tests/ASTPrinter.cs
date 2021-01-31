@@ -131,8 +131,8 @@ namespace ULox.Tests
         public Object Visit(Expr.Get expr)
         {
             Print(expr.name);
-            if (expr.obj != null)
-                Print(expr.obj);
+            if (expr.targetObj != null)
+                Print(expr.targetObj);
 
             return null;
         }
@@ -160,8 +160,8 @@ namespace ULox.Tests
 
         public Object Visit(Expr.Set expr)
         {
-            if(expr.obj != null)
-                Print(expr.obj);
+            if(expr.targetObj != null)
+                Print(expr.targetObj);
             else
                 Print("assign ");
             

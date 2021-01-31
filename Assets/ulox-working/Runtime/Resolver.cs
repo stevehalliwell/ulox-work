@@ -276,9 +276,8 @@ namespace ULox
                     Define(param);
                 }
             }
-            else if(functionType == FunctionType.METHOD)
+            else if (functionType == FunctionType.METHOD)
             {
-                //we are in a get
                 DeclareAt(Class.ThisToken, Class.ThisSlot);
             }
 
@@ -437,7 +436,7 @@ namespace ULox
 
         public object Visit(Expr.Get expr)
         {
-            if(expr.obj == null)
+            if (expr.targetObj == null)
             {
                 if (_scopes.Count > 0 &&
                     _scopes.Last().localVariables.TryGetValue(expr.name.Lexeme, out var existingFlag) &&
@@ -447,22 +446,53 @@ namespace ULox
                 }
 
                 expr.varLoc = ResolveLocal(expr.name, true);
-                return null;
+            }
+            else
+            {
+                Resolve(expr.targetObj);
+                ResolveLocal(expr.name, true);
             }
 
-            Resolve(expr.obj);
-            ResolveLocal(expr.name, true);
+            if ((_currentFunctionType == FunctionType.METHOD || _currentFunctionType == FunctionType.INITIALIZER) &&
+                 expr.targetObj == null &&
+                expr.varLoc == EnvironmentVariableLocation.Invalid)
+            {
+                var matchingLoc = _currentClass.fields.FindIndex(x => x.name.Lexeme == expr.name.Lexeme);
+                if (matchingLoc >= 0)
+                {
+                    expr.targetObj = new Expr.This(expr.name.Copy(TokenType.THIS, Class.ThisIdentifier),
+                        EnvironmentVariableLocation.Invalid);
+                    Resolve(expr.targetObj);
+                    expr.varLoc.slot = (short)matchingLoc;
+                }
+            }
+
             return null;
         }
 
         public object Visit(Expr.Set expr)
         {
             Resolve(expr.val);
-            if(expr.obj != null)
-                Resolve(expr.obj);
+            if (expr.targetObj != null)
+                Resolve(expr.targetObj);
             else
                 expr.varLoc = ResolveLocal(expr.name, false);
-            
+
+            if ( (_currentFunctionType == FunctionType.METHOD || _currentFunctionType == FunctionType.INITIALIZER) &&
+                 expr.targetObj == null &&
+                expr.varLoc == EnvironmentVariableLocation.Invalid)
+            {
+                //see if we can find the var on the this 
+                var matchingLoc = _currentClass.fields.FindIndex(x => x.name.Lexeme == expr.name.Lexeme);
+                if (matchingLoc >= 0)
+                {
+                    expr.targetObj = new Expr.This(expr.name.Copy(TokenType.THIS, Class.ThisIdentifier),
+                        EnvironmentVariableLocation.Invalid);
+                    Resolve(expr.targetObj);
+                    expr.varLoc.slot = (short)matchingLoc;
+                }
+            }
+
             return null;
         }
 

@@ -401,7 +401,7 @@ namespace ULox
 
         public object Visit(Expr.Get expr)
         {
-            if (expr.obj == null)
+            if (expr.targetObj == null)
             {
                 //trating it as a variable
                 if (expr.varLoc == EnvironmentVariableLocation.Invalid)
@@ -419,7 +419,7 @@ namespace ULox
                 return CurrentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
             }
 
-            var obj = Evaluate(expr.obj);
+            var obj = Evaluate(expr.targetObj);
 
             if(obj == null)
             {
@@ -459,7 +459,7 @@ namespace ULox
 
         public object Visit(Expr.Set expr)
         {
-            if (expr.obj == null)
+            if (expr.targetObj == null)
             {
                 //attempt to use as an assign
                 if (expr.varLoc == EnvironmentVariableLocation.Invalid)
@@ -481,7 +481,7 @@ namespace ULox
                 return assignVal;
             }
 
-            var obj = Evaluate(expr.obj) as Instance;
+            var obj = Evaluate(expr.targetObj) as Instance;
             var val = Evaluate(expr.val);
 
             if (obj == null)

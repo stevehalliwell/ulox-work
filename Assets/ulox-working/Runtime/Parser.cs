@@ -553,7 +553,7 @@ namespace ULox
                 if (expr is Expr.Get exprGet)
                 {
                     Token name = exprGet.name;
-                    Expr obj = exprGet.obj;
+                    Expr obj = exprGet.targetObj;
 
                     switch (equals.TokenType)
                     {
