@@ -1203,6 +1203,28 @@ print(t.b);",
                 .SetName("MethodGetImplicitThis");
 
             yield return new TestCaseData(
+@"class Test
+{
+    Meth() { b += 1; print(b); }
+}
+
+var t = Test();
+t.b = 7;
+t.Meth();",
+@"8")
+                .SetName("ResolveGetAndSetOnRuntimeMember");
+
+            yield return new TestCaseData(
+@"class Test
+{
+}
+
+var t = Test();
+print(t.a);",
+@"IDENTIFIER|6:9 Undefined method 'a'.")
+                .SetName("RuntimeAccessExpection");
+
+            yield return new TestCaseData(
 @"print("""");",
 @"")
                 .SetName("Empty");

@@ -404,19 +404,23 @@ namespace ULox
             if (expr.targetObj == null)
             {
                 //trating it as a variable
-                if (expr.varLoc == EnvironmentVariableLocation.Invalid)
+                if (expr.varLoc != EnvironmentVariableLocation.Invalid)
+                {
+                    return CurrentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
+                }
+                else
                 {
                     try
                     {
                         expr.varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
+                        return CurrentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
                     }
                     catch (LoxException)
                     {
-                        throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
+                        if (!AttemptToResolveToMember(expr))
+                            throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
                     }
                 }
-
-                return CurrentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
             }
 
             var obj = Evaluate(expr.targetObj);
@@ -440,7 +444,7 @@ namespace ULox
                 }
                 else
                 {
-                    //todo this dict lookup in here is still a cause of much perf issues
+                    //todo this dict lookup in here is still a cause of much perf issues, do the resolverlet
                     result = objInst.GetMethod(expr.name);
                 }
 
@@ -462,25 +466,29 @@ namespace ULox
             if (expr.targetObj == null)
             {
                 //attempt to use as an assign
-                if (expr.varLoc == EnvironmentVariableLocation.Invalid)
+                if (expr.varLoc != EnvironmentVariableLocation.Invalid)
+                {
+                    var assignVal = Evaluate(expr.val);
+                    CurrentEnvironment.Ancestor(expr.varLoc.depth).AssignSlot(expr.varLoc.slot, assignVal);
+                    return assignVal;
+                }
+                else
                 {
                     try
                     {
                         expr.varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
+                        var assignVal = Evaluate(expr.val);
+                        CurrentEnvironment.Ancestor(expr.varLoc.depth).AssignSlot(expr.varLoc.slot, assignVal);
+                        return assignVal;
                     }
                     catch (LoxException)
                     {
-                        //todo if we had a this related knownslot, we could grab the this and use it
-                        //  OR we can become a proxy and hold a set
-                        //  Or we can merge assign and set into the same thing
-                        throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
+                        if (!AttemptToResolveToMember(expr))
+                            throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
                     }
                 }
-                var assignVal = Evaluate(expr.val);
-                CurrentEnvironment.Ancestor(expr.varLoc.depth).AssignSlot(expr.varLoc.slot, assignVal);
-                return assignVal;
             }
-
+            
             var obj = Evaluate(expr.targetObj) as Instance;
             var val = Evaluate(expr.val);
 
@@ -489,9 +497,43 @@ namespace ULox
                 throw new RuntimeTypeException(expr.name, "Only instances have fields.");
             }
 
-            //todo this dict lookup in here is still a cause of much perf issues
+            //todo this dict lookup in here is still a cause of much perf issues, do the resolverlet
             obj.Set(expr.name.Lexeme, val);
             return val;
+        }
+
+        private bool AttemptToResolveToMember(Expr.Get expr)
+        {
+            var localThisVar = CurrentEnvironment.FetchObject(Class.ThisSlot);
+            if (expr.varLoc == EnvironmentVariableLocation.Invalid && localThisVar is Instance localThis)
+            {
+                var matchingLoc = localThis.FindSlot(expr.name.Lexeme);
+                if (matchingLoc != EnvironmentVariableLocation.InvalidSlot)
+                {
+                    expr.targetObj = new Expr.This(expr.name.Copy(TokenType.THIS, Class.ThisIdentifier),
+                        EnvironmentVariableLocation.Invalid);
+                    expr.varLoc.slot = matchingLoc;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private bool AttemptToResolveToMember(Expr.Set expr)
+        {
+            var localThisVar = CurrentEnvironment.FetchObject(Class.ThisSlot);
+            if (expr.varLoc == EnvironmentVariableLocation.Invalid && localThisVar is Instance localThis)
+            {
+                var matchingLoc = localThis.FindSlot(expr.name.Lexeme);
+                if (matchingLoc != EnvironmentVariableLocation.InvalidSlot)
+                {
+                    expr.targetObj = new Expr.This(expr.name.Copy(TokenType.THIS, Class.ThisIdentifier),
+                        EnvironmentVariableLocation.Invalid);
+                    expr.varLoc.slot = matchingLoc;
+                    return true;
+                }
+            }
+            return false;
         }
 
         public object Visit(Expr.This expr)

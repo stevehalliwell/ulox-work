@@ -14,7 +14,7 @@ namespace ULox
             "Set      : Expr targetObj, Token name, Expr val, EnvironmentVariableLocation varLoc",//if obj is null uses slot if not use full varloc
             "Binary   : Expr left, Token op, Expr right",
             "Call     : Expr callee, Token paren, List<Expr> arguments",
-            "Get      : Expr obj, Token name, EnvironmentVariableLocation varLoc",//if obj is null uses slot if not use full varloc
+            "Get      : Expr targetObj, Token name, EnvironmentVariableLocation varLoc",//if obj is null uses slot if not use full varloc
             "Grouping : Expr expression",
             "Literal  : object value",
             "Logical  : Expr left, Token op, Expr right",

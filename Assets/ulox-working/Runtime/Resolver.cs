@@ -469,7 +469,7 @@ namespace ULox
 
             return null;
         }
-
+        //todo turn the fallback logic into a resolvelet so it can be used here and in the intepreter
         public object Visit(Expr.Set expr)
         {
             Resolve(expr.val);

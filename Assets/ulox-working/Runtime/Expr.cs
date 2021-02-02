@@ -6,9 +6,9 @@ namespace ULox
     {
         public class Set : Expr
         {
-            public Set( Expr obj, Token name, Expr val, EnvironmentVariableLocation varLoc)
+            public Set( Expr targetObj, Token name, Expr val, EnvironmentVariableLocation varLoc)
             {
-                this.targetObj = obj;
+                this.targetObj = targetObj;
                 this.name = name;
                 this.val = val;
                 this.varLoc = varLoc;
@@ -47,9 +47,9 @@ namespace ULox
         }
         public class Get : Expr
         {
-            public Get( Expr obj, Token name, EnvironmentVariableLocation varLoc)
+            public Get( Expr targetObj, Token name, EnvironmentVariableLocation varLoc)
             {
-                this.targetObj = obj;
+                this.targetObj = targetObj;
                 this.name = name;
                 this.varLoc = varLoc;
             }

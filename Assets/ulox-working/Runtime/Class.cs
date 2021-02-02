@@ -64,7 +64,7 @@ namespace ULox
             {
                 for (int i = 0; i < _initVarIndexMatches?.Count; i += 2)
                 {
-                    //todo why the plus 1, is it starting params or not?
+                    //we're using the indicies in pairs of out to in
                     instance.AssignSlot(_initVarIndexMatches[i + 1], functionArgs.At(_initVarIndexMatches[i]));
                 }
 
