@@ -3,7 +3,6 @@ using System.Collections.Generic;
 
 namespace ULox.Tests
 {
-    //todo is there a desire to get access to your class from within instance method?e.g. cthis
     //todo calling super in a meta method
     //todo more metafields and metamethods tests?
     //todo should you be able to get to metas via this or super or class or meta keyword? or not?
@@ -314,7 +313,7 @@ return a;",
             yield return new TestCaseData(
 @"var a = 1;
 var a = 2;",
-@"Environment value redefinition not allowed. Requested a:7 collided.")
+@"Environment value redefinition not allowed. Requested a:8 collided.")
                 .SetName("CannotHaveDuplicateGlobals");
 
             yield return new TestCaseData(
@@ -1223,6 +1222,13 @@ var t = Test();
 print(t.a);",
 @"IDENTIFIER|6:9 Undefined method 'a'.")
                 .SetName("RuntimeAccessExpection");
+
+            yield return new TestCaseData(
+@"var a,b,c=10,d;
+a = c;
+print(a);",
+@"10")
+                .SetName("LocalMultiVarDeclare");
 
             yield return new TestCaseData(
 @"print("""");",

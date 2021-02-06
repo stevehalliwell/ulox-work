@@ -7,7 +7,7 @@ namespace ULox
 {
     public static class GenerateASTClasses
     {
-        private static string _outputLocation = "Assets\\ulox-working\\Runtime\\";
+        private static string _outputLocation = "Assets\\ulox-working\\Runtime\\Generated\\";
 
         private static string[] _requiredExprTypes = new string[]
         {

@@ -105,6 +105,26 @@ printr (insta);",
                 .SetName("PrintR_CircluarRef");
 
             yield return new TestCaseData(
+@"class Test{ var a = 10;}
+var t = Test();
+var tclass = classof(t);
+var nt = tclass();
+print(nt.a);",
+@"10")
+                .SetName("NewInstanceFromClassof");
+
+            yield return new TestCaseData(
+@"class Cloneable { Clone() { return classof(this)(); } }
+
+class Test < Cloneable { var a = 10;}
+
+var t = Test();
+var nt = t.Clone();
+print(nt.a);",
+@"10")
+                .SetName("CloneMethod");
+
+            yield return new TestCaseData(
 @"print ("""");",
 @"")
                 .SetName("Empty");

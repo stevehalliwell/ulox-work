@@ -68,6 +68,8 @@ ulox is no longer a superset of lox. The last point where that was the case is a
 - Add Testing and Asserting library to lox.
 - Multiple return values.
 - Implicit this within methods.
+- Methodless variant.
+- Closureless variant.
 
 ## Differences
 - null instead of nil.

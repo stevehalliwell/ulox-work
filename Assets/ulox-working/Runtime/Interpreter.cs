@@ -563,7 +563,6 @@ namespace ULox
             if (expr.superVarLoc == EnvironmentVariableLocation.Invalid)
                 expr.superVarLoc = CurrentEnvironment.FindLocation(Class.SuperIdentifier);
 
-            //todo cthis, or current class stored anywhere, would mean we don't need the empty super environments littering the landscape
             var superclass = (Class)CurrentEnvironment.Ancestor(expr.superVarLoc.depth).FetchObject(expr.superVarLoc.slot);
 
             if (!string.IsNullOrEmpty(expr.classNameToken.Lexeme))

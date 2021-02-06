@@ -31,6 +31,15 @@ namespace ULox
                 new Callable(1, (args) => System.Threading.Thread.Sleep((int)args.At<double>(0))));
             engine.SetValue("abort", 
                 new Callable(() => throw new LoxException("abort")));
+            engine.SetValue("classof",
+                new Callable(1, (objs) =>
+                {
+                    if (objs.At(0) is Instance inst)
+                    {
+                        return inst.Class;
+                    }
+                    throw new LoxException("'classof' can only be called on instances.");
+                }));
         }
 
         private void PrintRecursive(object v, System.Text.StringBuilder sb, string prefix, int remainingDepth)
