@@ -10,6 +10,10 @@ Beyond a port of jlox, it is now something to toy with, optimize, prototype with
 ulox is no longer a superset of lox. The last point where that was the case is at [this commit](../../tree/core_jlox_varloc)
 
 ![current code coverage](badge_linecoverage.png)
+- [Implicit This, Multiple Returns, classof](../../tree/ulox_this_multi_return_classof)
+	- The use of member vars within a method, no longer require explicit `this.` The this is inserted automatically if the variable is not in local or enclosing scope but is found in a valid local this.
+	- Add 'classof' engine function, like a c# typeof, it locates the class of the passed instance. This can also also be used to make new instances `var newObj = classof(existingObject)();`.
+	- Support multiple return values and splicing assignments/initialisers.See [Multiple Return](#multiple-return-values).
 - [Cache Gets](../../tree/ulox_assign_variable_collapse)
 	- Cache slot indicies on get and set expressions. Greatly improves performance of methods that operate on instance fields.
 	- Class init params that match field names are automatically assigned before init body is run, see [Class Sugar](#class-sugar).
@@ -66,8 +70,6 @@ ulox is no longer a superset of lox. The last point where that was the case is a
 - Add Performance tests.
 - Add/port tests from (craftinginterpreters)[https://github.com/munificent/craftinginterpreters/tree/master/test]
 - Add Testing and Asserting library to lox.
-- Multiple return values.
-- Implicit this within methods.
 - Methodless variant.
 - Closureless variant.
 
@@ -77,6 +79,39 @@ ulox is no longer a superset of lox. The last point where that was the case is a
 - An Instance is an Environment.
 - print is no longer a statement. It's now a function in the LoxCoreLibrary. 
 - Globals are in an instance, rather than an environment and bind themselves with the name 'Globals'. Allows for adding to globals from lower deeper scopes.
+
+## Multiple Return Values
+Functions can return more than 1 value by enclosing multiple expressions in braces. `return (a,b,c);`
+
+These returns are expanded and sliced in a number of useful ways.
+
+If as arguments to a call, they are expanded order-wise. 
+```
+fun Meth()
+{
+    var a = 1, b = 2, c = 3;
+    return (a,b,c);
+}
+
+fun InMeth(i,j,k)
+{
+    print(i+j+k);
+}
+
+InMeth(Meth());
+```
+
+Assigning results to multiple variables is done order-wise. This is done by eclosing the identifiers in `()`. Any excess are dropped, if not enough are returned it initial values are unchanged.
+```
+var a,b,c;
+(a,b,c) = Meth(); a is 1, b is 2, c is 3
+
+var (d,e,f) = Meth(); d is 1, e is 2, f is 3
+```
+If regular assign or var receives a multiple return values, it simply takes the first and ignores the rest.
+```
+var x,y = Meth();// x is null, y is 1
+```
 
 ## Class Sugar
 The added keywords in class declarations minimise the amount of plumbing required to do basic things.
@@ -182,4 +217,28 @@ class Foo
 ```
 and the field assignment from params will happen automatically.
 
+Methods can automatically insert their this. when there is no matching name in enclosing scopes.
+```
+class Foo
+{
+	var a, b, c;
+	
+	Meth()
+	{
+		this.a = this.b * this.c;
+	}
+}
+```
+can have it's this omitted.
+```
+class Foo
+{
+	var a, b, c;
+	
+	Meth()
+	{
+		a = b*c;
+	}
+}
+```
 

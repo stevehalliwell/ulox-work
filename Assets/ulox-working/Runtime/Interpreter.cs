@@ -159,7 +159,11 @@ namespace ULox
             return null;
         }
 
-        public object Visit(Expr.Grouping expr) => Evaluate(expr.expression);
+        public object Visit(Expr.Grouping expr)
+        {
+            //todo convert to support multiple params
+            return Evaluate(expr.expressions[0]);
+        }
 
         public object Visit(Expr.Literal expr) => expr.value;
 
@@ -270,13 +274,18 @@ namespace ULox
         {
             var callee = Evaluate(expr.callee);
             //todo would be nice not to have to alloc for each call
-            var args = new object[expr.arguments.Count];
-            var i = 0;
-            foreach (var item in expr.arguments)
+            //var args = new object[expr.arguments.expressions.Count];
+            var argList = new List<object>();
+            foreach (var item in expr.arguments.expressions)
             {
-                args[i] = Evaluate(item);
-                i++;
+                var res = Evaluate(item);
+                if (res is object[] resArray)
+                    argList.AddRange(resArray);
+                else
+                    argList.Add(res);
             }
+
+            var args = argList.ToArray();
 
             if (callee is ICallable calleeCallable)
             {
@@ -299,24 +308,67 @@ namespace ULox
 
         public void Visit(Stmt.Return stmt)
         {
-            object val = null;
-            if (stmt.value != null) val = Evaluate(stmt.value);
+            if (stmt.retVals != null || stmt.retVals.expressions.Count == 0)
+            {
+                if(stmt.retVals.expressions.Count == 1)
+                {
+                    throw new Return(stmt.keyword, Evaluate(stmt.retVals.expressions[0]));
+                }
 
-            throw new Return(stmt.keyword, val);
+                //else array of results
+
+                object[] retVal = new object[stmt.retVals.expressions.Count];
+             
+                for (int i = 0; i < stmt.retVals.expressions.Count; i++)
+                {
+                    retVal[i] = Evaluate(stmt.retVals.expressions[i]);
+                }
+
+                throw new Return(stmt.keyword, retVal);
+            }
+
+            throw new Return(stmt.keyword, null);
         }
 
         public void Visit(Stmt.Var stmt)
         {
-            Object value = null;
+            object value = null;
             if (stmt.initializer != null)
             {
                 value = Evaluate(stmt.initializer);
+                if(value is object[] objArray)
+                {
+                    value = objArray[0];
+                }
             }
 
             if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
                 CurrentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, value);
             else
                 CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, value);
+        }
+
+        public void Visit(Stmt.MultiVar stmt)
+        {
+            object[] initialiserResults = null;
+            if (stmt.initializer != null)
+            {
+                var rawInitialiserResults = Evaluate(stmt.initializer);
+                if (rawInitialiserResults is object[] objArray)
+                {
+                    initialiserResults = objArray;
+                }
+            }
+
+            if (initialiserResults == null)
+                throw new RuntimeTypeException(stmt.names[0], "MultiVar being used but was not given valid initialiser results from function.");
+
+            for (int i = 0; i < stmt.names.Count; i++)
+            {
+                CurrentEnvironment.DefineInAvailableSlot(stmt.names[i].Lexeme, 
+                    (i < initialiserResults.Length ? initialiserResults[i] : null));
+            }
+
         }
 
         public void Visit(Stmt.Function stmt)
@@ -488,6 +540,12 @@ namespace ULox
                     }
                 }
             }
+
+            if(expr.targetObj is Expr.Grouping grouping)
+            {
+                return HandleMultiSet(expr, grouping);
+            }
+
             
             var obj = Evaluate(expr.targetObj) as Instance;
             var val = Evaluate(expr.val);
@@ -500,6 +558,43 @@ namespace ULox
             //todo this dict lookup in here is still a cause of much perf issues, do the resolverlet
             obj.Set(expr.name.Lexeme, val);
             return val;
+        }
+
+        private object HandleMultiSet(Expr.Set setExpr, Expr.Grouping grouping)
+        {
+            object[] resultsFromFunc = System.Array.Empty<object>();
+            //we need the results first.
+            var rawFunctionReturn = Evaluate(setExpr.val);
+            if(rawFunctionReturn is object[] retVals)
+            {
+                resultsFromFunc = retVals;
+            }
+            else if (rawFunctionReturn is object retVal)
+            {
+                resultsFromFunc = new object[] { retVal };
+            }
+
+            for (int i = 0; i < grouping.expressions.Count; i++)
+            {
+                var curExpr = grouping.expressions[i] as Expr.Get;
+
+                if (i < resultsFromFunc.Length)
+                {
+                    var val = resultsFromFunc[i];
+                    Visit(curExpr);  //that'll locate
+                    if(curExpr.targetObj == null)
+                    {
+                        CurrentEnvironment.Ancestor(curExpr.varLoc.depth).AssignSlot(curExpr.varLoc.slot, val);
+                    }
+                    else
+                    {
+                        var obj = Evaluate(curExpr.targetObj) as Instance;
+                        obj.Set(curExpr.name.Lexeme, val);
+                    }
+                }
+            }
+
+            return resultsFromFunc;
         }
 
         private bool AttemptToResolveToMember(Expr.Get expr)

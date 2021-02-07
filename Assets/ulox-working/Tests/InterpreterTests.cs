@@ -5,8 +5,7 @@ namespace ULox.Tests
 {
     //todo calling super in a meta method
     //todo more metafields and metamethods tests?
-    //todo should you be able to get to metas via this or super or class or meta keyword? or not?
-    //todo fthis keyword to get access to the environment that you are running in?
+    //todo more multi return tests
     public class InterpreterTests
     {
         public static IEnumerable<TestCaseData> Generator()
@@ -1229,6 +1228,62 @@ a = c;
 print(a);",
 @"10")
                 .SetName("LocalMultiVarDeclare");
+
+            yield return new TestCaseData(
+@"fun Meth()
+{
+    var a = 1, b = 2, z = 3;
+    return (a,b,z);
+}
+
+var c,d;
+(c,d) = Meth();
+
+print(c+d);",
+@"3")
+                .SetName("MultiReturnsAssigns");
+
+            yield return new TestCaseData(
+@"fun Meth()
+{
+    var a = 1, b = 2, z = 3;
+    return (a,b,z);
+}
+
+var (c,d) = Meth();
+
+print(c+d);",
+@"3")
+                .SetName("MultiReturnsVar");
+
+            yield return new TestCaseData(
+@"fun Meth()
+{
+    var a = 1, b = 2, z = 3;
+    return (a,b,z);
+}
+
+var c,d = Meth();
+
+printr(d);",
+@"1")
+                .SetName("MultiReturnsTakeFirst");
+
+            yield return new TestCaseData(
+@"fun Meth()
+{
+    var a = 1, b = 2, c = 3;
+    return (a,b,c);
+}
+
+fun InMeth(i,j,k)
+{
+    print(i+j+k);
+}
+
+InMeth(Meth());",
+@"6")
+                .SetName("MultiReturnsExpandArgList");
 
             yield return new TestCaseData(
 @"print("""");",

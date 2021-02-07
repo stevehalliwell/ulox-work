@@ -13,9 +13,9 @@ namespace ULox
         {
             "Set      : Expr targetObj, Token name, Expr val, EnvironmentVariableLocation varLoc",//if obj is null uses slot if not use full varloc
             "Binary   : Expr left, Token op, Expr right",
-            "Call     : Expr callee, Token paren, List<Expr> arguments",
+            "Call     : Expr callee, Token paren, Expr.Grouping arguments",
             "Get      : Expr targetObj, Token name, EnvironmentVariableLocation varLoc",//if obj is null uses slot if not use full varloc
-            "Grouping : Expr expression",
+            "Grouping : List<Expr> expressions",
             "Literal  : object value",
             "Logical  : Expr left, Token op, Expr right",
             "Super    : Token keyword, Token classNameToken, Token method, " +
@@ -43,8 +43,9 @@ namespace ULox
             "Function   : Token name, Expr.Function function, short knownSlot",
             "If         : Expr condition, Stmt thenBranch," +
                         " Stmt elseBranch",
-            "Return     : Token keyword, Expr value",
+            "Return     : Token keyword, Expr.Grouping retVals",
             "Var        : Token name, Expr initializer, short knownSlot",
+            "MultiVar   : List<Token> names, Expr initializer",
             "While      : Expr condition, Stmt body," +
                         " Stmt increment",
             "Break      : Token keyword",

@@ -34,7 +34,7 @@ namespace ULox
         }
         public class Call : Expr
         {
-            public Call( Expr callee, Token paren, List<Expr> arguments)
+            public Call( Expr callee, Token paren, Expr.Grouping arguments)
             {
                 this.callee = callee;
                 this.paren = paren;
@@ -42,7 +42,7 @@ namespace ULox
             }
             public readonly Expr callee;
             public readonly Token paren;
-            public readonly List<Expr> arguments;
+            public readonly Expr.Grouping arguments;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
         public class Get : Expr
@@ -60,11 +60,11 @@ namespace ULox
         }
         public class Grouping : Expr
         {
-            public Grouping( Expr expression)
+            public Grouping( List<Expr> expressions)
             {
-                this.expression = expression;
+                this.expressions = expressions;
             }
-            public readonly Expr expression;
+            public readonly List<Expr> expressions;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
         public class Literal : Expr

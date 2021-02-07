@@ -84,13 +84,13 @@ namespace ULox
         }
         public class Return : Stmt
         {
-            public Return( Token keyword, Expr value)
+            public Return( Token keyword, Expr.Grouping retVals)
             {
                 this.keyword = keyword;
-                this.value = value;
+                this.retVals = retVals;
             }
             public readonly Token keyword;
-            public readonly Expr value;
+            public readonly Expr.Grouping retVals;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
         public class Var : Stmt
@@ -104,6 +104,17 @@ namespace ULox
             public readonly Token name;
             public readonly Expr initializer;
             public short knownSlot;
+            public override void Accept(Visitor visitor) => visitor.Visit(this);
+        }
+        public class MultiVar : Stmt
+        {
+            public MultiVar( List<Token> names, Expr initializer)
+            {
+                this.names = names;
+                this.initializer = initializer;
+            }
+            public readonly List<Token> names;
+            public readonly Expr initializer;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
         public class While : Stmt
@@ -150,6 +161,7 @@ namespace ULox
             void Visit(If stmt);
             void Visit(Return stmt);
             void Visit(Var stmt);
+            void Visit(MultiVar stmt);
             void Visit(While stmt);
             void Visit(Break stmt);
             void Visit(Continue stmt);

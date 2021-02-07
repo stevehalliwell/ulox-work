@@ -118,12 +118,7 @@ namespace ULox.Tests
         {
             Print("call ");
             Print(expr.callee);
-            if (expr.arguments.Count > 0)
-            {
-                Print("( ");
-                Print(expr.arguments);
-                Print(" )");
-            }
+            Print(expr.arguments);
 
             return null;
         }
@@ -139,7 +134,12 @@ namespace ULox.Tests
 
         public Object Visit(Expr.Grouping expr)
         {
-            Print(expr.expression);
+            if (expr.expressions.Count > 0)
+            {
+                Print("( ");
+                Print(expr.expressions);
+                Print(" )");
+            }
             return null;
         }
 
@@ -268,7 +268,7 @@ namespace ULox.Tests
         public void Visit(Stmt.Return stmt)
         {
             Print("return ");
-            Print(stmt.value);
+            Print(stmt.retVals);
         }
 
         public void Visit(Stmt.Var stmt)
@@ -320,6 +320,17 @@ namespace ULox.Tests
         {
             Print(stmt.left);
             Print(stmt.right);
+        }
+
+        public void Visit(Stmt.MultiVar stmt)
+        {
+            Print("multivar ");
+            for (int i = 0; i < stmt.names.Count; i++)
+            {
+                Print(stmt.names[i]);
+                if (i < stmt.names.Count - 1) Print(", ");
+            }
+            Print(stmt.initializer);
         }
     }
 }

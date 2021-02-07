@@ -283,12 +283,14 @@ namespace ULox
                 new Expr.Function(null,
                     new List<Stmt>()
                     {
-                        new Stmt.Return(className.Copy(TokenType.RETURN),
-                        new Expr.Get(
-                            new Expr.This(className.Copy(TokenType.THIS, Class.ThisIdentifier),
-                                EnvironmentVariableLocation.Invalid), hiddenInternalFieldName, EnvironmentVariableLocation.Invalid))
-                    }, false, false, true)
-                , EnvironmentVariableLocation.InvalidSlot);
+                        new Stmt.Return(className.Copy(TokenType.RETURN), 
+                            new Expr.Grouping( 
+                                new List<Expr>(){
+                                    new Expr.Get(
+                                        new Expr.This(className.Copy(TokenType.THIS, Class.ThisIdentifier),
+                                        EnvironmentVariableLocation.Invalid), hiddenInternalFieldName, EnvironmentVariableLocation.Invalid) })) 
+                                    }, false, false, true)
+                            , EnvironmentVariableLocation.InvalidSlot);
         }
 
         private Stmt.Function Function(FunctionType functionType)
@@ -351,6 +353,10 @@ namespace ULox
 
         private Stmt VarDeclaration()
         {
+            if(Match(TokenType.OPEN_PAREN))
+            {
+                return MultiVarDeclaration();
+            }
             Token name = Consume(TokenType.IDENTIFIER, "Expect variable name.");
 
             Expr initializer = null;
@@ -372,6 +378,27 @@ namespace ULox
             }
         }
 
+        private Stmt MultiVarDeclaration()
+        {
+            var nameList = new List<Token>();
+
+            do
+            {
+                nameList.Add(Consume(TokenType.IDENTIFIER, "Expect variable name."));
+            } while (Match(TokenType.COMMA));
+
+            Consume(TokenType.CLOSE_PAREN, "Expect ')' after multivar name block.");
+
+            Expr initializer = null;
+            if (Match(TokenType.ASSIGN))
+            {
+                initializer = Expression();
+            }
+
+            Consume(TokenType.END_STATEMENT, "Expect end of statement after variable declaration.");
+            return new Stmt.MultiVar(nameList, initializer);
+        }
+
         private Stmt Statement()
         {
             if (Match(TokenType.LOOP)) return LoopStatement();
@@ -389,12 +416,14 @@ namespace ULox
         private Stmt ReturnStatement()
         {
             var keyword = Previous();
-            Expr value = null;
-            if (!Check(TokenType.END_STATEMENT))
-                value = Expression();
-
+            Expr.Grouping grouping = null;
+            if (Match(TokenType.OPEN_PAREN))
+                grouping = GroupingExpression();
+            else
+                grouping = new Expr.Grouping(new List<Expr>() { Expression() });
+            
             Consume(TokenType.END_STATEMENT, "Expect ; after return value.");
-            return new Stmt.Return(keyword, value);
+            return new Stmt.Return(keyword, grouping);
         }
 
         private Stmt BreakStatement()
@@ -565,6 +594,13 @@ namespace ULox
                         case TokenType.ASSIGN: return new Expr.Set(obj, name, value, EnvironmentVariableLocation.Invalid);
                     }
                 }
+                else if (expr is Expr.Grouping grouping)
+                {
+                    switch (equals.TokenType)
+                    {
+                        case TokenType.ASSIGN: return new Expr.Set(grouping, equals, value, EnvironmentVariableLocation.Invalid);
+                    }
+                }
                 else
                 {
                     //a 'super.a = 1;' ends up in here unhandled
@@ -698,22 +734,8 @@ namespace ULox
 
         private Expr FinishCall(Expr callee)
         {
-            List<Expr> arguments = new List<Expr>();
-            if (!Check(TokenType.CLOSE_PAREN))
-            {
-                do
-                {
-                    if (arguments.Count >= 255)
-                    {
-                        throw new ParseException(Peek(), "Can't have more than 255 arguments.");
-                    }
-                    arguments.Add(Expression());
-                } while (Match(TokenType.COMMA));
-            }
-
-            Token paren = Consume(TokenType.CLOSE_PAREN, "Expect ')' after arguments.");
-
-            return new Expr.Call(callee, paren, arguments);
+            var group = GroupingExpression();
+            return new Expr.Call(callee, Previous(), group);
         }
 
         private Expr Primary()
@@ -756,12 +778,7 @@ namespace ULox
                 return new Expr.Get(null, Previous(), EnvironmentVariableLocation.Invalid);
             }
 
-            if (Match(TokenType.OPEN_PAREN))
-            {
-                Expr expr = Expression();
-                Consume(TokenType.CLOSE_PAREN, "Expect ')' after expression.");
-                return new Expr.Grouping(expr);
-            }
+            if (Match(TokenType.OPEN_PAREN)) return GroupingExpression();
 
             if (Match(TokenType.ASSIGN,
                 TokenType.GREATER,
@@ -800,6 +817,30 @@ namespace ULox
             }
 
             return expr;
+        }
+
+        private Expr.Grouping GroupingExpression()
+        {
+            //handle single return
+            if (Previous().TokenType != TokenType.OPEN_PAREN)
+                return new Expr.Grouping(new List<Expr>() { Expression() });
+
+
+            var list = new List<Expr>();
+
+            //handle empty grouping e.g func call
+            if (!Match(TokenType.CLOSE_PAREN))
+            {
+
+                //handle lists of expressions, this can then also be used for multi returns
+                do
+                {
+                    list.Add(Expression());
+                } while (Match(TokenType.COMMA));
+
+                Consume(TokenType.CLOSE_PAREN, "Expect ')' after grouping.");
+            }
+            return new Expr.Grouping(list);
         }
 
         private void Synchronize()

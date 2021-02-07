@@ -97,17 +97,17 @@ namespace ULox
         public object Visit(Expr.Call expr)
         {
             Resolve(expr.callee);
-            foreach (var item in expr.arguments)
-            {
-                Resolve(item);
-            }
+            Resolve(expr.arguments);
 
             return null;
         }
 
         public object Visit(Expr.Grouping expr)
         {
-            Resolve(expr.expression);
+            foreach (var item in expr.expressions)
+            {
+                Resolve(item);
+            }
             return null;
         }
 
@@ -328,12 +328,12 @@ namespace ULox
             {
                 throw new ResolverException(stmt.keyword, "Cannot return outside of a function.");
             }
-            if (stmt.value != null)
+            if (stmt.retVals != null)
             {
                 if (_currentFunctionType == FunctionType.INITIALIZER)
                     throw new ResolverException(stmt.keyword, "Cannot return a value from an initializer");
 
-                Resolve(stmt.value);
+                Resolve(stmt.retVals);
             }
 
             if (_currentExprFunc != null) _currentExprFunc.HasReturns = true;
@@ -347,6 +347,23 @@ namespace ULox
                 Resolve(stmt.initializer);
             }
             Define(stmt.name);
+        }
+
+        public void Visit(Stmt.MultiVar stmt)
+        {
+            if (stmt.initializer == null ||
+                !(stmt.initializer is Expr.Call))
+                throw new ResolverException(stmt.names[0], "MultiVar statement is being used but is not assigned to a initialised by a function.");
+
+            if (stmt.initializer != null)
+            {
+                Resolve(stmt.initializer);
+            }
+            foreach (var item in stmt.names)
+            {
+                Declare(item);
+                Define(item);
+            }
         }
 
         public void Visit(Stmt.Function stmt)
