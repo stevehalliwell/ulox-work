@@ -6,19 +6,13 @@ namespace ULox
     {
         public string InterpreterResult { get; private set; } = string.Empty;
         public Engine _engine;
-        private Resolver resolver;
 
         protected void SetResult(string str) => InterpreterResult += str;
 
         protected TestLoxEngine(params ILoxEngineLibraryBinder[] loxEngineLibraryBinders)
         {
             var binders = new ILoxEngineLibraryBinder[] { new LoxCoreLibrary(SetResult) };
-            resolver = new Resolver();
             _engine = new Engine(
-                new Scanner(),
-                new Parser() { CatchAndSynch = false },
-                resolver,
-                new Interpreter(),
                 binders.Concat(loxEngineLibraryBinders).ToArray());
         }
 
@@ -36,7 +30,7 @@ namespace ULox
                     SetResult(
                         string.Join(
                             "\n",
-                            resolver.ResolverWarnings.Select(x => $"{x.Token} {x.Message}")
+                            _engine.ResolverWarnings.Select(x => $"{x.Token} {x.Message}")
                                    ));
                 }
             }

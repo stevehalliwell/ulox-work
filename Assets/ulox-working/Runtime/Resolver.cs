@@ -278,7 +278,7 @@ namespace ULox
             }
             else if (functionType == FunctionType.METHOD)
             {
-                DeclareAt(Class.ThisToken, Class.ThisSlot);
+                DeclareAt(Class.MakeThisToken(), Class.ThisSlot);
             }
 
             Resolve(func.body);
@@ -477,7 +477,7 @@ namespace ULox
                 var matchingLoc = _currentClass.fields.FindIndex(x => x.name.Lexeme == expr.name.Lexeme);
                 if (matchingLoc >= 0)
                 {
-                    expr.targetObj = new Expr.This(expr.name.Copy(TokenType.THIS, Class.ThisIdentifier),
+                    expr.targetObj = new Expr.This(Class.MakeThisToken(expr.name),
                         EnvironmentVariableLocation.Invalid);
                     Resolve(expr.targetObj);
                     expr.varLoc.slot = (short)matchingLoc;
@@ -486,7 +486,7 @@ namespace ULox
 
             return null;
         }
-        //todo turn the fallback logic into a resolvelet so it can be used here and in the intepreter
+
         public object Visit(Expr.Set expr)
         {
             Resolve(expr.val);
@@ -503,7 +503,7 @@ namespace ULox
                 var matchingLoc = _currentClass.fields.FindIndex(x => x.name.Lexeme == expr.name.Lexeme);
                 if (matchingLoc >= 0)
                 {
-                    expr.targetObj = new Expr.This(expr.name.Copy(TokenType.THIS, Class.ThisIdentifier),
+                    expr.targetObj = new Expr.This(Class.MakeThisToken(expr.name),
                         EnvironmentVariableLocation.Invalid);
                     Resolve(expr.targetObj);
                     expr.varLoc.slot = (short)matchingLoc;

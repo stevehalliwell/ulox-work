@@ -9,7 +9,6 @@ namespace ULox
 
         private List<Token> _tokens;
         private int current = 0;
-        public bool CatchAndSynch { get; set; } = true;
         private int _loopDepth;
         public Token _currentClassToken;
 
@@ -17,49 +16,24 @@ namespace ULox
         {
             _tokens = tokens;
             var statements = new List<Stmt>();
-            try
+            while (!IsAtEnd())
             {
-                while (!IsAtEnd())
-                {
-                    statements.Add(Declaration());
-                }
-            }
-            catch (ParseException exception)
-            {
-                if (CatchAndSynch)
-                    return null;
-                else
-                    throw;
+                statements.Add(Declaration());
             }
             return statements;
         }
 
         private Stmt Declaration()
         {
-            try
+            if (Match(TokenType.CLASS)) return ClassDeclaration();
+            if (Check(TokenType.FUNCTION) && CheckNext(TokenType.IDENTIFIER))
             {
-                if (Match(TokenType.CLASS)) return ClassDeclaration();
-                if (Check(TokenType.FUNCTION) && CheckNext(TokenType.IDENTIFIER))
-                {
-                    Consume(TokenType.FUNCTION, null);
-                    return Function(FunctionType.Function);
-                }
-                if (Match(TokenType.VAR)) return VarDeclaration();
+                Consume(TokenType.FUNCTION, null);
+                return Function(FunctionType.Function);
+            }
+            if (Match(TokenType.VAR)) return VarDeclaration();
 
-                return Statement();
-            }
-            catch (ParseException exception)
-            {
-                if (CatchAndSynch)
-                {
-                    Synchronize();
-                    return null;
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            return Statement();
         }
 
         private Stmt ClassDeclaration()
@@ -266,29 +240,29 @@ namespace ULox
             var setFuncName = writtenFieldName.Copy(TokenType.IDENTIFIER, "Set" + writtenFieldName.Lexeme);
             var valueName = writtenFieldName.Copy(TokenType.IDENTIFIER, "value");
             return new Stmt.Function(setFuncName,
-                new Expr.Function(new List<Token>() { Class.ThisToken, valueName },
+                new Expr.Function(new List<Token>() { Class.MakeThisToken(), valueName },
                     new List<Stmt>()
                     {
                         new Stmt.Expression(new Expr.Set(
-                            new Expr.This(name.Copy(TokenType.THIS, Class.ThisIdentifier), EnvironmentVariableLocation.Invalid),
+                            new Expr.This(Class.MakeThisToken(name), EnvironmentVariableLocation.Invalid),
                             hiddenInternalFieldName,
                             new Expr.Get(null, valueName, EnvironmentVariableLocation.Invalid), EnvironmentVariableLocation.Invalid))
                     }, false, false, false),
                 EnvironmentVariableLocation.InvalidSlot);
         }
 
-        private static Stmt.Function CreateGetMethod(Token className, Token writtenFieldName, Token hiddenInternalFieldName)
+        private Stmt.Function CreateGetMethod(Token className, Token writtenFieldName, Token hiddenInternalFieldName)
         {
             return new Stmt.Function(writtenFieldName,
                 new Expr.Function(null,
                     new List<Stmt>()
                     {
-                        new Stmt.Return(className.Copy(TokenType.RETURN), 
-                            new Expr.Grouping( 
+                        new Stmt.Return(className.Copy(TokenType.RETURN),
+                            new Expr.Grouping(
                                 new List<Expr>(){
                                     new Expr.Get(
-                                        new Expr.This(className.Copy(TokenType.THIS, Class.ThisIdentifier),
-                                        EnvironmentVariableLocation.Invalid), hiddenInternalFieldName, EnvironmentVariableLocation.Invalid) })) 
+                                        new Expr.This(Class.MakeThisToken(className),
+                                        EnvironmentVariableLocation.Invalid), hiddenInternalFieldName, EnvironmentVariableLocation.Invalid) }))
                                     }, false, false, true)
                             , EnvironmentVariableLocation.InvalidSlot);
         }
@@ -305,7 +279,7 @@ namespace ULox
 
             if (functionType == FunctionType.Function || Check(TokenType.OPEN_PAREN))
             {
-                parameters = new List<Token>() { Class.ThisToken };
+                parameters = new List<Token>() { Class.MakeThisToken() };
                 Consume(TokenType.OPEN_PAREN, $"Expect '(' after {functionType} name.");
                 if (!Check(TokenType.CLOSE_PAREN))
                 {
@@ -337,7 +311,7 @@ namespace ULox
             if (functionType == FunctionType.Set)
             {
                 var createdValueParam = Previous().Copy(TokenType.IDENTIFIER, "value");
-                parameters = new List<Token>() { Class.ThisToken }; //todo standardise everwhere this is used, param list, autogened etc.
+                parameters = new List<Token>() { Class.MakeThisToken() }; 
                 parameters.Add(createdValueParam);
             }
 
@@ -353,7 +327,7 @@ namespace ULox
 
         private Stmt VarDeclaration()
         {
-            if(Match(TokenType.OPEN_PAREN))
+            if (Match(TokenType.OPEN_PAREN))
             {
                 return MultiVarDeclaration();
             }
@@ -421,7 +395,7 @@ namespace ULox
                 grouping = GroupingExpression();
             else
                 grouping = new Expr.Grouping(new List<Expr>() { Expression() });
-            
+
             Consume(TokenType.END_STATEMENT, "Expect ; after return value.");
             return new Stmt.Return(keyword, grouping);
         }
@@ -577,7 +551,7 @@ namespace ULox
             {
                 Token equals = Previous();
                 Expr value = Assignment();
-                
+
 
                 if (expr is Expr.Get exprGet)
                 {
@@ -586,19 +560,19 @@ namespace ULox
 
                     switch (equals.TokenType)
                     {
-                        case TokenType.MINUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value), EnvironmentVariableLocation.Invalid);
-                        case TokenType.PLUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value), EnvironmentVariableLocation.Invalid);
-                        case TokenType.STAR_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value), EnvironmentVariableLocation.Invalid);
-                        case TokenType.SLASH_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value), EnvironmentVariableLocation.Invalid);
-                        case TokenType.PERCENT_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value), EnvironmentVariableLocation.Invalid);
-                        case TokenType.ASSIGN: return new Expr.Set(obj, name, value, EnvironmentVariableLocation.Invalid);
+                    case TokenType.MINUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value), EnvironmentVariableLocation.Invalid);
+                    case TokenType.PLUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value), EnvironmentVariableLocation.Invalid);
+                    case TokenType.STAR_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value), EnvironmentVariableLocation.Invalid);
+                    case TokenType.SLASH_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value), EnvironmentVariableLocation.Invalid);
+                    case TokenType.PERCENT_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value), EnvironmentVariableLocation.Invalid);
+                    case TokenType.ASSIGN: return new Expr.Set(obj, name, value, EnvironmentVariableLocation.Invalid);
                     }
                 }
                 else if (expr is Expr.Grouping grouping)
                 {
                     switch (equals.TokenType)
                     {
-                        case TokenType.ASSIGN: return new Expr.Set(grouping, equals, value, EnvironmentVariableLocation.Invalid);
+                    case TokenType.ASSIGN: return new Expr.Set(grouping, equals, value, EnvironmentVariableLocation.Invalid);
                     }
                 }
                 else
@@ -843,29 +817,29 @@ namespace ULox
             return new Expr.Grouping(list);
         }
 
-        private void Synchronize()
-        {
-            Advance();
+        //private void Synchronize()
+        //{
+        //    Advance();
 
-            while (!IsAtEnd())
-            {
-                if (Previous().TokenType == TokenType.END_STATEMENT) return;
+        //    while (!IsAtEnd())
+        //    {
+        //        if (Previous().TokenType == TokenType.END_STATEMENT) return;
 
-                switch (Peek().TokenType)
-                {
-                    case TokenType.CLASS:
-                case TokenType.FUNCTION:
-                case TokenType.VAR:
-                case TokenType.FOR:
-                case TokenType.IF:
-                case TokenType.WHILE:
-                case TokenType.RETURN:
-                    return;
-                }
+        //        switch (Peek().TokenType)
+        //        {
+        //        case TokenType.CLASS:
+        //        case TokenType.FUNCTION:
+        //        case TokenType.VAR:
+        //        case TokenType.FOR:
+        //        case TokenType.IF:
+        //        case TokenType.WHILE:
+        //        case TokenType.RETURN:
+        //            return;
+        //        }
 
-                Advance();
-            }
-        }
+        //        Advance();
+        //    }
+        //}
 
         private Token Consume(TokenType type, string msg)
         {

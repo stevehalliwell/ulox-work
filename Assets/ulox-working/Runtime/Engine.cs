@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace ULox
@@ -11,16 +12,12 @@ namespace ULox
         private Scanner _scanner;
 
         public Engine(
-            Scanner scanner,
-            Parser parser,
-            Resolver resolver,
-            Interpreter interpreter,
             params ILoxEngineLibraryBinder[] loxEngineLibraryBinders)
         {
-            _scanner = scanner;
-            _parser = parser;
-            _resolver = resolver;
-            _interpreter = interpreter;
+            _scanner = new Scanner();
+            _parser = new Parser();
+            _resolver = new Resolver();
+            _interpreter = new Interpreter();
 
             foreach (var binder in loxEngineLibraryBinders)
             {
@@ -29,6 +26,8 @@ namespace ULox
         }
 
         public Interpreter Interpreter => _interpreter;
+
+        public List<ResolverWarning> ResolverWarnings => _resolver.ResolverWarnings;
 
         public IEnvironment AddressToEnvironment(string address, out string lastTokenLexeme)
         {

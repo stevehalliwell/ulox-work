@@ -5,7 +5,6 @@ using System.Text;
 
 namespace ULox
 {
-    //todo hash or index all strings
     public class Scanner
     {
         public List<Token> Tokens { get; private set; }
@@ -142,7 +141,7 @@ namespace ULox
                     }
                 }
 
-                Tokens.Add(new Token(TokenType.EOF, "", null, _line, _characterNumber));
+                AddTokenSingle(TokenType.EOF);
             }
 
             return Tokens;
@@ -176,11 +175,12 @@ namespace ULox
             }
 
             var identString = workingSpaceStringBuilder.ToString();
+            var token = TokenType.IDENTIFIER;
 
             if (keywords.TryGetValue(identString, out var keywordTokenType))
-                AddToken(keywordTokenType, identString);
-            else
-                AddToken(TokenType.IDENTIFIER, identString);
+                token = keywordTokenType;
+
+            AddToken(token, identString, identString);
         }
 
         private void ConsumeNumber()
@@ -208,8 +208,11 @@ namespace ULox
                 }
             }
 
+            var numStr = workingSpaceStringBuilder.ToString();
+
             AddToken(hasFoundDecimalPoint ? TokenType.FLOAT : TokenType.INT,
-                double.Parse(workingSpaceStringBuilder.ToString()));
+                numStr,
+                double.Parse(numStr));
         }
 
         private void ConsumeString()
@@ -224,7 +227,8 @@ namespace ULox
 
                 if (_currentChar == '"')
                 {
-                    AddToken(TokenType.STRING, System.Text.RegularExpressions.Regex.Unescape(workingSpaceStringBuilder.ToString()));
+                    var str = System.Text.RegularExpressions.Regex.Unescape(workingSpaceStringBuilder.ToString());
+                    AddToken(TokenType.STRING, str, str);
                     return;
                 }
 
@@ -285,15 +289,14 @@ namespace ULox
             return false;
         }
 
-        //was own function but lexeme as litteral made more sense at the time
-        private void AddTokenSingle(TokenType simpleToken)
+        private void AddTokenSingle(TokenType token)
         {
-            Tokens.Add(new Token(simpleToken, _currentChar.ToString(), string.Empty, _line, _characterNumber));
+            AddToken(token, _currentChar.ToString(), null);
         }
 
-        private void AddToken(TokenType simpleToken, object literal)
+        private void AddToken(TokenType simpleToken, string str, object literal)
         {
-            Tokens.Add(new Token(simpleToken, literal.ToString(), literal, _line, _characterNumber));
+            Tokens.Add(new Token(simpleToken, str, literal, _line, _characterNumber));
         }
     }
 }

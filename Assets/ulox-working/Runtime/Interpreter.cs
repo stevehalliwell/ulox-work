@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace ULox
 {
@@ -161,8 +162,27 @@ namespace ULox
 
         public object Visit(Expr.Grouping expr)
         {
-            //todo convert to support multiple params
-            return Evaluate(expr.expressions[0]);
+            //a number of things expect a grouping to resolve to a single number so we support that
+            if (expr.expressions.Count == 1)
+                return Evaluate(expr.expressions[0]);
+            else
+                return GroupingMultiEval(expr);
+        }
+
+        private object[] GroupingMultiEval(Expr.Grouping expr)
+        {
+            //todo would be nice not to need to alloc and array conver all of these
+            var argList = new List<object>();
+            foreach (var item in expr.expressions)
+            {
+                var res = Evaluate(item);
+                if (res is object[] resArray)
+                    argList.AddRange(resArray);
+                else
+                    argList.Add(res);
+            }
+
+            return argList.ToArray();
         }
 
         public object Visit(Expr.Literal expr) => expr.value;
@@ -273,19 +293,8 @@ namespace ULox
         public object Visit(Expr.Call expr)
         {
             var callee = Evaluate(expr.callee);
-            //todo would be nice not to have to alloc for each call
-            //var args = new object[expr.arguments.expressions.Count];
-            var argList = new List<object>();
-            foreach (var item in expr.arguments.expressions)
-            {
-                var res = Evaluate(item);
-                if (res is object[] resArray)
-                    argList.AddRange(resArray);
-                else
-                    argList.Add(res);
-            }
 
-            var args = argList.ToArray();
+            var args = GroupingMultiEval(expr.arguments);
 
             if (callee is ICallable calleeCallable)
             {
@@ -308,26 +317,7 @@ namespace ULox
 
         public void Visit(Stmt.Return stmt)
         {
-            if (stmt.retVals != null || stmt.retVals.expressions.Count == 0)
-            {
-                if(stmt.retVals.expressions.Count == 1)
-                {
-                    throw new Return(stmt.keyword, Evaluate(stmt.retVals.expressions[0]));
-                }
-
-                //else array of results
-
-                object[] retVal = new object[stmt.retVals.expressions.Count];
-             
-                for (int i = 0; i < stmt.retVals.expressions.Count; i++)
-                {
-                    retVal[i] = Evaluate(stmt.retVals.expressions[i]);
-                }
-
-                throw new Return(stmt.keyword, retVal);
-            }
-
-            throw new Return(stmt.keyword, null);
+            throw new Return(stmt.keyword, Visit(stmt.retVals));
         }
 
         public void Visit(Stmt.Var stmt)
@@ -336,16 +326,13 @@ namespace ULox
             if (stmt.initializer != null)
             {
                 value = Evaluate(stmt.initializer);
-                if(value is object[] objArray)
+                if (value is object[] objArray)
                 {
                     value = objArray[0];
                 }
             }
 
-            if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
-                CurrentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, value);
-            else
-                CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, value);
+            DefineVarInEnv(stmt, value);
         }
 
         public void Visit(Stmt.MultiVar stmt)
@@ -374,11 +361,7 @@ namespace ULox
         public void Visit(Stmt.Function stmt)
         {
             var func = new Function(stmt.name.Lexeme, stmt.function, CurrentEnvironment, false);
-
-            if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
-                CurrentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, func);
-            else
-                CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, func);
+            DefineFunctionInEnv(stmt, func);
         }
 
         public void Visit(Stmt.Class stmt)
@@ -412,7 +395,9 @@ namespace ULox
                 classMethods[method.name.Lexeme] = func;
             }
 
-            var metaClass = new Class(null, stmt.name.Lexeme + "_meta", null, classMethods, null, null,null);
+            classMethods.TryGetValue(Class.InitalizerFunctionName, out var metaInit);
+
+            var metaClass = new Class(null, stmt.name.Lexeme + "_meta", null, classMethods, null, null,null, metaInit);
 
             var methods = new Dictionary<string, Function>();
             foreach (Stmt.Function method in stmt.methods)
@@ -426,6 +411,9 @@ namespace ULox
                 methods[method.name.Lexeme] = function;
             }
 
+
+            methods.TryGetValue(Class.InitalizerFunctionName, out var initFunc);
+
             var @class = new Class(
                 metaClass,
                 stmt.name.Lexeme,
@@ -433,7 +421,8 @@ namespace ULox
                 methods,
                 stmt.fields,
                 CurrentEnvironment,
-                stmt.indexFieldMatches);
+                stmt.indexFieldMatches,
+                initFunc);
 
             if (stmt.metaFields != null)
             {
@@ -455,7 +444,7 @@ namespace ULox
         {
             if (expr.targetObj == null)
             {
-                //trating it as a variable
+                // it as a variable then
                 if (expr.varLoc != EnvironmentVariableLocation.Invalid)
                 {
                     return CurrentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
@@ -496,7 +485,7 @@ namespace ULox
                 }
                 else
                 {
-                    //todo this dict lookup in here is still a cause of much perf issues, do the resolverlet
+                    //todo this dict lookup in here is still a cause of much perf issues
                     result = objInst.GetMethod(expr.name);
                 }
 
@@ -555,7 +544,7 @@ namespace ULox
                 throw new RuntimeTypeException(expr.name, "Only instances have fields.");
             }
 
-            //todo this dict lookup in here is still a cause of much perf issues, do the resolverlet
+            //todo this dict lookup in here is still a cause of much perf issues
             obj.Set(expr.name.Lexeme, val);
             return val;
         }
@@ -597,40 +586,6 @@ namespace ULox
             return resultsFromFunc;
         }
 
-        private bool AttemptToResolveToMember(Expr.Get expr)
-        {
-            var localThisVar = CurrentEnvironment.FetchObject(Class.ThisSlot);
-            if (expr.varLoc == EnvironmentVariableLocation.Invalid && localThisVar is Instance localThis)
-            {
-                var matchingLoc = localThis.FindSlot(expr.name.Lexeme);
-                if (matchingLoc != EnvironmentVariableLocation.InvalidSlot)
-                {
-                    expr.targetObj = new Expr.This(expr.name.Copy(TokenType.THIS, Class.ThisIdentifier),
-                        EnvironmentVariableLocation.Invalid);
-                    expr.varLoc.slot = matchingLoc;
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private bool AttemptToResolveToMember(Expr.Set expr)
-        {
-            var localThisVar = CurrentEnvironment.FetchObject(Class.ThisSlot);
-            if (expr.varLoc == EnvironmentVariableLocation.Invalid && localThisVar is Instance localThis)
-            {
-                var matchingLoc = localThis.FindSlot(expr.name.Lexeme);
-                if (matchingLoc != EnvironmentVariableLocation.InvalidSlot)
-                {
-                    expr.targetObj = new Expr.This(expr.name.Copy(TokenType.THIS, Class.ThisIdentifier),
-                        EnvironmentVariableLocation.Invalid);
-                    expr.varLoc.slot = matchingLoc;
-                    return true;
-                }
-            }
-            return false;
-        }
-
         public object Visit(Expr.This expr)
         {
             if (expr.varLoc == EnvironmentVariableLocation.Invalid)
@@ -647,7 +602,6 @@ namespace ULox
             return CurrentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
         }
 
-        //todo super and this behave very differently, can they be uniformed
         public object Visit(Expr.Super expr)
         {
             if (expr.thisVarLoc == EnvironmentVariableLocation.Invalid)
@@ -712,6 +666,58 @@ namespace ULox
         {
             Execute(stmt.left);
             Execute(stmt.right);
+        }
+
+
+
+        private bool AttemptToResolveToMember(Expr.Get expr)
+        {
+            var localThisVar = CurrentEnvironment.FetchObject(Class.ThisSlot);
+            if (expr.varLoc == EnvironmentVariableLocation.Invalid && localThisVar is Instance localThis)
+            {
+                var matchingLoc = localThis.FindSlot(expr.name.Lexeme);
+                if (matchingLoc != EnvironmentVariableLocation.InvalidSlot)
+                {
+                    expr.targetObj = new Expr.This(Class.MakeThisToken(expr.name),
+                        EnvironmentVariableLocation.Invalid); ;
+                    expr.varLoc.slot = matchingLoc;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private bool AttemptToResolveToMember(Expr.Set expr)
+        {
+            var localThisVar = CurrentEnvironment.FetchObject(Class.ThisSlot);
+            if (expr.varLoc == EnvironmentVariableLocation.Invalid && localThisVar is Instance localThis)
+            {
+                var matchingLoc = localThis.FindSlot(expr.name.Lexeme);
+                if (matchingLoc != EnvironmentVariableLocation.InvalidSlot)
+                {
+                    expr.targetObj = new Expr.This(Class.MakeThisToken(expr.name),
+                        EnvironmentVariableLocation.Invalid);
+                    expr.varLoc.slot = matchingLoc;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private void DefineFunctionInEnv(Stmt.Function stmt, Function func)
+        {
+            if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
+                CurrentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, func);
+            else
+                CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, func);
+        }
+
+        private void DefineVarInEnv(Stmt.Var stmt, object value)
+        {
+            if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
+                CurrentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, value);
+            else
+                CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, value);
         }
     }
 }

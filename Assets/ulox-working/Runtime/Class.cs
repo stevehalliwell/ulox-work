@@ -8,12 +8,13 @@ namespace ULox
         public const string InitalizerFunctionName = "init";
         public const string ThisIdentifier = "this";
         public const string SuperIdentifier = "super";
-        public static Token ThisToken = new Token(TokenType.THIS, "this", null, -1, -1);
-
         //presently closures go super->this->members
         //  These offsets exist so that if/when this changes, it's less tiresome to do so
         public const short ThisSlot = 0;
         public const short SuperSlot = 0;
+
+        public static Token MakeThisToken() => new Token(TokenType.THIS, Class.ThisIdentifier, null, -1, -1);
+        public static Token MakeThisToken(Token from) => from.Copy(TokenType.THIS, Class.ThisIdentifier);
 
         private string _name;
         private Dictionary<string, Function> _methods;
@@ -33,7 +34,8 @@ namespace ULox
             Dictionary<string, Function> methods,
             List<Stmt.Var> fields,
             IEnvironment enclosing,
-            List<short> initVarIndexMatches)
+            List<short> initVarIndexMatches,
+            Function initializer)
             : base(metaClass, enclosing)
         {
             _name = name;
@@ -41,12 +43,7 @@ namespace ULox
             _superclass = superclass;
             _vars = fields;
             _initVarIndexMatches = initVarIndexMatches;
-            GenerateInitializerData();
-        }
-
-        private void GenerateInitializerData()
-        {
-            _initializer = FindMethod(InitalizerFunctionName);
+            _initializer = initializer;
         }
 
         public virtual int Arity => (_initializer?.Arity ?? Function.StartingParamSlot);

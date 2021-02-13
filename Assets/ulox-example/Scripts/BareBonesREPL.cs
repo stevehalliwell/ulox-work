@@ -18,10 +18,6 @@ namespace ULox.Demo
         private void Start()
         {
             engine = new Engine(
-                new Scanner(),
-                new Parser() { CatchAndSynch = false },
-                new Resolver(),
-                new Interpreter(),
                 new LoxCoreLibrary(Debug.Log),
                 new StandardClasses(),
                 new UnityFunctions());
