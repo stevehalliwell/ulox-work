@@ -7,11 +7,11 @@ namespace ULox
         public string InterpreterResult { get; private set; } = string.Empty;
         public Engine _engine;
 
-        protected void SetResult(string str) => InterpreterResult += str;
+        protected void AppendResult(string str) => InterpreterResult += str;
 
         protected TestLoxEngine(params ILoxEngineLibraryBinder[] loxEngineLibraryBinders)
         {
-            var binders = new ILoxEngineLibraryBinder[] { new LoxCoreLibrary(SetResult) };
+            var binders = new ILoxEngineLibraryBinder[] { new LoxCoreLibrary(AppendResult) };
             _engine = new Engine(
                 binders.Concat(loxEngineLibraryBinders).ToArray());
         }
@@ -27,7 +27,7 @@ namespace ULox
 
                 if (logWarnings)
                 {
-                    SetResult(
+                    AppendResult(
                         string.Join(
                             "\n",
                             _engine.ResolverWarnings.Select(x => $"{x.Token} {x.Message}")
@@ -38,7 +38,7 @@ namespace ULox
             {
                 if (catchAndLogExceptions)
                 {
-                    SetResult(e.Message);
+                    AppendResult(e.Message);
                 }
                 else
                 {

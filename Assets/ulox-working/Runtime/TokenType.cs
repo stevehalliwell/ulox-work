@@ -8,9 +8,13 @@
         CLOSE_BRACE,
         COMMA,
         DOT,
+        END_STATEMENT,
+        
+        INCREMENT,
+        DECREMENT,
+
         MINUS,
         PLUS,
-        END_STATEMENT,
         SLASH,
         STAR,
         PERCENT,
@@ -19,9 +23,7 @@
         SLASH_EQUAL,
         STAR_EQUAL,
         PERCENT_EQUAL,
-        INCREMENT,
-        DECREMENT,
-
+        
         ASSIGN,
         BANG,
         BANG_EQUAL,
@@ -30,6 +32,7 @@
         GREATER_EQUAL,
         LESS,
         LESS_EQUAL,
+        
         QUESTION,
         COLON,
 

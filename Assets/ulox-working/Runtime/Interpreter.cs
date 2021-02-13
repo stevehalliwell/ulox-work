@@ -96,6 +96,20 @@ namespace ULox
             object left = Evaluate(expr.left);
             object right = Evaluate(expr.right);
 
+            if(left is Instance leftInst)
+            {
+                var classOperator = leftInst.GetOperator(expr.op.TokenType);
+
+                if(classOperator != null)
+                {
+                    return classOperator.Call(this, FunctionArguments.New(left, right));
+                }
+                else
+                {
+                    throw new ClassException(expr.op, "Did not find operator on left instance.");
+                }
+            }
+
             switch (expr.op.TokenType)
             {
                 case TokenType.BANG_EQUAL:
@@ -172,7 +186,7 @@ namespace ULox
         private object[] GroupingMultiEval(Expr.Grouping expr)
         {
             //todo would be nice not to need to alloc and array conver all of these
-            var argList = new List<object>();
+            var argList = new List<object>();   //todo cache alloc?
             foreach (var item in expr.expressions)
             {
                 var res = Evaluate(item);
@@ -560,7 +574,7 @@ namespace ULox
             }
             else if (rawFunctionReturn is object retVal)
             {
-                resultsFromFunc = new object[] { retVal };
+                resultsFromFunc = new object[] { retVal }; //todo cache alloc?
             }
 
             for (int i = 0; i < grouping.expressions.Count; i++)

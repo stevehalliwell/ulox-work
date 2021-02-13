@@ -1286,6 +1286,121 @@ InMeth(Meth());",
                 .SetName("MultiReturnsExpandArgList");
 
             yield return new TestCaseData(
+@"class Vector2
+{
+    var x,y;
+    init(x,y){}
+
+    _add(lhs, rhs)
+    {
+        return Vector2(lhs.x + rhs.x, lhs.y + rhs.y);
+    }
+
+    _minus(lhs, rhs)
+    {
+        return Vector2(lhs.x - rhs.x, lhs.y - rhs.y);
+    }
+
+    _slash(lhs, rhs)
+    {
+        return Vector2(lhs.x / rhs.x, lhs.y / rhs.y);
+    }
+
+    _star(lhs, rhs)
+    {
+        return Vector2(lhs.x * rhs.x, lhs.y * rhs.y);
+    }
+
+    _percent(lhs, rhs)
+    {
+        return Vector2(lhs.x % rhs.x, lhs.y % rhs.y);
+    }
+}
+
+var a = Vector2(1,2),b = Vector2(3,4);
+
+printr( a+b );
+print(""\r\n"");
+printr( a-b );
+print(""\r\n"");
+printr( a*b );
+print(""\r\n"");
+printr( a/b );
+print(""\r\n"");
+printr( a%b );",
+@"<inst Vector2>
+  x : 4
+  y : 6
+<inst Vector2>
+  x : -2
+  y : -2
+<inst Vector2>
+  x : 3
+  y : 8
+<inst Vector2>
+  x : 0.333333333333333
+  y : 0.5
+<inst Vector2>
+  x : 1
+  y : 2")
+                .SetName("ClassMathOperators");
+
+            yield return new TestCaseData(
+@"class Vector2
+{
+    var x,y;
+    init(x,y){}
+
+    _equality(lhs, rhs)
+    {
+        return lhs.x == rhs.x and lhs.y == rhs.y;
+    }
+}
+
+var a = Vector2(1,2),b = Vector2(3,4);
+
+print(a == b);
+
+var c = a;
+
+print(a == c);",
+@"FalseTrue")
+                .SetName("ClassLogicOperator");
+
+            yield return new TestCaseData(
+@"class Vector2
+{
+    var x,y;
+    init(x,y){}
+}
+
+var a = Vector2(1,2),b = Vector2(3,4);
+
+printr( a+b );",
+@"PLUS|9:11 Did not find operator on left instance.")
+                .SetName("ClassMissingOperator");
+
+            yield return new TestCaseData(
+@"class Vector2
+{
+    var x,y;
+    init(x,y){}
+}
+
+fun AddV2(lhs, rhs)
+{
+    return Vector2(lhs.x + rhs.x, lhs.y + rhs.y);
+}
+
+var a = Vector2(1,2),b = Vector2(3,4);
+
+printr( AddV2( a, b ) );",
+@"<inst Vector2>
+  x : 4
+  y : 6")
+                .SetName("Vector2Func");
+
+            yield return new TestCaseData(
 @"print("""");",
 @"")
                 .SetName("Empty");
@@ -1299,7 +1414,6 @@ InMeth(Meth());",
 
             engine.Run(testString, true);
 
-            Assert.IsTrue(string.IsNullOrEmpty(requiredResult) == string.IsNullOrEmpty(engine.InterpreterResult));
             Assert.AreEqual(requiredResult, engine.InterpreterResult);
         }
 

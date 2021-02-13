@@ -85,7 +85,7 @@ namespace ULox.Tests
         {
             public override void Run(string testString, bool catchAndLogExceptions = true, bool logWarnings = true, Action<string> REPLPrint = null)
             {
-                base.Run(testString, catchAndLogExceptions, logWarnings, SetResult);
+                base.Run(testString, catchAndLogExceptions, logWarnings, AppendResult);
             }
         }
     }
