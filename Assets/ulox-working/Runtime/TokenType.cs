@@ -68,6 +68,9 @@
 
         THROW,
 
+        TEST,
+        TESTCASE,
+
         EOF,
 
         NONE,

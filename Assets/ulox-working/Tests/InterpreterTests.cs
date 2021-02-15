@@ -1411,6 +1411,16 @@ printr( AddV2( a, b ) );",
                 .SetName("ThrowMsgCaught");
 
             yield return new TestCaseData(
+@"test {var a = 10; print(a);}",
+@"10")
+                .SetName("AnonTest");
+
+            yield return new TestCaseData(
+@"test TestA {print(testName); }",
+@"TestA")
+                .SetName("NamedTest");
+
+            yield return new TestCaseData(
 @"print("""");",
 @"")
                 .SetName("Empty");

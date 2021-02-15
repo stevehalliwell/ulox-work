@@ -51,6 +51,7 @@ namespace ULox
                         " Stmt increment",
             "Break      : Token keyword",
             "Continue   : Token keyword",
+            "Test       : Token token, Token name, Stmt.Block block",
         };
 
         [MenuItem("Create/GenerateASTClasses")]

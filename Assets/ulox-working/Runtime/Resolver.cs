@@ -564,5 +564,13 @@ namespace ULox
             
             return null;
         }
+
+        public void Visit(Stmt.Test stmt)
+        {
+            BeginScope();
+            DefineManually("testName", 0);
+            Resolve(stmt.block);
+            EndScopeNoWarnings();
+        }
     }
 }

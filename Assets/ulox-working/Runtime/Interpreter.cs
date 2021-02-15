@@ -738,5 +738,14 @@ namespace ULox
         {
             throw new RuntimeException(expr.keyword, Evaluate(expr.expr)?.ToString());
         }
+
+        public void Visit(Stmt.Test stmt)
+        {
+            PushNewEnvironemnt().DefineInAvailableSlot("testName", stmt.name.Lexeme);
+            //run block as normal
+            Visit(stmt.block);
+            //get all test cases and run them
+            //var tests = stmt.block.statements.Where(x => x is );
+        }
     }
 }

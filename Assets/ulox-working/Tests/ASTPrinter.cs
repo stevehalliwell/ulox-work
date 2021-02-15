@@ -339,5 +339,11 @@ namespace ULox.Tests
             Print(expr.expr);
             return null;
         }
+
+        public void Visit(Stmt.Test stmt)
+        {
+            Print("test ");
+            Print(stmt.block);
+        }
     }
 }

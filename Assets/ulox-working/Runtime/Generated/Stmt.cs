@@ -148,6 +148,19 @@ namespace ULox
             public readonly Token keyword;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
+        public class Test : Stmt
+        {
+            public Test( Token token, Token name, Stmt.Block block)
+            {
+                this.token = token;
+                this.name = name;
+                this.block = block;
+            }
+            public readonly Token token;
+            public readonly Token name;
+            public readonly Stmt.Block block;
+            public override void Accept(Visitor visitor) => visitor.Visit(this);
+        }
 
         public abstract void Accept(Visitor visitor);
 
@@ -165,6 +178,7 @@ namespace ULox
             void Visit(While stmt);
             void Visit(Break stmt);
             void Visit(Continue stmt);
+            void Visit(Test stmt);
         }
     }
 }

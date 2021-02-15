@@ -33,7 +33,30 @@ namespace ULox
             }
             if (Match(TokenType.VAR)) return VarDeclaration();
 
+            if (Match(TokenType.TEST)) return TestDeclaration();
+            if (Match(TokenType.TESTCASE)) return TestCaseDeclaration();
+
             return Statement();
+        }
+
+        private Stmt TestCaseDeclaration()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        private Stmt TestDeclaration()
+        {
+            var testToken = Previous();
+            var testName = testToken.Copy(TokenType.IDENTIFIER,testToken.ToString());
+            if(Check(TokenType.IDENTIFIER))
+            {
+                testName = Consume(TokenType.IDENTIFIER, null);
+            }
+
+            Consume(TokenType.OPEN_BRACE, "Expect '{' before block of a test.");
+            var statements = Block();
+
+            return new Stmt.Test(testToken, testName, new Stmt.Block(statements));
         }
 
         private Stmt ClassDeclaration()
