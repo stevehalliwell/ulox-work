@@ -733,5 +733,10 @@ namespace ULox
             else
                 CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, value);
         }
+
+        public object Visit(Expr.Throw expr)
+        {
+            throw new RuntimeException(expr.keyword, Evaluate(expr.expr)?.ToString());
+        }
     }
 }

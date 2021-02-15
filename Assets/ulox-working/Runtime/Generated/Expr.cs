@@ -158,6 +158,17 @@ namespace ULox
             public bool HasReturns;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
+        public class Throw : Expr
+        {
+            public Throw( Token keyword, Expr expr)
+            {
+                this.keyword = keyword;
+                this.expr = expr;
+            }
+            public readonly Token keyword;
+            public readonly Expr expr;
+            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
+        }
 
         public abstract T Accept<T>(Visitor<T> visitor);
 
@@ -175,6 +186,7 @@ namespace ULox
             T Visit(Unary expr);
             T Visit(Conditional expr);
             T Visit(Function expr);
+            T Visit(Throw expr);
         }
     }
 }

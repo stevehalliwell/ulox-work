@@ -556,5 +556,13 @@ namespace ULox
             Resolve(stmt.left);
             Resolve(stmt.right);
         }
+
+        public object Visit(Expr.Throw expr)
+        {
+            if (expr.expr != null)
+                Resolve(expr.expr);
+            
+            return null;
+        }
     }
 }

@@ -66,6 +66,8 @@
         SET,
         GETSET,
 
+        THROW,
+
         EOF,
 
         NONE,

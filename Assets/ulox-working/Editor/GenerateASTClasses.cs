@@ -27,6 +27,7 @@ namespace ULox
             "Function : List<Token> parameters, List<Stmt> body," +
                       " bool HasLocals, bool NeedsClosure, " +
                       " bool HasReturns",
+            "Throw    : Token keyword, Expr expr",
         };
 
         private static string[] _requiredStmtTypes = new string[]

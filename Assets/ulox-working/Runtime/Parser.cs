@@ -754,6 +754,8 @@ namespace ULox
 
             if (Match(TokenType.OPEN_PAREN)) return GroupingExpression();
 
+            if (Match(TokenType.THROW)) return new Expr.Throw(Previous(), Check(TokenType.END_STATEMENT) ? null : Expression());
+
             if (Match(TokenType.ASSIGN,
                 TokenType.GREATER,
                 TokenType.GREATER_EQUAL,
@@ -786,7 +788,7 @@ namespace ULox
                 Expr thenBranch = Expression();
                 Consume(TokenType.COLON,
                     "Expect ':' after then branch of conditional expression.");
-                Expr elseBranch = Conditional();
+                Expr elseBranch = Expression();
                 expr = new Expr.Conditional(expr, thenBranch, elseBranch);
             }
 

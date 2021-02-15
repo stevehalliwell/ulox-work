@@ -52,7 +52,14 @@
         { }
     }
 
-    public class RuntimeTypeException : TokenException
+    public class RuntimeException : TokenException
+    {
+        public RuntimeException(Token token, string msg)
+            : base(token, msg)
+        { }
+    }
+
+    public class RuntimeTypeException : RuntimeException
     {
         public RuntimeTypeException(Token token, string msg)
             : base(token, msg)
@@ -79,6 +86,7 @@
         {
         }
     }
+
     public class InterpreterControlException : System.Exception
     {
         public Token From { get; set; }

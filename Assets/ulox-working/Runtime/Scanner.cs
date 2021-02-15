@@ -40,6 +40,7 @@ namespace ULox
             { "get",    TokenType.GET},
             { "set",    TokenType.SET},
             { "getset", TokenType.GETSET},
+            { "throw",  TokenType.THROW},
         };
 
         public Scanner()

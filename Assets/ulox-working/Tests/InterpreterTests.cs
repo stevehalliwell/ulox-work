@@ -1401,6 +1401,16 @@ printr( AddV2( a, b ) );",
                 .SetName("Vector2Func");
 
             yield return new TestCaseData(
+@"throw;",
+@"THROW|1:5 ")
+                .SetName("ThrowEmptyCaught");
+
+            yield return new TestCaseData(
+@"throw ""hello"";",
+@"THROW|1:5 hello")
+                .SetName("ThrowMsgCaught");
+
+            yield return new TestCaseData(
 @"print("""");",
 @"")
                 .SetName("Empty");

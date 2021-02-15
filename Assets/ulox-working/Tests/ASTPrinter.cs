@@ -332,5 +332,12 @@ namespace ULox.Tests
             }
             Print(stmt.initializer);
         }
+
+        public Object Visit(Expr.Throw expr)
+        {
+            Print("throw ");
+            Print(expr.expr);
+            return null;
+        }
     }
 }
