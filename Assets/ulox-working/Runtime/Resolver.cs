@@ -572,5 +572,16 @@ namespace ULox
             Resolve(stmt.block);
             EndScopeNoWarnings();
         }
+
+        public void Visit(Stmt.TestCase stmt)
+        {
+            if(stmt.valueGrouping != null)
+                Resolve(stmt.valueGrouping);
+
+            BeginScope();
+            DefineManually("testValue", 0);
+            Resolve(stmt.block);
+            EndScopeNoWarnings();
+        }
     }
 }

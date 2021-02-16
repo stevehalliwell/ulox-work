@@ -41,7 +41,15 @@ namespace ULox
 
         private Stmt TestCaseDeclaration()
         {
-            throw new System.NotImplementedException();
+            var testName = Consume(TokenType.IDENTIFIER, "TestCases must have a name.");
+
+            Expr.Grouping valueGrouping = null;
+            if (Match(TokenType.OPEN_PAREN)) valueGrouping = GroupingExpression();
+
+            Consume(TokenType.OPEN_BRACE, "Expect '{' before block of a test.");
+            var statements = Block();
+
+            return new Stmt.TestCase(testName, valueGrouping, new Stmt.Block(statements));
         }
 
         private Stmt TestDeclaration()

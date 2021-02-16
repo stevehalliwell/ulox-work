@@ -345,5 +345,14 @@ namespace ULox.Tests
             Print("test ");
             Print(stmt.block);
         }
+
+        public void Visit(Stmt.TestCase stmt)
+        {
+            Print("testcase ");
+            if(stmt.valueGrouping != null)
+                Print(stmt.valueGrouping);
+            
+            Print(stmt.block);
+        }
     }
 }

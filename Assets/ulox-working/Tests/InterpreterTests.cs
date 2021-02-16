@@ -1421,6 +1421,16 @@ printr( AddV2( a, b ) );",
                 .SetName("NamedTest");
 
             yield return new TestCaseData(
+@"testcase Test1 { print(""Hello World""); }",
+@"Hello World")
+                .SetName("TestCaseRun");
+
+            yield return new TestCaseData(
+@"testcase Test1 (""Foo"",""Bar"") { print(""Hello "" + testValue); }",
+@"Hello FooHello Bar")
+                .SetName("TestCaseValuesRun");
+
+            yield return new TestCaseData(
 @"print("""");",
 @"")
                 .SetName("Empty");

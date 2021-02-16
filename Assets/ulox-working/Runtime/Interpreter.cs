@@ -742,10 +742,31 @@ namespace ULox
         public void Visit(Stmt.Test stmt)
         {
             PushNewEnvironemnt().DefineInAvailableSlot("testName", stmt.name.Lexeme);
-            //run block as normal
             Visit(stmt.block);
-            //get all test cases and run them
-            //var tests = stmt.block.statements.Where(x => x is );
+            PopEnvironemnt();
+        }
+
+        public void Visit(Stmt.TestCase stmt)
+        {
+            if (stmt.valueGrouping == null)
+            {
+                RunTestCase(stmt, null);
+            }
+            else
+            {
+                var exprResArr = GroupingMultiEval(stmt.valueGrouping);
+                foreach (var valueExpr in exprResArr)
+                {
+                    RunTestCase(stmt, valueExpr);
+                }
+            }
+        }
+
+        private void RunTestCase(Stmt.TestCase stmt, object valueExpr)
+        {
+            PushNewEnvironemnt().DefineInAvailableSlot("testValue", valueExpr);
+            Visit(stmt.block);
+            PopEnvironemnt();
         }
     }
 }

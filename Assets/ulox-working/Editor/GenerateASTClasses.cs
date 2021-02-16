@@ -52,6 +52,7 @@ namespace ULox
             "Break      : Token keyword",
             "Continue   : Token keyword",
             "Test       : Token token, Token name, Stmt.Block block",
+            "TestCase   : Token name, Expr.Grouping valueGrouping, Stmt.Block block",
         };
 
         [MenuItem("Create/GenerateASTClasses")]

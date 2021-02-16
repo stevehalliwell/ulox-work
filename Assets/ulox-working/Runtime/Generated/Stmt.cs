@@ -161,6 +161,19 @@ namespace ULox
             public readonly Stmt.Block block;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
+        public class TestCase : Stmt
+        {
+            public TestCase( Token name, Expr.Grouping valueGrouping, Stmt.Block block)
+            {
+                this.name = name;
+                this.valueGrouping = valueGrouping;
+                this.block = block;
+            }
+            public readonly Token name;
+            public readonly Expr.Grouping valueGrouping;
+            public readonly Stmt.Block block;
+            public override void Accept(Visitor visitor) => visitor.Visit(this);
+        }
 
         public abstract void Accept(Visitor visitor);
 
@@ -179,6 +192,7 @@ namespace ULox
             void Visit(Break stmt);
             void Visit(Continue stmt);
             void Visit(Test stmt);
+            void Visit(TestCase stmt);
         }
     }
 }
