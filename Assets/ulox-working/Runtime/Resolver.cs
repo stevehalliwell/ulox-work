@@ -200,7 +200,7 @@ namespace ULox
             scope.localVariables.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared, slot));
         }
 
-        private void DefineManually(string name, short slot)
+        private void DefineManuallyAt(string name, short slot)
         {
             if (_scopes.Count == 0) return;
             var scope = _scopes.Last();
@@ -219,6 +219,21 @@ namespace ULox
             if (_scopes.Count == 0) return;
             var count = _scopes.Last().localVariables.Count;
             _scopes.Last().localVariables[name.Lexeme].state = VariableUse.State.Defined;
+        }
+
+        private short DeclareDefineRead(string name)
+        {
+            if (_scopes.Count == 0) return EnvironmentVariableLocation.InvalidSlot;
+
+            var scope = _scopes.Last();
+            if (scope.localVariables.ContainsKey(name))
+            {
+                throw new LoxException($"Already a variable of name {name} in this scope.");
+            }
+
+            var slot = (short)scope.localVariables.Count;
+            scope.localVariables.Add(name, new VariableUse(new Token(TokenType.IDENTIFIER, name, name, -1, -1), VariableUse.State.Defined, slot));
+            return slot;
         }
 
         private void EndScope()
@@ -409,7 +424,7 @@ namespace ULox
             foreach (Stmt.Function metaMeth in stmt.metaMethods)
             {
                 BeginScope();
-                DefineManually(Class.ThisIdentifier, Class.ThisSlot);
+                DefineManuallyAt(Class.ThisIdentifier, Class.ThisSlot);
                 //Declare(metaMeth.name);
                 //Define(metaMeth.name);
                 ResolveFunction(metaMeth.function, FunctionType.METHOD);
@@ -419,7 +434,7 @@ namespace ULox
             if (stmt.superclass != null)
             {
                 BeginScope();
-                DefineManually(Class.SuperIdentifier, Class.SuperSlot);
+                DefineManuallyAt(Class.SuperIdentifier, Class.SuperSlot);
             }
 
             //BeginScope();
@@ -568,7 +583,7 @@ namespace ULox
         public void Visit(Stmt.Test stmt)
         {
             BeginScope();
-            DefineManually("testName", 0);
+            DeclareDefineRead("testName");
             Resolve(stmt.block);
             EndScopeNoWarnings();
         }
@@ -579,7 +594,8 @@ namespace ULox
                 Resolve(stmt.valueGrouping);
 
             BeginScope();
-            DefineManually("testValue", 0);
+            DeclareDefineRead("testCaseName");
+            DeclareDefineRead("testValue");
             Resolve(stmt.block);
             EndScopeNoWarnings();
         }

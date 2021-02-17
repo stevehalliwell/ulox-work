@@ -34,7 +34,29 @@ namespace ULox
                                    ));
                 }
             }
-            catch (System.Exception e)
+            catch (LoxException e)
+            {
+                if (catchAndLogExceptions)
+                {
+                    AppendResult(e.Message);
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (System.ArgumentOutOfRangeException e)
+            {
+                if (catchAndLogExceptions)
+                {
+                    AppendResult(e.Message);
+                }
+                else
+                {
+                    throw;
+                }
+            }
+            catch (System.IndexOutOfRangeException e)
             {
                 if (catchAndLogExceptions)
                 {

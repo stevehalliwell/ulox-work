@@ -10,7 +10,10 @@ namespace ULox
         private List<Token> _tokens;
         private int current = 0;
         private int _loopDepth;
-        public Token _currentClassToken;
+        private Token _currentClassToken;
+        private bool _skipTests = false;
+
+        public Parser(bool skipTests = false) { _skipTests = skipTests; }
 
         public List<Stmt> Parse(List<Token> tokens)
         {
@@ -63,6 +66,9 @@ namespace ULox
 
             Consume(TokenType.OPEN_BRACE, "Expect '{' before block of a test.");
             var statements = Block();
+
+            if (_skipTests)
+                return null;
 
             return new Stmt.Test(testToken, testName, new Stmt.Block(statements));
         }

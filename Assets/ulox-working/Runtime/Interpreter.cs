@@ -13,6 +13,9 @@ namespace ULox
         private Environment _globals = new Instance(null, null);
         public IEnvironment CurrentEnvironment => _environmentStack.Peek();
         private Stack<IEnvironment> _environmentStack = new Stack<IEnvironment>();
+        private TestSuiteManager _testSuiteManager = new TestSuiteManager();
+
+        public TestSuiteManager TestSuiteManager => _testSuiteManager;
 
         public Environment Globals => _globals;
 
@@ -742,7 +745,9 @@ namespace ULox
         public void Visit(Stmt.Test stmt)
         {
             PushNewEnvironemnt().DefineInAvailableSlot("testName", stmt.name.Lexeme);
+            _testSuiteManager.SetSuite(stmt.name.Lexeme);
             Visit(stmt.block);
+            _testSuiteManager.EndCurrentSuite();
             PopEnvironemnt();
         }
 
@@ -750,23 +755,40 @@ namespace ULox
         {
             if (stmt.valueGrouping == null)
             {
-                RunTestCase(stmt, null);
+                RunTestCaseInternal(stmt, null);
             }
             else
             {
                 var exprResArr = GroupingMultiEval(stmt.valueGrouping);
                 foreach (var valueExpr in exprResArr)
                 {
-                    RunTestCase(stmt, valueExpr);
+                    RunTestCaseInternal(stmt, valueExpr);
                 }
             }
         }
 
-        private void RunTestCase(Stmt.TestCase stmt, object valueExpr)
+        private void RunTestCaseInternal(Stmt.TestCase stmt, object valueExpr)
         {
-            PushNewEnvironemnt().DefineInAvailableSlot("testValue", valueExpr);
-            Visit(stmt.block);
-            PopEnvironemnt();
+            try
+            {
+                _testSuiteManager.StartCase(stmt, valueExpr);
+
+                var env = PushNewEnvironemnt();
+                env.DefineInAvailableSlot("testCaseName", stmt.name.Lexeme);
+                env.DefineInAvailableSlot("testValue", valueExpr);
+                Visit(stmt.block);
+            }
+            catch (LoxException e)
+            {
+                _testSuiteManager.LoxExceptionWasThrownByCase(e);
+                if (!_testSuiteManager.IsInUserSuite)
+                    throw;
+            }
+            finally
+            {
+                PopEnvironemnt();
+                _testSuiteManager.EndingCase();
+            }
         }
     }
 }

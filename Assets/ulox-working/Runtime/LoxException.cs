@@ -2,13 +2,18 @@
 {
     public class LoxException : System.Exception
     {
-        public LoxException(string msg) : base(msg)
-        {
-        }
+        public LoxException(string msg) : base(msg) { }
 
         public LoxException(TokenType tokenType, int line, int character, string msg)
             : base($"{tokenType}|{line}:{character} {msg}")
         { }
+    }
+
+    public class PanicException : System.Exception { }
+
+    public class TestException : LoxException
+    {
+        public TestException(string msg) : base(msg) { }
     }
 
     public class TokenException : LoxException
@@ -26,9 +31,7 @@
 
     public class InstanceException : TokenException
     {
-        public InstanceException(Token name, string msg) : base(name, msg)
-        {
-        }
+        public InstanceException(Token name, string msg) : base(name, msg) { }
     }
 
     public class EnvironmentException : TokenException
@@ -40,9 +43,7 @@
 
     public class ResolverException : TokenException
     {
-        public ResolverException(Token token, string msg) : base(token, msg)
-        {
-        }
+        public ResolverException(Token token, string msg) : base(token, msg) { }
     }
 
     public class ParseException : TokenException
@@ -68,23 +69,17 @@
 
     public class RuntimeCallException : RuntimeTypeException
     {
-        public RuntimeCallException(Token token, string msg) : base(token, msg)
-        {
-        }
+        public RuntimeCallException(Token token, string msg) : base(token, msg) { }
     }
 
     public class RuntimeAccessException : RuntimeTypeException
     {
-        public RuntimeAccessException(Token token, string msg) : base(token, msg)
-        {
-        }
+        public RuntimeAccessException(Token token, string msg) : base(token, msg) { }
     }
 
     public class ClassException : TokenException
     {
-        public ClassException(Token token, string msg) : base(token, msg)
-        {
-        }
+        public ClassException(Token token, string msg) : base(token, msg) { }
     }
 
     public class InterpreterControlException : System.Exception
@@ -109,15 +104,11 @@
 
     public class Break : InterpreterControlException
     {
-        public Break(Token from) : base(from)
-        {
-        }
+        public Break(Token from) : base(from) { }
     }
 
     public class Continue : InterpreterControlException
     {
-        public Continue(Token from) : base(from)
-        {
-        }
+        public Continue(Token from) : base(from) { }
     }
 }

@@ -1,0 +1,13 @@
+test IntegerMath
+{
+	var a = 2, b = 3;
+	var result;
+	var AddResult = 5;
+
+	testcase Add
+	{
+		result = a+b;
+		if(result != AddResult)
+			throw;
+	}
+}

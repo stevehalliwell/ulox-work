@@ -1431,6 +1431,77 @@ printr( AddV2( a, b ) );",
                 .SetName("TestCaseValuesRun");
 
             yield return new TestCaseData(
+@"test TestA 
+{
+    testcase Test1 {print(testName + "":"" + testCaseName);} 
+}",
+@"TestA:Test1")
+                .SetName("NamedTestCase");
+
+            yield return new TestCaseData(
+@"test mathTests
+{
+    testcase add 
+    {
+        var a = 1 + 2;
+        if(a != 3)
+            throw;
+    }
+    testcase mul 
+    {
+        var a = 1 * 2;
+        if(a != 2)
+            throw;
+    }
+    testcase div 
+    {
+        var a = 1 / 2;
+        if(a != 0.5)
+            throw;
+    }
+    testcase sub 
+    {
+        var a = 1 - 2;
+        if(a != -1)
+            throw;
+    }
+    print(""no failures"");
+}",
+@"no failures")
+                .SetName("SimpleTestSuite");
+
+            yield return new TestCaseData(
+@"test mathTests
+{
+    testcase add 
+    {
+        var a = 1 + 2;
+        if(a != 3)
+            throw;
+    }
+    testcase mul 
+    {
+        var a = 1 * 2;
+        if(a != 1)
+            throw;
+    }
+}",
+@"mathTests FAILED 1 of 2
+mul:Failed - THROW|13:29 
+")
+                .SetName("SimpleTestSuiteFailure");
+
+            yield return new TestCaseData(
+@"testcase mul 
+{
+    var a = 1 * 2;
+    if(a != 1)
+        throw;
+}",
+@"THROW|5:21 ")
+                .SetName("TestCaseFailure");
+
+            yield return new TestCaseData(
 @"print("""");",
 @"")
                 .SetName("Empty");
