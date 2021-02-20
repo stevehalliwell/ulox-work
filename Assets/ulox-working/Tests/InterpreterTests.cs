@@ -1250,6 +1250,38 @@ print(c+d);",
     return (a,b,z);
 }
 
+class Obj { var c,d; }
+
+var obj = Obj();
+
+(obj.c,obj.d) = Meth();
+
+print(obj.c + obj.d);",
+@"3")
+                .SetName("MultiReturnsIntoObjectFields");
+
+            yield return new TestCaseData(
+@"fun Meth()
+{
+    var a = 1, b = 2, z = 3;
+    print(b + z);
+    return (a);
+}
+
+var c,d = 2;
+(c) = Meth();
+
+print(c+d);",
+@"53")
+                .SetName("SingleReturnInGroupingAssigns");
+
+            yield return new TestCaseData(
+@"fun Meth()
+{
+    var a = 1, b = 2, z = 3;
+    return (a,b,z);
+}
+
 var (c,d) = Meth();
 
 print(c+d);",
@@ -1355,6 +1387,11 @@ printr( a%b );",
     {
         return lhs.x == rhs.x and lhs.y == rhs.y;
     }
+
+    _bang_equality(lhs, rhs)
+    {
+        return lhs.x != rhs.x or lhs.y != rhs.y;
+    }
 }
 
 var a = Vector2(1,2),b = Vector2(3,4);
@@ -1363,9 +1400,46 @@ print(a == b);
 
 var c = a;
 
-print(a == c);",
-@"FalseTrue")
+print(a == c);
+print(a != b);",
+@"FalseTrueFalse")
                 .SetName("ClassLogicOperator");
+
+            yield return new TestCaseData(
+@"class Scalar
+{
+    var x;
+    init(x){}
+
+    _less(lhs, rhs)
+    {
+        return lhs.x < rhs.x;
+    }
+
+    _greater(lhs, rhs)
+    {
+        return lhs.x > rhs.x;
+    }
+
+    _less_equal(lhs, rhs)
+    {
+        return lhs.x <= rhs.x;
+    }
+
+    _greater_equal(lhs, rhs)
+    {
+        return lhs.x >= rhs.x;
+    }
+}
+
+var a = Scalar(1), b = Scalar(1);
+
+print(a < b);
+print(a > b);
+print(a <= b);
+print(a >= b);",
+@"FalseFalseTrueTrue")
+                .SetName("ClassComparisonLogicOperator");
 
             yield return new TestCaseData(
 @"class Vector2

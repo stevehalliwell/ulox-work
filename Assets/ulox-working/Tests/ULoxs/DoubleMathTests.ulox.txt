@@ -1,0 +1,38 @@
+test DoubleMath
+{
+	var a = 3.6, b = 1.2;
+
+	var AddResult = 4.8;
+	var MulResult = 4.32;
+	var SubResult = 2.4;
+	var DivResult = 3;
+	var ModResult = 0;
+	
+	testcase Add
+	{
+		Assert.AreApproxEqual(a+b, AddResult, testCaseName);
+	}
+
+	testcase Mul
+	{
+		Assert.AreApproxEqual(a*b, MulResult, testCaseName);
+	}
+
+	testcase Sub
+	{
+		Assert.AreApproxEqual(a-b, SubResult, testCaseName);
+	}
+
+	testcase Div
+	{
+		Assert.AreApproxEqual(a/b, DivResult, testCaseName);
+	}
+
+	testcase Mod
+	{
+		Assert.AreApproxEqual(a%b, ModResult, testCaseName);
+	}
+}
+
+
+ValidateTesting();

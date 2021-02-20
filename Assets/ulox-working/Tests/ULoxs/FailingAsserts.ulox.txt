@@ -1,0 +1,16 @@
+test FailingAssert
+{
+	var a = 2, b = 3;
+	var AddResult = -5;
+
+	testcase EqualAssert
+	{
+		Assert.AreEqual(a+b, AddResult, testCaseName);
+	}
+	testcase ApproxEqualAssert
+	{
+		Assert.AreApproxEqual(a+b, AddResult, testCaseName);
+	}
+}
+
+ValidateTesting();

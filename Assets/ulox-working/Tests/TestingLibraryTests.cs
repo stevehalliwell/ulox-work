@@ -32,6 +32,7 @@ namespace ULox.Tests
         public static string[] FileList = new string[]
         {
             "Assets\\ulox-working\\Tests\\ULoxs\\IntegerMathTests.ulox.txt",
+            "Assets\\ulox-working\\Tests\\ULoxs\\DoubleMathTests.ulox.txt",
         };
 
         [Test]
@@ -54,10 +55,19 @@ namespace ULox.Tests
              engine.Run(System.IO.File.ReadAllText("Assets\\ulox-working\\Tests\\ULoxs\\Failing.ulox.txt"), true));
         }
 
+        [Test]
+        public void ExternalFileTests_Asserts_Failure()
+        {
+            var engine = new TestingLibraryTestLoxEngine();
+
+            Assert.Throws<PanicException>(() =>
+             engine.Run(System.IO.File.ReadAllText("Assets\\ulox-working\\Tests\\ULoxs\\FailingAsserts.ulox.txt"), true));
+        }
+
         internal class TestingLibraryTestLoxEngine : TestLoxEngine
         {
             public TestingLibraryTestLoxEngine()
-                : base(new TestingLibrary(true))
+                : base(new TestingLibrary(true), new AssertLibrary())
             {
             }
         }

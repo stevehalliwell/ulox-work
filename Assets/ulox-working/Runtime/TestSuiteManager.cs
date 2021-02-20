@@ -69,6 +69,7 @@ namespace ULox
             foreach (var testSuite in _testSuiteLookup)
             {
                 sb.AppendLine(testSuite.Key);
+                sb.AppendLine(new string('=',testSuite.Key.Length));
 
                 foreach (var testCaseRes in testSuite.Value.TestCaseResults)
                 {

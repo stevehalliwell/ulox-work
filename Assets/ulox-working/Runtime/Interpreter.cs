@@ -162,6 +162,7 @@ namespace ULox
 
                     if (left is double leftD && right is double rightD)
                         return leftD + rightD;
+                    
                     if (left is string leftS)
                     {
                         if (right is string rightS)
@@ -169,6 +170,10 @@ namespace ULox
                         else
                             return leftS + right.ToString();
                     }
+                    
+                    if(right is string rightS2)
+                        return left.ToString() + rightS2;
+
                     throw new RuntimeTypeException(expr.op, "Operands must be numbers or strings.");
                 }
                 break;
@@ -230,7 +235,7 @@ namespace ULox
 
         public object Evaluate(Expr expression) => expression?.Accept(this) ?? null;
 
-        private static bool IsEqual(object left, object right)
+        public static bool IsEqual(object left, object right)
         {
             if (left == null && right == null) return true;
             if (left == null) return false;

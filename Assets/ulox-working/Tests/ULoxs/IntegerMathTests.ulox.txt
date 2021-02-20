@@ -1,13 +1,37 @@
 test IntegerMath
 {
-	var a = 2, b = 3;
-	var result;
-	var AddResult = 5;
+	var a = 4, b = 2;
+	var AddResult = 6;
+	var MulResult = 8;
+	var SubResult = 2;
+	var DivResult = 2;
+	var ModResult = 0;
 
 	testcase Add
 	{
-		result = a+b;
-		if(result != AddResult)
-			throw;
+		Assert.AreEqual(a+b, AddResult, testCaseName);
+	}
+
+	testcase Mul
+	{
+		Assert.AreEqual(a*b, MulResult, testCaseName);
+	}
+
+	testcase Sub
+	{
+		Assert.AreEqual(a-b, SubResult, testCaseName);
+	}
+
+	testcase Div
+	{
+		Assert.AreEqual(a/b, DivResult, testCaseName);
+	}
+
+	testcase Mod
+	{
+		Assert.AreEqual(a%b, ModResult, testCaseName);
 	}
 }
+
+
+ValidateTesting();

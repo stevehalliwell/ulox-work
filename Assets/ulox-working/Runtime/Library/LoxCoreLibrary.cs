@@ -33,6 +33,8 @@ namespace ULox
                 new Callable(() => throw new LoxException("abort")));
             engine.SetValue("panic",
                 new Callable(() => throw new PanicException()));
+            engine.SetValue("panic_msg",
+                new Callable(1,(args) => throw new PanicException(args.At<string>(0))));
             engine.SetValue("classof",
                 new Callable(1, (objs) =>
                 {

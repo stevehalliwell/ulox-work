@@ -9,7 +9,15 @@
         { }
     }
 
-    public class PanicException : System.Exception { }
+    public class PanicException : System.Exception
+    {
+        public PanicException(string message = "") : base(message) { }
+    }
+
+    public class AssertException : LoxException
+    {
+        public AssertException(string msg) : base(msg) { }
+    }
 
     public class TestException : LoxException
     {

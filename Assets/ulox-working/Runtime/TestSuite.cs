@@ -65,7 +65,7 @@ namespace ULox
 
         public override string ToString()
         {
-            return $"{name}:{status} - {msg}";
+            return $"{name}:{status}{(string.IsNullOrEmpty(msg) ? string.Empty : $" - {msg}")}";
         }
     }
 }
