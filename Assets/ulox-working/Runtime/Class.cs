@@ -23,6 +23,7 @@ namespace ULox
         public Class Super => _superclass;
         private List<Stmt.Var> _vars;
         private List<short> _initVarIndexMatches;
+        private Function _ourInitializer;
         private Function _initializer;
 
         public string Name => _name;
@@ -43,7 +44,8 @@ namespace ULox
             _superclass = superclass;
             _vars = fields;
             _initVarIndexMatches = initVarIndexMatches;
-            _initializer = initializer;
+            _ourInitializer = initializer;
+            _initializer = _ourInitializer != null ? _ourInitializer : _superclass?._ourInitializer;
         }
 
         public virtual int Arity => (_initializer?.Arity ?? Function.StartingParamSlot);

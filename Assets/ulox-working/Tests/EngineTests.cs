@@ -114,6 +114,12 @@ print(nt.a);",
                 .SetName("NewInstanceFromClassof");
 
             yield return new TestCaseData(
+@"var a = 10;
+classof(a);",
+@"'classof' can only be called on instances.")
+                .SetName("ClassofFailure");
+
+            yield return new TestCaseData(
 @"class Cloneable { Clone() { return classof(this)(); } }
 
 class Test < Cloneable { var a = 10;}

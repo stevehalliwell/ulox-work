@@ -312,7 +312,7 @@ return a;",
             yield return new TestCaseData(
 @"var a = 1;
 var a = 2;",
-@"Environment value redefinition not allowed. Requested a:8 collided.")
+@"Environment value redefinition not allowed. Requested a:10 collided.")
                 .SetName("CannotHaveDuplicateGlobals");
 
             yield return new TestCaseData(
@@ -1388,7 +1388,7 @@ printr( a%b );",
         return lhs.x == rhs.x and lhs.y == rhs.y;
     }
 
-    _bang_equality(lhs, rhs)
+    _bang_equal(lhs, rhs)
     {
         return lhs.x != rhs.x or lhs.y != rhs.y;
     }
@@ -1402,7 +1402,7 @@ var c = a;
 
 print(a == c);
 print(a != b);",
-@"FalseTrueFalse")
+@"FalseTrueTrue")
                 .SetName("ClassLogicOperator");
 
             yield return new TestCaseData(

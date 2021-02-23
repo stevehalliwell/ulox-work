@@ -44,7 +44,7 @@ namespace ULox
                     trans.position = new Vector3(
                             Convert.ToSingle(args.At<double>(1)),
                             Convert.ToSingle(args.At<double>(2)),
-                            args.Count > 3 ? Convert.ToSingle(args.At<double>(3)) : 0);
+                            0);
                 }));
         }
 

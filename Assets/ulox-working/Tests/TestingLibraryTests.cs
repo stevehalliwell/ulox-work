@@ -29,23 +29,6 @@ namespace ULox.Tests
             Assert.AreEqual(requiredResult, engine.InterpreterResult);
         }
 
-        public static string[] FileList = new string[]
-        {
-            "Assets\\ulox-working\\Tests\\ULoxs\\IntegerMathTests.ulox.txt",
-            "Assets\\ulox-working\\Tests\\ULoxs\\DoubleMathTests.ulox.txt",
-        };
-
-        [Test]
-        [TestCaseSource(nameof(FileList))]
-        public void ExternalFileTests_Result_Matches(string file)
-        {
-            var engine = new TestingLibraryTestLoxEngine();
-
-            engine.Run(System.IO.File.ReadAllText(file), true);
-
-            Assert.AreEqual(string.Empty, engine.InterpreterResult);
-        }
-
         [Test]
         public void ExternalFileTests_Result_Failure()
         {
@@ -53,6 +36,15 @@ namespace ULox.Tests
 
             Assert.Throws<PanicException>(() =>
              engine.Run(System.IO.File.ReadAllText("Assets\\ulox-working\\Tests\\ULoxs\\Failing.ulox.txt"), true));
+        }
+
+        [Test]
+        public void ExternalFileTests_Result_FailureWithMsg()
+        {
+            var engine = new TestingLibraryTestLoxEngine();
+
+            Assert.Throws<PanicException>(() =>
+             engine.Run(System.IO.File.ReadAllText("Assets\\ulox-working\\Tests\\ULoxs\\FailingWithMsg.ulox.txt"), true));
         }
 
         [Test]

@@ -104,6 +104,39 @@ namespace ULox.Tests
         }
 
         [Test]
+        public void LocalEnvironment_To_LocalEnv_Via_Globals()
+        {
+            var test = new CustomEnvironmentTestLoxEngine();
+
+            var localEnvA = new ULoxScriptEnvironment(test._engine);
+            var localEnvB = new ULoxScriptEnvironment(test._engine);
+
+            localEnvA.RunScript("Globals.val = 10;");
+            localEnvB.RunScript("print(Globals.val);");
+
+            Assert.AreEqual("10", test.InterpreterResult);
+        }
+
+        [Test]
+        public void LocalEnvironment_ExternalInteractions()
+        {
+            var test = new CustomEnvironmentTestLoxEngine();
+
+            var localEnv = new ULoxScriptEnvironment(test._engine);
+
+            localEnv.RunScript("var val = 10;");
+
+            var val = localEnv.FetchLocalByName("val");
+            localEnv.AssignLocalByName("val", 20);
+            localEnv.AssignLocalByName("val2", 30);
+            localEnv.RunScript("val2 *= 2;");
+
+            Assert.AreEqual(val, 10);
+            Assert.AreEqual(localEnv.FetchLocalByName("val"), 20);
+            Assert.AreEqual(localEnv.FetchLocalByName("val2"), 60);
+        }
+
+        [Test]
         public void RunScript_InsideScript_Validate()
         {
             var test = new CustomEnvironmentTestLoxEngine();

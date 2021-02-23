@@ -61,6 +61,10 @@
             {
                 _ourEnvironment.AssignSlot(loc, Interpreter.SantizeObject(val));
             }
+            else
+            {
+                _ourEnvironment.DefineInAvailableSlot(name, Interpreter.SantizeObject(val));
+            }
         }
     }
 }
