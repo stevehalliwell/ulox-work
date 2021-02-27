@@ -39,67 +39,6 @@ var res = ComboMath(foo, bar, car);",
 { var 11:8 - IDENTIFIER res[ call [ 11:22 - IDENTIFIER ComboMath ][ ( [ 11:26 - IDENTIFIER foo ][ 11:32 - IDENTIFIER bar ][ 11:38 - IDENTIFIER car ] ) ] ] }")
                 .SetName("MathAndFunctions");
             yield return new TestCaseData(
-@"class Foo
-{
-    init()
-{
-this.a = 1;
-}
-}
-
-/*
-
-class Bar < Foo
-{
-init()
-{
-super.init();
-this.b = 2;
-}
-}
-*/
-
-var inst = Foo();
-
-print( inst.a);",
-@"{ class 1:10 - IDENTIFIER Foo
-   instance 
-  fun 3:12 - IDENTIFIER init[  ( -1:-1 - THIS this ) { [ [ 5:4 - THIS this ]5:6 - IDENTIFIER a[ 1 ] ] } ] }
-{ var 11:9 - IDENTIFIER inst[ call [ 11:17 - IDENTIFIER Foo ][  ] ] }
-{ [ call [ 13:5 - IDENTIFIER print ][ ( [ 13:14 - IDENTIFIER a[ 13:12 - IDENTIFIER inst ] ] ) ] ] }")
-                .SetName("Class");
-            yield return new TestCaseData(
-@"class Foo
-{
-    init()
-{
-this.a = 1;
-}
-}
-
-class Bar < Foo
-{
-init()
-{
-super.init();
-this.b = 2;
-}
-}
-
-var inst = Bar();
-
-print (inst.a + inst.b);",
-@"{ class 1:10 - IDENTIFIER Foo
-   instance 
-  fun 3:12 - IDENTIFIER init[  ( -1:-1 - THIS this ) { [ [ 5:4 - THIS this ]5:6 - IDENTIFIER a[ 1 ] ] } ] }
-{ class 9:10 - IDENTIFIER Bar inherit [ 9:18 - IDENTIFIER Foo ]
-   instance 
-  fun 11:4 - IDENTIFIER init[  ( -1:-1 - THIS this ) { [ call [ super 13:10 - IDENTIFIER init ][  ] ] }
-    { [ [ 14:4 - THIS this ]14:6 - IDENTIFIER b[ 2 ] ] } ] }
-{ var 18:9 - IDENTIFIER inst[ call [ 18:17 - IDENTIFIER Bar ][  ] ] }
-{ [ call [ 20:5 - IDENTIFIER print ][ ( [ 20:17 - PLUS + [ 20:14 - IDENTIFIER a[ 20:12 - IDENTIFIER inst ] ] [ 20:25 - IDENTIFIER b[ 20:23 - IDENTIFIER inst ] ] ] ) ] ] }")
-                .SetName("Inher");
-            yield return new TestCaseData(
 @"var logic = true and false or true;
 var comparison = 1 < 2 and 2 >= 3 or 1 > 2 and 2 <= 3;
 

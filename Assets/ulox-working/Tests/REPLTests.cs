@@ -44,7 +44,7 @@ namespace ULox.Tests
 @"<inst TestClass>" }, TestName = "Instance")]
         [TestCase(new object[]
         {
-@"class TestClass{init(){this.a = 10;}}",
+@"class TestClass{init(self){self.a = 10;}}",
 @"TestClass().a;",
 @"10" }, TestName = "Instance_init_value")]
         [TestCase(new object[]
@@ -52,13 +52,6 @@ namespace ULox.Tests
 @"class TestClass{var a = 10;}",
 @"TestClass().a;",
 @"10" }, TestName = "Instance_props_var_value")]
-        [TestCase(new object[]
-        {
-@"class TestClass{getset a = 10;}",
-@"var t = TestClass();",
-@"t.Seta(t.a + 10);",   //null return
-@"t.a;",
-@"null20" }, TestName = "Instance_props_getset_value")]
         [TestCase(new object[]
         {
 @"class TestClass{class var a = 10;}",

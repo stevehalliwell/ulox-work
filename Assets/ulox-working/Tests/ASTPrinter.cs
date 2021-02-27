@@ -170,19 +170,6 @@ namespace ULox.Tests
             return null;
         }
 
-        public Object Visit(Expr.Super expr)
-        {
-            Print("super ");
-            Print(expr.method);
-            return null;
-        }
-
-        public Object Visit(Expr.This expr)
-        {
-            Print(expr.keyword);
-            return null;
-        }
-
         public Object Visit(Expr.Unary expr)
         {
             Print(expr.op);

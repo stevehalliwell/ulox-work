@@ -65,15 +65,15 @@ namespace ULox
                 {
                     sb.AppendLine();
                     sb.Append(prefix);
-                    sb.Append("meta : ");
+                    sb.Append("super : ");
                     PrintRecursive(vClass.Super, sb, prefix, remainingDepth);
                 }
 
-                foreach (var meth in vClass.ReadOnlyMethods)
+                foreach (var varItem in vClass.Vars)
                 {
-                    sb.AppendLine(); 
+                    sb.AppendLine();
                     sb.Append(prefix);
-                    PrintRecursive(meth.Value, sb, prefix, remainingDepth);
+                    sb.Append($"var {varItem.name.Lexeme}");
                 }
             }
             else if (v is Environment vEnv)

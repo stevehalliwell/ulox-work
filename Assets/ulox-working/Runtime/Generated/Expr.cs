@@ -89,34 +89,6 @@ namespace ULox
             public readonly Expr right;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
-        public class Super : Expr
-        {
-            public Super( Token keyword, Token classNameToken, Token method,  EnvironmentVariableLocation superVarLoc, EnvironmentVariableLocation thisVarLoc)
-            {
-                this.keyword = keyword;
-                this.classNameToken = classNameToken;
-                this.method = method;
-                this.superVarLoc = superVarLoc;
-                this.thisVarLoc = thisVarLoc;
-            }
-            public readonly Token keyword;
-            public readonly Token classNameToken;
-            public readonly Token method;
-            public EnvironmentVariableLocation superVarLoc;
-            public EnvironmentVariableLocation thisVarLoc;
-            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
-        }
-        public class This : Expr
-        {
-            public This( Token keyword, EnvironmentVariableLocation varLoc)
-            {
-                this.keyword = keyword;
-                this.varLoc = varLoc;
-            }
-            public readonly Token keyword;
-            public EnvironmentVariableLocation varLoc;
-            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
-        }
         public class Unary : Expr
         {
             public Unary( Token op, Expr right)
@@ -181,8 +153,6 @@ namespace ULox
             T Visit(Grouping expr);
             T Visit(Literal expr);
             T Visit(Logical expr);
-            T Visit(Super expr);
-            T Visit(This expr);
             T Visit(Unary expr);
             T Visit(Conditional expr);
             T Visit(Function expr);

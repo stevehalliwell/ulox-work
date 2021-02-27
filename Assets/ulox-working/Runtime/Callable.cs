@@ -6,7 +6,7 @@ namespace ULox
     {
         private readonly Func<Interpreter, FunctionArguments, object> _func;
         private readonly int _arity;
-        public int Arity => _arity + Function.StartingParamSlot;
+        public int Arity => _arity;
 
         public Callable(int arity, Func<Interpreter, FunctionArguments, object> func)
         {

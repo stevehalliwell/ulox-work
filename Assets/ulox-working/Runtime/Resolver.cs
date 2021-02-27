@@ -33,20 +33,12 @@ namespace ULox
         }
 
         private List<ScopeInfo> _scopes = new List<ScopeInfo>();
-        private FunctionType _currentFunctionType = FunctionType.NONE;
+        private FunctionType _currentFunctionType = FunctionType.None;
         private Expr.Function _currentExprFunc;
         private Stmt.Class _currentClass;
         private List<ResolverWarning> _resolverWarnings = new List<ResolverWarning>();
 
         public List<ResolverWarning> ResolverWarnings => _resolverWarnings;
-
-        private enum FunctionType
-        {
-            NONE,
-            FUNCTION,
-            INITIALIZER,
-            METHOD,
-        }
 
         private enum ClassType
         {
@@ -64,7 +56,7 @@ namespace ULox
         {
             _scopes.Clear();
 
-            _currentFunctionType = FunctionType.NONE;
+            _currentFunctionType = FunctionType.None;
             _currentClass = null;
             _resolverWarnings = new List<ResolverWarning>();
         }
@@ -183,37 +175,6 @@ namespace ULox
             return slot;
         }
 
-        private void DeclareAt(Token name, short slot)
-        {
-            if (_scopes.Count == 0) return;
-
-            var scope = _scopes.Last();
-            if (scope.localVariables.ContainsKey(name.Lexeme))
-            {
-                throw new ResolverException(name, "Already a variable with this name in this scope.");
-            }
-            if (scope.localVariables.Values.FirstOrDefault(x => x.slot == slot) != default)
-            {
-                throw new ResolverException(name, $"Already a variable at slot {slot} in this scope.");
-            }
-
-            scope.localVariables.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared, slot));
-        }
-
-        private void DefineManuallyAt(string name, short slot)
-        {
-            if (_scopes.Count == 0) return;
-            var scope = _scopes.Last();
-
-            if (scope.localVariables.ContainsKey(name) ||
-                scope.localVariables.Values.FirstOrDefault(x => x.slot == slot) != default)
-            {
-                throw new LoxException($"Already a variable of name {name} or at slot {slot} in this scope.");
-            }
-
-            scope.localVariables[name] = new VariableUse(new Token(TokenType.IDENTIFIER, name, name, -1, -1), VariableUse.State.Read, slot);
-        }
-
         private void Define(Token name)
         {
             if (_scopes.Count == 0) return;
@@ -232,8 +193,16 @@ namespace ULox
             }
 
             var slot = (short)scope.localVariables.Count;
-            scope.localVariables.Add(name, new VariableUse(new Token(TokenType.IDENTIFIER, name, name, -1, -1), VariableUse.State.Defined, slot));
+            scope.localVariables.Add(name, new VariableUse(new Token(TokenType.IDENTIFIER, name, name, -1, -1), VariableUse.State.Read, slot));
             return slot;
+        }
+
+        private void MarkRead(string name)
+        {
+            if (_scopes.Last().localVariables.TryGetValue(name, out var varUse))
+            {
+                varUse.state = VariableUse.State.Read;
+            }
         }
 
         private void EndScope()
@@ -242,10 +211,6 @@ namespace ULox
             {
                 if (item.state != VariableUse.State.Read)
                 {
-                    if (item.name.TokenType == TokenType.THIS ||
-                        item.name.TokenType == TokenType.SUPER)
-                        continue;
-
                     Warning(item.name, "Local variable is never read.");
                 }
             }
@@ -269,7 +234,7 @@ namespace ULox
 
         public object Visit(Expr.Function expr)
         {
-            ResolveFunction(expr, FunctionType.FUNCTION);
+            ResolveFunction(expr, FunctionType.Function);
             return null;
         }
 
@@ -282,31 +247,29 @@ namespace ULox
             _currentExprFunc = func;
 
             BeginScope();
+
             if (func.parameters != null)
             {
                 for (int i = 0; i < func.parameters.Count; i++)
                 {
                     var param = func.parameters[i];
-                    DeclareAt(param, (short)i);
+                    Declare(param);
                     Define(param);
                 }
-            }
-            else if (functionType == FunctionType.METHOD)
-            {
-                DeclareAt(Class.MakeThisToken(), Class.ThisSlot);
             }
 
             Resolve(func.body);
 
-            if (functionType == FunctionType.INITIALIZER)
+            if (functionType == FunctionType.Init)
             {
+                MarkRead("self");
                 //match params to the init to fiels we know we have to allow auto assigning
                 var initArgPair = new List<short>();
                 var initMethod = _currentClass.methods.FirstOrDefault(x => x.name.Lexeme == Class.InitalizerFunctionName);
                 if (initMethod != null)
                 {
                     var initParams = initMethod.function.parameters;
-                    for (int paramIndex = Function.StartingParamSlot; paramIndex < initParams.Count; paramIndex++)
+                    for (int paramIndex = 0; paramIndex < initParams.Count; paramIndex++)
                     {
 
                         var item = initParams[paramIndex];
@@ -314,7 +277,7 @@ namespace ULox
                         if (matchingLoc >= 0)
                         {
                             ResolveLocal(item, true);
-                            initArgPair.Add((short)(paramIndex - Function.StartingParamSlot));
+                            initArgPair.Add((short)(paramIndex));
                             initArgPair.Add((short)matchingLoc);
                         }
                     }
@@ -339,15 +302,12 @@ namespace ULox
 
         public void Visit(Stmt.Return stmt)
         {
-            if (_currentFunctionType == FunctionType.NONE)
+            if (_currentFunctionType == FunctionType.None)
             {
                 throw new ResolverException(stmt.keyword, "Cannot return outside of a function.");
             }
             if (stmt.retVals != null)
             {
-                if (_currentFunctionType == FunctionType.INITIALIZER)
-                    throw new ResolverException(stmt.keyword, "Cannot return a value from an initializer");
-
                 Resolve(stmt.retVals);
             }
 
@@ -386,7 +346,7 @@ namespace ULox
             stmt.knownSlot = Declare(stmt.name);
             Define(stmt.name);
 
-            ResolveFunction(stmt.function, FunctionType.FUNCTION);
+            ResolveFunction(stmt.function, FunctionType.Function);
         }
 
         public void Visit(Stmt.While stmt)
@@ -423,22 +383,8 @@ namespace ULox
 
             foreach (Stmt.Function metaMeth in stmt.metaMethods)
             {
-                BeginScope();
-                DefineManuallyAt(Class.ThisIdentifier, Class.ThisSlot);
-                //Declare(metaMeth.name);
-                //Define(metaMeth.name);
-                ResolveFunction(metaMeth.function, FunctionType.METHOD);
-                EndScope();
+                ResolveFunction(metaMeth.function, FunctionType.Method);
             }
-
-            if (stmt.superclass != null)
-            {
-                BeginScope();
-                DefineManuallyAt(Class.SuperIdentifier, Class.SuperSlot);
-            }
-
-            //BeginScope();
-            //DefineManually(Class.ThisIdentifier, Class.ThisSlot);
 
             BeginScope();
             foreach (var item in stmt.fields)
@@ -449,19 +395,15 @@ namespace ULox
 
             foreach (Stmt.Function thisMeth in stmt.methods)
             {
-                FunctionType declaration = FunctionType.METHOD;
+                FunctionType declaration = FunctionType.Method;
                 if (thisMeth.name.Lexeme == Class.InitalizerFunctionName)
                 {
-                    declaration = FunctionType.INITIALIZER;
+                    declaration = FunctionType.Init;
                 }
                 //Declare(thisMeth.name);
                 //Define(thisMeth.name);
                 ResolveFunction(thisMeth.function, declaration);
             }
-
-            //EndScope();
-
-            if (stmt.superclass != null) EndScope();
 
             _currentClass = enclosingClass;
         }
@@ -485,20 +427,6 @@ namespace ULox
                 ResolveLocal(expr.name, true);
             }
 
-            if ((_currentFunctionType == FunctionType.METHOD || _currentFunctionType == FunctionType.INITIALIZER) &&
-                 expr.targetObj == null &&
-                expr.varLoc == EnvironmentVariableLocation.Invalid)
-            {
-                var matchingLoc = _currentClass.fields.FindIndex(x => x.name.Lexeme == expr.name.Lexeme);
-                if (matchingLoc >= 0)
-                {
-                    expr.targetObj = new Expr.This(Class.MakeThisToken(expr.name),
-                        EnvironmentVariableLocation.Invalid);
-                    Resolve(expr.targetObj);
-                    expr.varLoc.slot = (short)matchingLoc;
-                }
-            }
-
             return null;
         }
 
@@ -510,43 +438,6 @@ namespace ULox
             else
                 expr.varLoc = ResolveLocal(expr.name, false);
 
-            if ( (_currentFunctionType == FunctionType.METHOD || _currentFunctionType == FunctionType.INITIALIZER) &&
-                 expr.targetObj == null &&
-                expr.varLoc == EnvironmentVariableLocation.Invalid)
-            {
-                //see if we can find the var on the this 
-                var matchingLoc = _currentClass.fields.FindIndex(x => x.name.Lexeme == expr.name.Lexeme);
-                if (matchingLoc >= 0)
-                {
-                    expr.targetObj = new Expr.This(Class.MakeThisToken(expr.name),
-                        EnvironmentVariableLocation.Invalid);
-                    Resolve(expr.targetObj);
-                    expr.varLoc.slot = (short)matchingLoc;
-                }
-            }
-
-            return null;
-        }
-
-        public object Visit(Expr.This expr)
-        {
-            if (_currentClass == null)
-                throw new ResolverException(expr.keyword, "Cannot use 'this' outside of a class.");
-
-            expr.varLoc = ResolveLocal(expr.keyword, false);
-            return null;
-        }
-
-        public object Visit(Expr.Super expr)
-        {
-            if (_currentClass == null)
-                throw new ResolverException(expr.keyword, "Cannot use 'super' outside of a class.");
-            if (_currentClass.superclass == null)
-                throw new ResolverException(expr.keyword, "Cannot use 'super' in a class with no superclass.");
-
-            //todo it would be possible to keep a class tree and confirm if the method identifier exists on the super
-
-            ResolveLocal(expr.keyword, false);
             return null;
         }
 

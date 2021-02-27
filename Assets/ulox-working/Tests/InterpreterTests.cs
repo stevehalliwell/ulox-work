@@ -3,7 +3,8 @@ using System.Collections.Generic;
 
 namespace ULox.Tests
 {
-    //todo calling super in a meta method
+    //todo init that does work and assigns that to instance vars
+    //todo move creation to the class, have pass self to init
     //todo more metafields and metamethods tests?
     //todo more multi return tests
     public class InterpreterTests
@@ -145,8 +146,7 @@ print(partial.BeginingOfStatement + partial.EndOfStatement); ",
                 .SetName("Class_DataStore");
 
             yield return new TestCaseData(
-@"
-class Bacon {
+@"class Bacon {
   eat() {
     print( ""Crunch crunch crunch!"");
   }
@@ -158,29 +158,28 @@ Bacon().eat();",
 
             yield return new TestCaseData(
 @"class Cake {
-  taste() {
+  taste(self) {
     var adjective = ""delicious"";
-    print(""The "" + this.flavor + "" cake is "" + adjective + ""!"");
+    print(""The "" + self.flavor + "" cake is "" + adjective + ""!"");
   }
 }
 
 var cake = Cake();
 cake.flavor = ""German chocolate"";
-cake.taste();",
+cake.taste(cake);",
 @"The German chocolate cake is delicious!")
-                .SetName("Class_thisScope");
+                .SetName("Class_selfScope");
 
             yield return new TestCaseData(
 @"class Circle {
-  init(radius) {
-    this.radius = radius;
-  }
+    var radius;
+    init(self, radius) {}
 
-  area(){return 3.14 * this.radius * this.radius;}
+    area(self){return 3.14 * self.radius * self.radius;}
 }
 
 var circ = Circle(4);
-print(circ.area());",
+print(circ.area(circ));",
 @"50.24")
                 .SetName("Class_init");
 
@@ -209,15 +208,16 @@ print( s);",
 }
 
 class BostonCream < Doughnut {
-  cook() {
-    super.cook();
+    mycook(self) {
+    self.cook();
     print(""Pipe full of custard and coat with chocolate."");
   }
 }
 
-BostonCream().cook();",
+var bc = BostonCream();
+bc.mycook(bc);",
 @"Fry until golden brown.Pipe full of custard and coat with chocolate.")
-                .SetName("Class_Super");
+                .SetName("Child_Class_CallParentFunc");
 
             yield return new TestCaseData(
 @"var a = 10;
@@ -275,7 +275,7 @@ print(Func());",
 }
 
 print(Undef().a);",
-@"IDENTIFIER|5:15 Undefined method 'a'.")
+@"IDENTIFIER|5:15 Undefined property 'a' on <inst Undef>.")
                 .SetName("UndefinedProperty");
 
             yield return new TestCaseData(
@@ -298,18 +298,6 @@ return a;",
                 .SetName("CannotReturnWhenNotWithinAFunc");
 
             yield return new TestCaseData(
-@"class Initer
-{
-    init()
-    {
-        this.a = 1;
-        return this.a;
-    }
-}",
-@"RETURN|6:22 Cannot return a value from an initializer")
-                .SetName("CannotReturnValueFromInit");
-
-            yield return new TestCaseData(
 @"var a = 1;
 var a = 2;",
 @"Environment value redefinition not allowed. Requested a:10 collided.")
@@ -328,35 +316,7 @@ var a = 2;",
 @"class Base {}
 class Child < Child {}",
 @"IDENTIFIER|2:22 A class can't inherit from itself.")
-                .SetName("CannotSuperSelf");
-
-            yield return new TestCaseData(
-@"fun Thiser()
-{
-    this.a = 5;
-}",
-@"THIS|3:12 Cannot use 'this' outside of a class.")
-                .SetName("CannotUseThisOutsideMethods");
-
-            yield return new TestCaseData(
-@"class Base {}
-class Child {
-    init()
-    {
-        super.init();
-    }
-}",
-@"SUPER|5:21 Cannot use 'super' in a class with no superclass.")
-                .SetName("CannotSuperWithoutBase");
-
-            yield return new TestCaseData(
-@"fun init()
-{
-    super.init();
-}
-",
-@"SUPER|3:13 Cannot use 'super' outside of a class.")
-                .SetName("CannotSuperOutsideClass");
+                .SetName("CannotInheritSelf");
 
             yield return new TestCaseData(
 @"var a = if(7);",
@@ -425,14 +385,8 @@ var a = -Func;",
             yield return new TestCaseData(
 @"fun Func(a,b){}
 Func(7);",
-@"CLOSE_PAREN|2:7 Expected 3 args but got 1")
+@"CLOSE_PAREN|2:7 Expected 2 args but got 1")
                 .SetName("CannotCallFunctionWithIncorrectParamCount");
-
-            yield return new TestCaseData(
-@"fun Func(a,b){}
-class Klass < Func{}",
-@"IDENTIFIER|2:21 Superclass must be a class.")
-                .SetName("SuperMustBeClass");
 
             yield return new TestCaseData(
 @"fun Func(a,b){}
@@ -447,24 +401,6 @@ print(Func.a);",
 Func.a = 67;",
 @"IDENTIFIER|3:6 Only instances have fields.")
                 .SetName("OnlyInstHasSet");
-
-            yield return new TestCaseData(
-@"class Doughnut {
-  cook() {
-    print(""Fry until golden brown."");
-  }
-}
-
-class BostonCream < Doughnut {
-  cook() {
-    super.Missing();
-    print(""Pipe full of custard and coat with chocolate."");
-  }
-}
-
-BostonCream().cook();",
-@"IDENTIFIER|9:21 Could not find 'Missing'via 'super'.")
-                .SetName("Class_SuperMissingMethod");
 
             yield return new TestCaseData(
 @"fun Say(a,b,c)
@@ -582,22 +518,6 @@ thrice(fun(a) {
                 .SetName("UnusedLocals");
 
             yield return new TestCaseData(
-@"class Circle {
-  init(radius) {
-    this.radius = radius;
-  }
-
-  area {
-    return 3.14 * this.radius * this.radius;
-  }
-}
-
-var circle = Circle(4);
-print(circle.area);",
-@"50.24")
-                .SetName("ClassGetProperty");
-
-            yield return new TestCaseData(
 @"class Math {
   class square(n) {
     return n * n;
@@ -658,8 +578,9 @@ a /= 2;
 a %= 1;
 print(a);
 
-class Test{init(){this.a = 0;}}
+class Test{var a=0;}
 var t = Test();
+t.a = 0;
 t.a = t.a + 1;
 t.a += 1;
 t.a *= 3;
@@ -684,142 +605,40 @@ print(t.a);
             yield return new TestCaseData(
 @"class Square
 {
-    getset Side;
-    Area {return this.Side * this.Side;}
+    var Side;
+    Area(self) {return self.Side * self.Side;}
 }
 var sq = Square();
 print(sq.Side);
-sq.SetSide(2);
-print(sq.Area);",
+sq.Side = 2;
+print(sq.Area(sq));",
 @"null4")
-                .SetName("ClassGetSet");
-
-            yield return new TestCaseData(
-@"class Square
-{
-    getset Side;
-    Area {return this.Side * this.Side;}
-}
-var sq = Square();
-print(sq.Arae);",
-@"IDENTIFIER|7:13 Undefined method 'Arae'.")
-                .SetName("ClassGetSet_Typo_Error");
+                .SetName("Class_Var_Func");
 
             yield return new TestCaseData(
 @"class Square
 {
     var Side;
-    Area {return this.Side * this.Side;}
+    Area(self) {return self.Side * self.Side;}
 }
 var sq = Square();
-print(sq.Area);
-sq.Side = 2;
-print(sq.Area);",
-@"STAR|4:35 Operands must be numbers.")
-                .SetName("ClassVars_nullfield");
+print(sq.Arae);",
+@"IDENTIFIER|7:13 Undefined property 'Arae' on <inst Square>.")
+                .SetName("Class_Var_Func_Typo_Error");
 
             yield return new TestCaseData(
 @"class Square
 {
-    var Side = 2;
-    Area {return this.Side * this.Side;}
+    var Side = 1;
 }
-
-print(Square().Area);",
-@"4")
+var sq = Square();
+print(sq.Side);",
+@"1")
                 .SetName("ClassVars_InitialValue");
-
-            yield return new TestCaseData(
-@"class Square
-{
-    get Side = 2;
-    Area {return this.Side * this.Side;}
-}
-var sq = Square();
-print(sq.Side);
-print(sq.Area);",
-@"24")
-                .SetName("ClassVars_GetInitialValue");
-
-            yield return new TestCaseData(
-@"class Square
-{
-    set Side = 1;
-    Area {return this._Side * this._Side;}
-}
-var sq = Square();
-sq.SetSide(2);
-print(sq.Area);",
-@"4")
-                .SetName("ClassVars_SetInitialValue");
-
-            yield return new TestCaseData(
-@"class Square
-{
-    getset Side = 1;
-    Area {return this.Side * this.Side;}
-}
-var sq = Square();
-sq.SetSide(2);
-print(sq.Side);
-print(sq.Area);",
-@"24")
-                .SetName("ClassVars_GetSetInitialValue");
-
-            yield return new TestCaseData(
-@"class Square
-{
-    init() {this.side = 1;}
-    get Side {print(this.side); return this.side;}
-    Area {return this.side * this.side;}
-}
-
-var sq = Square();
-sq.Side;
-print(sq.Area);",
-@"11")
-                .SetName("Class_CustomGet");
-
-            yield return new TestCaseData(
-@"class Square
-{
-    init() {this.side = 1;}
-    set Side {print(value); this.side = value;}
-    Area {return this.side * this.side;}
-}
-
-var sq = Square();
-sq.Side(2);
-print(sq.Area);",
-@"24")
-                .SetName("Class_CustomSet");
-
-            yield return new TestCaseData(
-@"class Square
-{
-    init() {this.side = 1;}
-    get Side(a) {return this.side;}
-    Area {return this.side * this.side;}
-}",
-@"IDENTIFIER|1:13 Cannot have arguments to a Get.")
-                .SetName("Class_NoGetParams");
-
-            yield return new TestCaseData(
-@"class Square
-{
-    init() {this.side = 1;}
-    set Side(a) {this.side = a;}
-    Area {return this.side * this.side;}
-}",
-@"IDENTIFIER|1:13 Cannot have arguments to a Set. A 'value' param is auto generated.")
-                .SetName("Class_NoSetParams");
 
             yield return new TestCaseData(
 @"var klass = class Square
 {
-    init() {this.side = 1;}
-    set Side(a) {this.side = a;}
-    Area {return this.side * this.side;}
 }",
 @"CLASS|1:20 Expect expression.")
                 .SetName("CannotAssignVarToClass");
@@ -832,29 +651,11 @@ print(sq.Area);",
             yield return new TestCaseData(
 @"class Square
 {
-    get a;
-    set a;
-}",
-@"IDENTIFIER|3:14 Classes cannot have fields of identical names. Found more than 1 _a in class Square.")
-                .SetName("Class_DupFields");
-
-            yield return new TestCaseData(
-@"class Square
-{
     var a;
     a(){}
 }",
 @"IDENTIFIER|4:9 Classes cannot have a field and a method of identical names. Found more than 1 a in class Square.")
                 .SetName("Class_DupFieldnMethod");
-
-            yield return new TestCaseData(
-@"class Square
-{
-    class get a;
-    class set a;
-}",
-@"IDENTIFIER|3:21 Classes cannot have metaFields of identical names. Found more than 1 _a in class Square.")
-                .SetName("Class_Static_DupFields");
 
             yield return new TestCaseData(
 @"class Square
@@ -890,12 +691,6 @@ World!")
                 .SetName("Print_EscapedChars");
 
             yield return new TestCaseData(
-@"var val = 1;
-get a(){print(val);}",
-@"GET|2:3 Only expected withing class declaration.")
-                .SetName("Unexpected_get");
-
-            yield return new TestCaseData(
 @"var a = ""Why "", b = ""Hello "", c = ""There"";
 print(a + b + c);",
 @"Why Hello There")
@@ -905,21 +700,12 @@ print(a + b + c);",
 @"class TestClass
 {
     var a = ""Why "", b = ""Hello "", c = ""There"";
-    Say() { print(this.a + this.b + this.c); }
+    Say(self) { print(self.a + self.b + self.c); }
 }
-TestClass().Say();",
+var tc = TestClass();
+tc.Say(tc);",
 @"Why Hello There")
                 .SetName("MultiVarFieldPrintMatch");
-
-            yield return new TestCaseData(
-@"class TestClass
-{
-    getset a = ""Why "", b = ""Hello "", c = ""There"";
-    Say() { print(this.a + this.b + this.c); }
-}
-TestClass().Say();",
-@"Why Hello There")
-                .SetName("MultiGetSetFieldPrintMatch");
 
             yield return new TestCaseData(
 @"var a = true;
@@ -944,7 +730,7 @@ class Derived < Base { var b = 2;}
 var inst = Derived();
 print(inst.b + inst.a);",
 @"3")
-                .SetName("SuperFields");
+                .SetName("InherFields");
 
             yield return new TestCaseData(
 @"class Base { BaseMeth(b) {print(b + ""Bar"");} }
@@ -952,7 +738,7 @@ class Derived < Base { var c = ""Foo"";}
 var inst = Derived();
 inst.BaseMeth(inst.c);",
 @"FooBar")
-                .SetName("SuperMethod");
+                .SetName("Inher_Base_Method");
 
             yield return new TestCaseData(
 @"class Base { BaseMeth(b) {print(b + ""Bar"");} }
@@ -960,31 +746,7 @@ class Derived < Base { var c = ""Foo"";}
 var inst = Derived();
 inst.BaseMeth(inst.c);",
 @"FooBar")
-                .SetName("SuperMethodsAndField");
-
-            yield return new TestCaseData(
-@"class Base { BaseMeth(b) {print(b + ""Bar"");} }
-class Derived < Base { ChildMeth(a) {print(""Well, ""); super.BaseMeth(a);}}
-var inst = Derived();
-inst.ChildMeth(""Foo"");",
-@"Well, FooBar")
-                .SetName("SuperMethodAndChildMethodField");
-
-            yield return new TestCaseData(
-@"class Base
-{
-    BaseMeth(b) {print(b + ""Bar"");}
-}
-class Derived < Base
-{
-    ChildMeth(a) { print(""Well, ""); super.BaseMeth(a + Derived.fb);}
-
-    class var fb = ""Foobar? "";
-}
-var inst = Derived();
-inst.ChildMeth(""is it "");",
-@"Well, is it Foobar? Bar")
-                .SetName("MetaFieldAndSuperMethod");
+                .SetName("InherMethodsAndField");
 
             yield return new TestCaseData(
 @"class Base
@@ -994,144 +756,27 @@ inst.ChildMeth(""is it "");",
 class Derived < Base
 {
     class BaseMeth(b) {print(b + ""Bar"");}
-    ChildMeth(a) {print(""Well, ""); Derived.BaseMeth(a + this.fb);}
+    ChildMeth(self,a) {print(""Well, ""); Derived.BaseMeth(a + self.fb);}
 }
 var inst = Derived();
-inst.ChildMeth(""is it "");",
+inst.ChildMeth(inst, ""is it "");",
 @"Well, is it Foobar? Bar")
-                .SetName("MetaMethodAndSuperField");
-
-            yield return new TestCaseData(
-@"class Base
-{
-    getset foo = ""asdf"";
-}
-class Derived < Base
-{
-    ChildMeth(a)
-    {
-        print(a);
-        super.Setfoo(""Foo"");
-        print(super.foo() + ""Bar"");
-    }
-}
-var inst = Derived();
-inst.ChildMeth(""is it "");",
-@"is it FooBar")
-                .SetName("DerivedSuperProperty");
-
-            yield return new TestCaseData(
-@"class Base
-{
-    init(){this.foo=""Foo"";}
-}
-class Derived < Base
-{
-    ChildMeth(a)
-    {
-        print(a);
-        this.bar = ""Bar"";
-        //todo document this difference, perhaps super is an error if not on method?
-        //  would expect to use super here perhaps
-        print(this.foo + this.bar);
-    }
-}
-var inst = Derived();
-inst.ChildMeth(""is it "");",
-@"is it FooBar")
-                .SetName("DerivedSuperManualProperty");
-
-            yield return new TestCaseData(
-@"class Base
-{
-    init(){this.foo=""Foo"";}
-}
-class Derived < Base
-{
-    ChildMeth(a)
-    {
-        this.bar = ""Bar"";
-        //todo document this difference, perhaps super is an error if not on method?
-        //  would expect to use super here perhaps
-        print(super.foo + this.bar);
-    }
-}
-var inst = Derived();
-inst.ChildMeth(""is it "");",
-@"IDENTIFIER|12:67 Could not find 'foo'via 'super'.")
-                .SetName("CannotUseSuperOnField");
-
-            yield return new TestCaseData(
-@"
-class BaseBase
-{
-    Foo(a) {print(""BaseBase"" + a);}
-}
-class Base < BaseBase
-{
-    Foo(a) {print(""Base"" + super.Foo(a));}
-}
-class Derived < Base
-{
-    Foo(a) {print(""Derived"" + super.Foo(a));}
-}
-var inst = Derived();
-inst.Foo(""hi"");",
-@"BaseBasehiBaseDerived")
-                .SetName("SuperChain");
-
-            yield return new TestCaseData(
-@"
-class BaseBase
-{
-    Foo(a) {print(""BaseBase"" + a);}
-}
-class Base < BaseBase
-{
-    Foo(a) {print(""Base"" + super.Foo(a));}
-}
-class Derived < Base
-{
-    Foo(a) {print(""Derived"" + super(BaseBase).Foo(a));}
-}
-var inst = Derived();
-inst.Foo(""hi"");",
-@"BaseBasehiDerived")
-                .SetName("SuperJumpChain");
-
-            yield return new TestCaseData(
-@"
-class BaseBase
-{
-    Foo(a) {print(""BaseBase"" + a);}
-}
-class Base < BaseBase
-{
-    Foo(a) {print(""Base"" + super.Foo(a));}
-}
-class Derived < Base
-{
-    Foo(a) {print(""Derived"" + super(BassBase).Foo(a));}
-}
-var inst = Derived();
-inst.Foo(""hi"");",
-@"IDENTIFIER|12:51 Could not find parent class of name 'BassBase' via 'super'.")
-                .SetName("TypoSuperJumpChain");
+                .SetName("MetaMethodAndInherField");
 
             yield return new TestCaseData(
 @"class Test
 {
     var a = 10;
-    Thing(b)
+    Thing(self, b)
     {
-        if(b == true) { this.a *= 2; return this.a;}
-        else { this.a /= 2; return this.a; }
+        if(b == true) { self.a *= 2; return self.a;}
+        else { self.a /= 2; return self.a; }
     }
 }
 
 var t = Test();
-print(t.Thing(true));
-print(t.Thing(false));
+print(t.Thing(t,true));
+print(t.Thing(t,false));
 ",
 @"2010")
                 .SetName("ClassInnerUseOfThis");
@@ -1140,7 +785,7 @@ print(t.Thing(false));
 @"class Test
 {
     var a,b,c=10;
-    init(a,c){}
+    init(self, a,c){}
 }
 
 var t = Test(1,2);
@@ -1148,69 +793,21 @@ printr(t);",
 @"<inst Test>
   a : 1
   b : null
-  c : 2")
+  c : 2
+  init : <fn init>")
                 .SetName("ClassAutoInitVars");
 
             yield return new TestCaseData(
 @"class Test
 {
-    getset a,b,c=10;
-    init(_a,_c){}
-}
-
-var t = Test(1,2);
-printr(t);",
-@"<inst Test>
-  _a : 1
-  _b : null
-  _c : 2")
-                .SetName("ClassAutoInitGetSet");
-
-            yield return new TestCaseData(
-@"class Test
-{
-    var a,b,c;
-    getset d;
-    Meth(p)
-    {
-        a = p;
-        _d = p;
-    }
-}
-
-var t = Test();
-t.Meth(""Hello World"");
-print(t.a);
-print(t.d);",
-@"Hello WorldHello World")
-                .SetName("MethodSetImplicitThis");
-
-            yield return new TestCaseData(
-@"class Test
-{
-    var a=5,b;
-    init()
-    {
-        b = a*a;
-    }
-}
-
-var t = Test();
-print(t.b);",
-@"25")
-                .SetName("MethodGetImplicitThis");
-
-            yield return new TestCaseData(
-@"class Test
-{
-    Meth() { b += 1; print(b); }
+    Meth(self) { self.b += 1; print(self.b); }
 }
 
 var t = Test();
 t.b = 7;
-t.Meth();",
+t.Meth(t);",
 @"8")
-                .SetName("ResolveGetAndSetOnRuntimeMember");
+                .SetName("ResolveAccessOnRuntimeMember");
 
             yield return new TestCaseData(
 @"class Test
@@ -1219,7 +816,7 @@ t.Meth();",
 
 var t = Test();
 print(t.a);",
-@"IDENTIFIER|6:9 Undefined method 'a'.")
+@"IDENTIFIER|6:9 Undefined property 'a' on <inst Test>.")
                 .SetName("RuntimeAccessExpection");
 
             yield return new TestCaseData(
@@ -1321,7 +918,7 @@ InMeth(Meth());",
 @"class Vector2
 {
     var x,y;
-    init(x,y){}
+    init(self,x,y){}
 
     _add(lhs, rhs)
     {
@@ -1363,25 +960,55 @@ printr( a%b );",
 @"<inst Vector2>
   x : 4
   y : 6
+  init : <fn init>
+  _add : <fn _add>
+  _minus : <fn _minus>
+  _slash : <fn _slash>
+  _star : <fn _star>
+  _percent : <fn _percent>
 <inst Vector2>
   x : -2
   y : -2
+  init : <fn init>
+  _add : <fn _add>
+  _minus : <fn _minus>
+  _slash : <fn _slash>
+  _star : <fn _star>
+  _percent : <fn _percent>
 <inst Vector2>
   x : 3
   y : 8
+  init : <fn init>
+  _add : <fn _add>
+  _minus : <fn _minus>
+  _slash : <fn _slash>
+  _star : <fn _star>
+  _percent : <fn _percent>
 <inst Vector2>
   x : 0.333333333333333
   y : 0.5
+  init : <fn init>
+  _add : <fn _add>
+  _minus : <fn _minus>
+  _slash : <fn _slash>
+  _star : <fn _star>
+  _percent : <fn _percent>
 <inst Vector2>
   x : 1
-  y : 2")
+  y : 2
+  init : <fn init>
+  _add : <fn _add>
+  _minus : <fn _minus>
+  _slash : <fn _slash>
+  _star : <fn _star>
+  _percent : <fn _percent>")
                 .SetName("ClassMathOperators");
 
             yield return new TestCaseData(
 @"class Vector2
 {
     var x,y;
-    init(x,y){}
+    init(self,x,y){}
 
     _equality(lhs, rhs)
     {
@@ -1409,7 +1036,7 @@ print(a != b);",
 @"class Scalar
 {
     var x;
-    init(x){}
+    init(self,x){}
 
     _less(lhs, rhs)
     {
@@ -1445,7 +1072,7 @@ print(a >= b);",
 @"class Vector2
 {
     var x,y;
-    init(x,y){}
+    init(self,x,y){}
 }
 
 var a = Vector2(1,2),b = Vector2(3,4);
@@ -1458,7 +1085,7 @@ printr( a+b );",
 @"class Vector2
 {
     var x,y;
-    init(x,y){}
+    init(self,x,y){}
 }
 
 fun AddV2(lhs, rhs)
@@ -1471,7 +1098,8 @@ var a = Vector2(1,2),b = Vector2(3,4);
 printr( AddV2( a, b ) );",
 @"<inst Vector2>
   x : 4
-  y : 6")
+  y : 6
+  init : <fn init>")
                 .SetName("Vector2Func");
 
             yield return new TestCaseData(
@@ -1574,6 +1202,33 @@ mul:Failed - THROW|13:29
 }",
 @"THROW|5:21 ")
                 .SetName("TestCaseFailure");
+
+            yield return new TestCaseData(
+@"class MyClass
+{
+    var a,b,c = 10;
+    init(self, a,b)
+    {
+        self.c += a + b;
+    }
+}
+
+var my = MyClass(1,2);
+print(my.c);",
+@"13")
+                .SetName("Class_Create_init");
+
+            yield return new TestCaseData(
+@"fun Func()
+{
+    print(""Foo"");
+    return;
+    print(""Bar"");
+}
+
+Func();",
+@"Foo")
+                .SetName("Return_void");
 
             yield return new TestCaseData(
 @"print("""");",

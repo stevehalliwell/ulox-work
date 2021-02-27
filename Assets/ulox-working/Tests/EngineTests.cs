@@ -28,55 +28,52 @@ printr (a);",
                 .SetName("PrintR_var");
 
             yield return new TestCaseData(
-@"class Test{getset a;}
+@"class Test{var a;}
 printr (Test);",
 @"<class Test>
-  <fn a>
-  <fn Seta>")
+  var a")
                 .SetName("PrintR_Class");
 
             yield return new TestCaseData(
-@"class Test{getset a;}
+@"class Test{var a;}
 printr (Test());",
 @"<inst Test>
-  _a : null")
+  a : null")
                 .SetName("PrintR_Inst");
 
             yield return new TestCaseData(
-@"class Test{getset a;var b = 10;}
+@"class Test{var a;var b = 10;}
 var t = Test();
-t.Seta(Test());
+t.a = Test();
 printr (t);",
 @"<inst Test>
-  _a : <inst Test>
-    _a : null
+  a : <inst Test>
+    a : null
     b : 10
   b : 10")
                 .SetName("PrintR_InstNested");
 
             yield return new TestCaseData(
-@"class Base {getset a;}
-class Test < Base{getset b;}
+@"class Base {var a;}
+class Test < Base{var b;}
 printr (Test);",
 @"<class Test>
-  meta : <class Base>
-    <fn a>
-    <fn Seta>
-  <fn b>
-  <fn Setb>")
+  super : <class Base>
+    var a
+  var b")
                 .SetName("PrintR_Class_WithBase");
 
             yield return new TestCaseData(
 @"class Base {var c = 1;}
-class Test < Base{getset a;var b = 10;}
+class Test < Base{var a;var b = 10;}
 var t = Test();
-t.Seta(Test());
+t.a = Test();
 printr (t);",
 @"<inst Test>
   c : 1
-  _a : <inst Test>
+  a : <inst Test>
     c : 1
-    _a : null
+    a : null
     b : 10
   b : 10")
                 .SetName("PrintR_InstNested_WithBase");
@@ -120,15 +117,15 @@ classof(a);",
                 .SetName("ClassofFailure");
 
             yield return new TestCaseData(
-@"class Cloneable { Clone() { return classof(this)(); } }
+@"class Cloneable { Clone(self) { return classof(self)(); } }
 
 class Test < Cloneable { var a = 10;}
 
 var t = Test();
-var nt = t.Clone();
+var nt = t.Clone(t);
 print(nt.a);",
 @"10")
-                .SetName("CloneMethod");
+                .SetName("CloneViaClassof");
 
             yield return new TestCaseData(
 @"print ("""");",

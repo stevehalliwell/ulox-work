@@ -5,8 +5,6 @@ namespace ULox
 {
     public class Parser
     {
-        private enum FunctionType { None, Function, Method, Get, Set, }
-
         private List<Token> _tokens;
         private int current = 0;
         private int _loopDepth;
@@ -98,64 +96,7 @@ namespace ULox
             {
                 var funcType = FunctionType.Method;
                 var isClassMeta = Match(TokenType.CLASS);
-                if (Match(TokenType.GET))
-                {
-                    //check if its short hand and generate, if not then pass to function
-                    if (CheckNext(TokenType.END_STATEMENT,
-                        TokenType.ASSIGN,
-                        TokenType.COMMA))
-                    {
-                        HandleGetSetGeneration(
-                            className,
-                            methods,
-                            metaMethods,
-                            fields,
-                            metaFields,
-                            isClassMeta,
-                            true,
-                            false);
-                    }
-                    else
-                    {
-                        var genFunc = Function(FunctionType.Get);
-                        (isClassMeta ? metaMethods : methods).Add(genFunc);
-                    }
-                }
-                else if (Match(TokenType.SET))
-                {
-                    if (CheckNext(TokenType.END_STATEMENT,
-                        TokenType.ASSIGN,
-                        TokenType.COMMA))
-                    {
-                        HandleGetSetGeneration(
-                            className,
-                            methods,
-                            metaMethods,
-                            fields,
-                            metaFields,
-                            isClassMeta,
-                            false,
-                            true);
-                    }
-                    else
-                    {
-                        var genFunc = Function(FunctionType.Set);
-                        (isClassMeta ? metaMethods : methods).Add(genFunc);
-                    }
-                }
-                else if (Match(TokenType.GETSET))
-                {
-                    HandleGetSetGeneration(
-                        className,
-                            methods,
-                            metaMethods,
-                            fields,
-                            metaFields,
-                            isClassMeta,
-                            true,
-                            true);
-                }
-                else if (Match(TokenType.VAR))
+                if (Match(TokenType.VAR))
                 {
                     var varStatements = FlattenChainOfVars(VarDeclaration());
                     foreach (var varStatement in varStatements)
@@ -222,34 +163,6 @@ namespace ULox
                 null);
         }
 
-        private void HandleGetSetGeneration(
-            Token className,
-            List<Stmt.Function> methods,
-            List<Stmt.Function> metaMethods,
-            List<Stmt.Var> fields,
-            List<Stmt.Var> metaFields,
-            bool isClassMeta,
-            bool doGet,
-            bool doSet)
-        {
-            var origAssigns = FlattenChainOfVars(VarDeclaration());
-            foreach (var origAssign in origAssigns)
-            {
-                var hiddenAssign = ToClassAutoVarDeclaration(origAssign);
-                if (doGet)
-                {
-                    var genFunc = CreateGetMethod(className, origAssign.name, hiddenAssign.name);
-                    (isClassMeta ? metaMethods : methods).Add(genFunc);
-                }
-                if (doSet)
-                {
-                    var genFunc = CreateSetMethod(className, origAssign.name, hiddenAssign.name);
-                    (isClassMeta ? metaMethods : methods).Add(genFunc);
-                }
-                (isClassMeta ? metaFields : fields).Add(hiddenAssign);
-            }
-        }
-
         private List<Stmt.Var> FlattenChainOfVars(Stmt stmt)
         {
             var res = new List<Stmt.Var>();
@@ -272,38 +185,6 @@ namespace ULox
             }
         }
 
-        private static Stmt.Function CreateSetMethod(Token name, Token writtenFieldName, Token hiddenInternalFieldName)
-        {
-            var setFuncName = writtenFieldName.Copy(TokenType.IDENTIFIER, "Set" + writtenFieldName.Lexeme);
-            var valueName = writtenFieldName.Copy(TokenType.IDENTIFIER, "value");
-            return new Stmt.Function(setFuncName,
-                new Expr.Function(new List<Token>() { Class.MakeThisToken(), valueName },
-                    new List<Stmt>()
-                    {
-                        new Stmt.Expression(new Expr.Set(
-                            new Expr.This(Class.MakeThisToken(name), EnvironmentVariableLocation.Invalid),
-                            hiddenInternalFieldName,
-                            new Expr.Get(null, valueName, EnvironmentVariableLocation.Invalid), EnvironmentVariableLocation.Invalid))
-                    }, false, false, false),
-                EnvironmentVariableLocation.InvalidSlot);
-        }
-
-        private Stmt.Function CreateGetMethod(Token className, Token writtenFieldName, Token hiddenInternalFieldName)
-        {
-            return new Stmt.Function(writtenFieldName,
-                new Expr.Function(null,
-                    new List<Stmt>()
-                    {
-                        new Stmt.Return(className.Copy(TokenType.RETURN),
-                            new Expr.Grouping(
-                                new List<Expr>(){
-                                    new Expr.Get(
-                                        new Expr.This(Class.MakeThisToken(className),
-                                        EnvironmentVariableLocation.Invalid), hiddenInternalFieldName, EnvironmentVariableLocation.Invalid) }))
-                                    }, false, false, true)
-                            , EnvironmentVariableLocation.InvalidSlot);
-        }
-
         private Stmt.Function Function(FunctionType functionType)
         {
             var name = Consume(TokenType.IDENTIFIER, $"Expect {functionType} name.");
@@ -312,54 +193,29 @@ namespace ULox
 
         private Expr.Function FunctionBody(FunctionType functionType)
         {
-            List<Token> parameters = null;
+            var prev = Previous();
+            List<Token> parameters = new List<Token>();
 
-            if (functionType == FunctionType.Function || Check(TokenType.OPEN_PAREN))
+            //todo if init and first param not self, yell
+
+            Consume(TokenType.OPEN_PAREN, $"Expect '(' after {functionType} name.");
+            if (!Check(TokenType.CLOSE_PAREN))
             {
-                parameters = new List<Token>() { Class.MakeThisToken() };
-                Consume(TokenType.OPEN_PAREN, $"Expect '(' after {functionType} name.");
-                if (!Check(TokenType.CLOSE_PAREN))
+                do
                 {
-                    do
+                    if (parameters.Count >= 255)
                     {
-                        if (parameters.Count >= 255)
-                        {
-                            throw new ParseException(Peek(), "Can't have more than 255 arguments.");
-                        }
+                        throw new ParseException(Peek(), "Can't have more than 255 arguments.");
+                    }
 
-                        parameters.Add(Consume(TokenType.IDENTIFIER, "Expect parameter name."));
-                    } while (Match(TokenType.COMMA));
-                }
-                Consume(TokenType.CLOSE_PAREN, "Expect ')' after parameters.");
+                    parameters.Add(Consume(TokenType.IDENTIFIER, "Expect parameter name."));
+                } while (Match(TokenType.COMMA));
             }
-
-            if (functionType == FunctionType.Get &&
-                (parameters != null && parameters.Count != 0))
-            {
-                throw new ClassException(_currentClassToken, "Cannot have arguments to a Get.");
-            }
-
-            if (functionType == FunctionType.Set &&
-                (parameters != null && parameters.Count != 0))
-            {
-                throw new ClassException(_currentClassToken, "Cannot have arguments to a Set. A 'value' param is auto generated.");
-            }
-
-            if (functionType == FunctionType.Set)
-            {
-                var createdValueParam = Previous().Copy(TokenType.IDENTIFIER, "value");
-                parameters = new List<Token>() { Class.MakeThisToken() }; 
-                parameters.Add(createdValueParam);
-            }
+            Consume(TokenType.CLOSE_PAREN, "Expect ')' after parameters.");
 
             Consume(TokenType.OPEN_BRACE, $"Expect '{{' before {functionType} body.");
             var body = Block();
             return new Expr.Function(parameters, body, false, false, false);
-        }
-
-        private static Stmt.Var ToClassAutoVarDeclaration(Stmt.Var inVar)
-        {
-            return new Stmt.Var(inVar.name.Copy(inVar.name.TokenType, "_" + inVar.name.Lexeme), inVar.initializer, EnvironmentVariableLocation.InvalidSlot);
         }
 
         private Stmt VarDeclaration()
@@ -427,12 +283,14 @@ namespace ULox
         private Stmt ReturnStatement()
         {
             var keyword = Previous();
-            Expr.Grouping grouping = null;
-            if (Match(TokenType.OPEN_PAREN))
-                grouping = GroupingExpression();
-            else
-                grouping = new Expr.Grouping(new List<Expr>() { Expression() });
-
+            Expr.Grouping grouping = new Expr.Grouping(new List<Expr>() { });
+            if (!Check(TokenType.END_STATEMENT))
+            {
+                if (Match(TokenType.OPEN_PAREN))
+                    grouping = GroupingExpression();
+                else
+                    grouping = new Expr.Grouping(new List<Expr>() { Expression() });
+            }
             Consume(TokenType.END_STATEMENT, "Expect ; after return value.");
             return new Stmt.Return(keyword, grouping);
         }
@@ -614,7 +472,6 @@ namespace ULox
                 }
                 else
                 {
-                    //a 'super.a = 1;' ends up in here unhandled
                     throw new ParseException(equals, "Invalid assignment target.");
                 }
             }
@@ -761,29 +618,6 @@ namespace ULox
                 return new Expr.Literal(Previous().Literal);
             }
 
-            if (Match(TokenType.SUPER))
-            {
-                Token keyword = Previous();
-                Token specifiedClass = new Token();
-                if (Match(TokenType.OPEN_PAREN))
-                {
-                    specifiedClass = Consume(TokenType.IDENTIFIER,
-                    "Expect parent class identifiying token.");
-                    Consume(TokenType.CLOSE_PAREN, "Expect ')' after 'super' with specified parent class name.");
-                }
-                Consume(TokenType.DOT, "Expect '.' after 'super'.");
-                Token method = Consume(TokenType.IDENTIFIER,
-                    "Expect superclass method name.");
-                return new Expr.Super(
-                    keyword,
-                    specifiedClass,
-                    method,
-                    EnvironmentVariableLocation.Invalid,
-                    EnvironmentVariableLocation.Invalid);
-            }
-
-            if (Match(TokenType.THIS)) return new Expr.This(Previous(), EnvironmentVariableLocation.Invalid);
-
             if (Match(TokenType.IDENTIFIER))
             {
                 return new Expr.Get(null, Previous(), EnvironmentVariableLocation.Invalid);
@@ -804,13 +638,6 @@ namespace ULox
                 TokenType.QUESTION))
             {
                 throw new ParseException(Previous(), "Missing left-had operand.");
-            }
-
-            if (Match(TokenType.GET,
-                TokenType.SET,
-                TokenType.GETSET))
-            {
-                throw new ParseException(Previous(), "Only expected withing class declaration.");
             }
 
             throw new ParseException(Peek(), "Expect expression.");

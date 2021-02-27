@@ -256,7 +256,10 @@ namespace ULox
 
         public void Visit(Stmt.Expression stmt) => Evaluate(stmt.expression);
 
-        public void Visit(Stmt.Block stmt) => ExecuteBlock(stmt.statements, new Environment(CurrentEnvironment));
+        public void Visit(Stmt.Block stmt)
+        {
+            ExecuteBlock(stmt.statements, new Environment(CurrentEnvironment));
+        }
 
         public void Visit(Stmt.If stmt)
         {
@@ -302,15 +305,9 @@ namespace ULox
             }
         }
 
-        public void Visit(Stmt.Break stmt)
-        {
-            throw new Break(stmt.keyword);
-        }
+        public void Visit(Stmt.Break stmt) => throw new Break(stmt.keyword);
 
-        public void Visit(Stmt.Continue stmt)
-        {
-            throw new Continue(stmt.keyword);
-        }
+        public void Visit(Stmt.Continue stmt) => throw new Continue(stmt.keyword);
 
         public object Visit(Expr.Call expr)
         {
@@ -320,7 +317,7 @@ namespace ULox
 
             if (callee is ICallable calleeCallable)
             {
-                if (args.Length + Function.StartingParamSlot != calleeCallable.Arity)
+                if (args.Length != calleeCallable.Arity)
                     throw new RuntimeCallException(expr.paren,
                         $"Expected { calleeCallable.Arity} args but got { args.Length }");
 
@@ -334,13 +331,10 @@ namespace ULox
         public object Visit(Expr.Function expr)
         {
             //todo if it doesn't use closure does it need current env?
-            return new Function(null, expr, CurrentEnvironment, false);
+            return new Function(null, expr, CurrentEnvironment);
         }
 
-        public void Visit(Stmt.Return stmt)
-        {
-            throw new Return(stmt.keyword, Visit(stmt.retVals));
-        }
+        public void Visit(Stmt.Return stmt) => throw new Return(stmt.keyword, Visit(stmt.retVals));
 
         public void Visit(Stmt.Var stmt)
         {
@@ -382,7 +376,7 @@ namespace ULox
 
         public void Visit(Stmt.Function stmt)
         {
-            var func = new Function(stmt.name.Lexeme, stmt.function, CurrentEnvironment, false);
+            var func = new Function(stmt.name.Lexeme, stmt.function, CurrentEnvironment);
             DefineFunctionInEnv(stmt, func);
         }
 
@@ -403,38 +397,20 @@ namespace ULox
                 CurrentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, null);
             else
                 stmt.knownSlot = CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, null);
-            
-            if (stmt.superclass != null)
-            {
-                _environmentStack.Push(new Environment(CurrentEnvironment));
-                CurrentEnvironment.DefineSlot(Class.SuperIdentifier, Class.SuperSlot, superclass);
-            }
 
-            var classMethods = new Dictionary<string, Function>();
-            foreach (var method in stmt.metaMethods)
-            {
-                var func = new Function(method.name.Lexeme, method.function, CurrentEnvironment, false);
-                classMethods[method.name.Lexeme] = func;
-            }
+            //  metas are now not able to have methods as they don't get 'created'
+            var metaClass = new Class(null, stmt.name.Lexeme + "_meta", null, null, null, null, null); 
 
-            classMethods.TryGetValue(Class.InitalizerFunctionName, out var metaInit);
-
-            var metaClass = new Class(null, stmt.name.Lexeme + "_meta", null, classMethods, null, null,null, metaInit);
-
-            var methods = new Dictionary<string, Function>();
+            var methods = new List<Function>();
             foreach (Stmt.Function method in stmt.methods)
             {
                 var function = new Function(
                     method.name.Lexeme,
                     method.function,
-                    CurrentEnvironment,
-                    method.name.Lexeme == Class.InitalizerFunctionName);
+                    CurrentEnvironment);
 
-                methods[method.name.Lexeme] = function;
+                methods.Add(function);
             }
-
-
-            methods.TryGetValue(Class.InitalizerFunctionName, out var initFunc);
 
             var @class = new Class(
                 metaClass,
@@ -443,8 +419,15 @@ namespace ULox
                 methods,
                 stmt.fields,
                 CurrentEnvironment,
-                stmt.indexFieldMatches,
-                initFunc);
+                stmt.indexFieldMatches);
+
+
+            foreach (var method in stmt.metaMethods)
+            {
+                var func = new Function(method.name.Lexeme, method.function, CurrentEnvironment);
+                metaClass.Set(func.Name, func);
+                @class.Set(func.Name, func);
+            }
 
             if (stmt.metaFields != null)
             {
@@ -452,11 +435,6 @@ namespace ULox
                 {
                     @class.Set(item.name.Lexeme, Evaluate(item.initializer));
                 }
-            }
-
-            if (superclass != null)
-            {
-                _environmentStack.Pop();
             }
 
             CurrentEnvironment.AssignSlot(stmt.knownSlot, @class);
@@ -480,7 +458,6 @@ namespace ULox
                     }
                     catch (LoxException)
                     {
-                        if (!AttemptToResolveToMember(expr))
                             throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
                     }
                 }
@@ -507,17 +484,9 @@ namespace ULox
                 }
                 else
                 {
-                    //todo this dict lookup in here is still a cause of much perf issues
-                    result = objInst.GetMethod(expr.name);
+                    throw new RuntimeAccessException(expr.name, $"Undefined property '{expr.name.Lexeme}' on {obj}.");
                 }
 
-                if (result is IFunction resultFunc)
-                {
-                    if (resultFunc.IsGetter)
-                    {
-                        result = resultFunc.Call(this, FunctionArguments.New(objInst));
-                    }
-                }
                 return result;
             }
 
@@ -546,7 +515,6 @@ namespace ULox
                     }
                     catch (LoxException)
                     {
-                        if (!AttemptToResolveToMember(expr))
                             throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
                     }
                 }
@@ -608,59 +576,6 @@ namespace ULox
             return resultsFromFunc;
         }
 
-        public object Visit(Expr.This expr)
-        {
-            if (expr.varLoc == EnvironmentVariableLocation.Invalid)
-            {
-                try
-                {
-                    expr.varLoc = CurrentEnvironment.FindLocation(expr.keyword.Lexeme);
-                }
-                catch (LoxException)
-                {
-                    throw new EnvironmentException(expr.keyword, $"Undefined variable {expr.keyword.Lexeme}");
-                }
-            }
-            return CurrentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
-        }
-
-        public object Visit(Expr.Super expr)
-        {
-            if (expr.thisVarLoc == EnvironmentVariableLocation.Invalid)
-                expr.thisVarLoc = CurrentEnvironment.FindLocation(Class.ThisIdentifier);
-
-            var inst = (Instance)CurrentEnvironment.Ancestor(expr.thisVarLoc.depth).FetchObject(expr.thisVarLoc.slot);
-
-            if (expr.superVarLoc == EnvironmentVariableLocation.Invalid)
-                expr.superVarLoc = CurrentEnvironment.FindLocation(Class.SuperIdentifier);
-
-            var superclass = (Class)CurrentEnvironment.Ancestor(expr.superVarLoc.depth).FetchObject(expr.superVarLoc.slot);
-
-            if (!string.IsNullOrEmpty(expr.classNameToken.Lexeme))
-            {
-                while (superclass != null && superclass.Name != expr.classNameToken.Lexeme)
-                {
-                    superclass = superclass.Super;
-                }
-
-                if (superclass == null)
-                {
-                    throw new RuntimeTypeException(expr.classNameToken,
-                        $"Could not find parent class of name '{expr.classNameToken.Lexeme}' via 'super'.");
-                }
-            }
-
-            var method = superclass.FindMethod(expr.method.Lexeme);
-
-            if (method == null)
-            {
-                throw new RuntimeTypeException(expr.method,
-                    $"Could not find '{expr.method.Lexeme}'via 'super'.");
-            }
-
-            return method.Bind(inst);
-        }
-
         public object Visit(Expr.Conditional expr)
         {
             if (IsTruthy(Evaluate(expr.condition)))
@@ -690,42 +605,7 @@ namespace ULox
             Execute(stmt.right);
         }
 
-
-
-        private bool AttemptToResolveToMember(Expr.Get expr)
-        {
-            var localThisVar = CurrentEnvironment.FetchObject(Class.ThisSlot);
-            if (expr.varLoc == EnvironmentVariableLocation.Invalid && localThisVar is Instance localThis)
-            {
-                var matchingLoc = localThis.FindSlot(expr.name.Lexeme);
-                if (matchingLoc != EnvironmentVariableLocation.InvalidSlot)
-                {
-                    expr.targetObj = new Expr.This(Class.MakeThisToken(expr.name),
-                        EnvironmentVariableLocation.Invalid); ;
-                    expr.varLoc.slot = matchingLoc;
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private bool AttemptToResolveToMember(Expr.Set expr)
-        {
-            var localThisVar = CurrentEnvironment.FetchObject(Class.ThisSlot);
-            if (expr.varLoc == EnvironmentVariableLocation.Invalid && localThisVar is Instance localThis)
-            {
-                var matchingLoc = localThis.FindSlot(expr.name.Lexeme);
-                if (matchingLoc != EnvironmentVariableLocation.InvalidSlot)
-                {
-                    expr.targetObj = new Expr.This(Class.MakeThisToken(expr.name),
-                        EnvironmentVariableLocation.Invalid);
-                    expr.varLoc.slot = matchingLoc;
-                    return true;
-                }
-            }
-            return false;
-        }
-
+       
         private void DefineFunctionInEnv(Stmt.Function stmt, Function func)
         {
             if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
@@ -742,10 +622,7 @@ namespace ULox
                 CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, value);
         }
 
-        public object Visit(Expr.Throw expr)
-        {
-            throw new RuntimeException(expr.keyword, Evaluate(expr.expr)?.ToString());
-        }
+        public object Visit(Expr.Throw expr) => throw new RuntimeException(expr.keyword, Evaluate(expr.expr)?.ToString());
 
         public void Visit(Stmt.Test stmt)
         {

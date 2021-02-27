@@ -11,14 +11,6 @@
             _class = @class;
         }
 
-        public object GetMethod(Token name)
-        {
-            var method = _class?.FindMethod(name.Lexeme);
-            if (method != null) return method.Bind(this);
-
-            throw new InstanceException(name, "Undefined method '" + name.Lexeme + "'.");
-        }
-
         public virtual void Set(string name, object val)
         {
             if (valueIndicies.TryGetValue(name, out var index))
@@ -101,7 +93,14 @@
             //    break;
             }
 
-            return _class.FindMethod(operatorName);
+            var loc = FindSlot(operatorName);
+            if (loc != EnvironmentVariableLocation.InvalidSlot)
+                return FetchObject(loc) as Function;
+
+            loc = _class.FindSlot(operatorName);
+            return loc != EnvironmentVariableLocation.InvalidSlot ? 
+                _class.FetchObject(loc) as Function : 
+                null;
         }
     }
 }

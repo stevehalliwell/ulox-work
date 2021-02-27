@@ -18,10 +18,6 @@ namespace ULox
             "Grouping : List<Expr> expressions",
             "Literal  : object value",
             "Logical  : Expr left, Token op, Expr right",
-            "Super    : Token keyword, Token classNameToken, Token method, " +
-                      " EnvironmentVariableLocation superVarLoc," +
-                      " EnvironmentVariableLocation thisVarLoc",
-            "This     : Token keyword, EnvironmentVariableLocation varLoc",
             "Unary    : Token op, Expr right",
             "Conditional : Expr condition, Expr ifTrue, Expr ifFalse",
             "Function : List<Token> parameters, List<Stmt> body," +

@@ -60,11 +60,6 @@
         TRUE,
         FALSE,
         NULL,
-        THIS,
-        SUPER,
-        GET,
-        SET,
-        GETSET,
 
         THROW,
 

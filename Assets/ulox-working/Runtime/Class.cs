@@ -6,19 +6,9 @@ namespace ULox
     public class Class : Instance, ICallable
     {
         public const string InitalizerFunctionName = "init";
-        public const string ThisIdentifier = "this";
-        public const string SuperIdentifier = "super";
-        //presently closures go super->this->members
-        //  These offsets exist so that if/when this changes, it's less tiresome to do so
-        public const short ThisSlot = 0;
-        public const short SuperSlot = 0;
-
-        public static Token MakeThisToken() => new Token(TokenType.THIS, Class.ThisIdentifier, null, -1, -1);
-        public static Token MakeThisToken(Token from) => from.Copy(TokenType.THIS, Class.ThisIdentifier);
 
         private string _name;
-        private Dictionary<string, Function> _methods;
-        public IReadOnlyDictionary<string, Function> ReadOnlyMethods => _methods;
+        private List<Function> _methods;
         private Class _superclass;
         public Class Super => _superclass;
         private List<Stmt.Var> _vars;
@@ -32,11 +22,10 @@ namespace ULox
             Class metaClass,
             string name,
             Class superclass,
-            Dictionary<string, Function> methods,
+            List<Function> methods,
             List<Stmt.Var> fields,
             IEnvironment enclosing,
-            List<short> initVarIndexMatches,
-            Function initializer)
+            List<short> initVarIndexMatches)
             : base(metaClass, enclosing)
         {
             _name = name;
@@ -44,11 +33,13 @@ namespace ULox
             _superclass = superclass;
             _vars = fields;
             _initVarIndexMatches = initVarIndexMatches;
-            _ourInitializer = initializer;
+            _ourInitializer = methods?.Find(x => x.Name == Class.InitalizerFunctionName);
             _initializer = _ourInitializer != null ? _ourInitializer : _superclass?._ourInitializer;
         }
 
-        public virtual int Arity => (_initializer?.Arity ?? Function.StartingParamSlot);
+        public virtual int Arity => (_initializer?.Arity - 1 ?? 0);
+
+        public IReadOnlyList<Stmt.Var> Vars => _vars;
 
         public virtual object Call(Interpreter interpreter, FunctionArguments functionArgs)
         {
@@ -58,16 +49,21 @@ namespace ULox
             //  and so on, will allow base class methods to use var index should they wish as ahead of time
             //  order is stable
             CreateFields(interpreter, instance, this);
+            CreateMethods(interpreter, instance, this);
 
             if (_initializer != null)
             {
+                var newArgs = new object[functionArgs.args.Length + 1];
+                newArgs[0] = instance;
+                functionArgs.args.CopyTo(newArgs, 1);
+                functionArgs = FunctionArguments.New(newArgs);
+
                 for (int i = 0; i < _initVarIndexMatches?.Count; i += 2)
                 {
                     //we're using the indicies in pairs of out to in
                     instance.AssignSlot(_initVarIndexMatches[i + 1], functionArgs.At(_initVarIndexMatches[i]));
                 }
 
-                functionArgs.@this = instance;
                 _initializer.Call(interpreter, functionArgs);
             }
 
@@ -92,17 +88,20 @@ namespace ULox
             }
         }
 
-        public virtual Function FindMethod(string lexeme)
+        private void CreateMethods(Interpreter interpreter, Instance inst, Class fromClass)
         {
-            if (_methods == null) return null;
+            if (fromClass == null)
+                return;
 
-            if (_methods.TryGetValue(lexeme, out Function func))
-                return func;
+            CreateMethods(interpreter, inst, fromClass._superclass);
 
-            if (_superclass != null)
-                return _superclass.FindMethod(lexeme);
-
-            return null;
+            if (fromClass._methods != null)
+            {
+                foreach (var item in fromClass._methods)
+                {
+                    inst.Set(item.Name, item);
+                }
+            }
         }
 
         public override string ToString() => $"<class {_name}>";
