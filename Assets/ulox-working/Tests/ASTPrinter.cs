@@ -202,7 +202,7 @@ namespace ULox.Tests
                 }
                 Print(stmt.metaMethods);
             }
-            if (stmt.fields.Count > 0 || stmt.methods.Count > 0)
+            if (stmt.fields.Count > 0 )
             {
                 PrintLine();
                 Print(" instance ");
@@ -210,7 +210,7 @@ namespace ULox.Tests
                 {
                     Print(item);
                 }
-                Print(stmt.methods);
+                Print(stmt.init);
             }
             Dent();
         }

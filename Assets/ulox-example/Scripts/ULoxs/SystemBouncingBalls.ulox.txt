@@ -65,7 +65,6 @@ fun Update()
 	var len = balls.Count();
 	for(var i = 0; i < len; i += 1)
 	{
-		var b = balls.Get(i);
-		b.Tick(b);
+		Ball.Tick(balls.Get(i));
 	}
 }

@@ -145,26 +145,6 @@ new TokenType[]
                 .SetName("Comments");
 
             yield return new TestCaseData(
-@"var logic = true and false or true;
-var comparison = 1 < 2 and 2 >= 3 or 1 > 2 and 2 <= 3
-
-class WithInit{
-    init(a,b,c)
-    {
-        this.a = a;
-        this.b = b;
-        this.c = c;
-    }
-}
-
-var inst = WithInit(!logic,comparison,3)",
-new TokenType[]
-{
-                
-})
-                .SetName("LogicClasses");
-
-            yield return new TestCaseData(
 @"var a = 1 < 2 ? 3 : 4;",
 new TokenType[]
 {
@@ -182,21 +162,6 @@ new TokenType[]
             TokenType.EOF,
 })
                 .SetName("Conditional");
-
-            yield return new TestCaseData(
-@"class Test
-{
-    init(a,b) {this._a = a; print b;}
-    get a = true;
-    set d = 7;
-    getset i,j,k;
-    func(funky){d(funky);}
-}",
-new TokenType[]
-{
-
-})
-                .SetName("ClassSugar");
         }
 
         [Test]

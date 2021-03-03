@@ -33,35 +33,11 @@ var res = ComboMath(foo, bar, car);",
 @"{ var 1:8 - IDENTIFIER foo[ 1 ] }
 { var 2:8 - IDENTIFIER bar[ 2 ] }
 { var 3:8 - IDENTIFIER car[ 3 ] }
-{ fun 5:14 - IDENTIFIER ComboMath[  ( -1:-1 - THIS this | 5:16 - IDENTIFIER a | 5:18 - IDENTIFIER b | 5:20 - IDENTIFIER c ) { 
-  fun 7:16 - IDENTIFIER Mul[  ( -1:-1 - THIS this | 7:18 - IDENTIFIER l | 7:22 - IDENTIFIER r ) { return [ ( [ 7:36 - STAR * [ 7:35 - IDENTIFIER l ] [ 7:37 - IDENTIFIER r ] ] ) ] } ] }
+{ fun 5:14 - IDENTIFIER ComboMath[  ( 5:16 - IDENTIFIER a | 5:18 - IDENTIFIER b | 5:20 - IDENTIFIER c ) { 
+  fun 7:16 - IDENTIFIER Mul[  ( 7:18 - IDENTIFIER l | 7:22 - IDENTIFIER r ) { return [ ( [ 7:36 - STAR * [ 7:35 - IDENTIFIER l ] [ 7:37 - IDENTIFIER r ] ] ) ] } ] }
   { return [ ( [ 8:27 - SLASH / [ call [ 8:19 - IDENTIFIER Mul ][ ( [ 8:21 - IDENTIFIER a ][ 8:23 - IDENTIFIER b ] ) ] ] [ 8:30 - IDENTIFIER c ] ] ) ] } ] }
 { var 11:8 - IDENTIFIER res[ call [ 11:22 - IDENTIFIER ComboMath ][ ( [ 11:26 - IDENTIFIER foo ][ 11:32 - IDENTIFIER bar ][ 11:38 - IDENTIFIER car ] ) ] ] }")
                 .SetName("MathAndFunctions");
-            yield return new TestCaseData(
-@"var logic = true and false or true;
-var comparison = 1 < 2 and 2 >= 3 or 1 > 2 and 2 <= 3;
-
-class WithInit{
-    init(a,b,c)
-    {
-        this.a = a;
-        this.b = b;
-        this.c = c;
-    }
-}
-
-var inst = WithInit(!logic,comparison,3);",
-@"{ var 1:10 - IDENTIFIER logic[ 1:35 - OR or [ 1:24 - AND and [ True ][ False ] ][ True ] ] }
-{ var 2:15 - IDENTIFIER comparison[ 2:46 - OR or [ 2:32 - AND and [ 2:24 - LESS < [ 1 ] [ 2 ] ][ 2:39 - GREATER_EQUAL > [ 2 ] [ 3 ] ] ][ 2:60 - AND and [ 2:52 - GREATER > [ 1 ] [ 2 ] ][ 2:67 - LESS_EQUAL < [ 2 ] [ 3 ] ] ] ] }
-{ class 4:15 - IDENTIFIER WithInit
-   instance 
-  fun 5:12 - IDENTIFIER init[  ( -1:-1 - THIS this | 5:14 - IDENTIFIER a | 5:16 - IDENTIFIER b | 5:18 - IDENTIFIER c ) { [ [ 7:20 - THIS this ]7:22 - IDENTIFIER a[ 7:28 - IDENTIFIER a ] ] }
-    { [ [ 8:20 - THIS this ]8:22 - IDENTIFIER b[ 8:28 - IDENTIFIER b ] ] }
-    { [ [ 9:20 - THIS this ]9:22 - IDENTIFIER c[ 9:28 - IDENTIFIER c ] ] } ] }
-{ var 13:9 - IDENTIFIER inst[ call [ 13:22 - IDENTIFIER WithInit ][ ( [ 13:24 - BANG ![ 13:29 - IDENTIFIER logic ] ][ 13:40 - IDENTIFIER comparison ][ 3 ] ) ] ] }")
-                .SetName("LogicAndInitClass");
-
 
             yield return new TestCaseData(
 @"class Simple
@@ -115,56 +91,6 @@ a -= (1 + 2);",
 { [ assign 11:1 - IDENTIFIER a[ 11:5 - MINUS - [ 11:1 - IDENTIFIER a ] [ ( [ 11:12 - PLUS + [ 1 ] [ 2 ] ] ) ] ] ] }")
                 .SetName("CompoundAssign");
 
-
-            yield return new TestCaseData(
-@"class Test{init(){this.a = 0;}}
-var t = Test();
-
-t.a = t.a + 1;
-t.a += 1;",
-@"{ class 1:11 - IDENTIFIER Test
-   instance 
-  fun 1:16 - IDENTIFIER init[  ( -1:-1 - THIS this ) { [ [ 1:23 - THIS this ]1:25 - IDENTIFIER a[ 0 ] ] } ] }
-{ var 2:6 - IDENTIFIER t[ call [ 2:15 - IDENTIFIER Test ][  ] ] }
-{ [ [ 4:1 - IDENTIFIER t ]4:3 - IDENTIFIER a[ 4:14 - PLUS + [ 4:11 - IDENTIFIER a[ 4:9 - IDENTIFIER t ] ] [ 1 ] ] ] }
-{ [ [ 5:1 - IDENTIFIER t ]5:3 - IDENTIFIER a[ 5:7 - PLUS + [ 5:3 - IDENTIFIER a[ 5:1 - IDENTIFIER t ] ] [ 1 ] ] ] }")
-                .SetName("CompoundAssignClasses");
-
-            yield return new TestCaseData(
-@"class Test
-{
-    init(){this.a = 1;}
-    Geta(){return this.a;}
-    Seta(value){this.a = value;}
-}",
-@"{ class 1:11 - IDENTIFIER Test
-   instance 
-  fun 3:12 - IDENTIFIER init[  ( -1:-1 - THIS this ) { [ [ 3:19 - THIS this ]3:21 - IDENTIFIER a[ 1 ] ] } ]
-  fun 4:12 - IDENTIFIER Geta[  ( -1:-1 - THIS this ) { return [ ( [ 4:29 - IDENTIFIER a[ 4:27 - THIS this ] ] ) ] } ]
-  fun 5:12 - IDENTIFIER Seta[  ( -1:-1 - THIS this | 5:18 - IDENTIFIER value ) { [ [ 5:24 - THIS this ]5:26 - IDENTIFIER a[ 5:36 - IDENTIFIER value ] ] } ] }")
-                .SetName("ManualClassGetSet");
-
-            yield return new TestCaseData(
-@"class Test
-{
-    get a;
-}",
-@"{ class 1:11 - IDENTIFIER Test
-   instance { var 3:14 - IDENTIFIER _a }
-  fun 3:14 - IDENTIFIER a[ { return [ ( [ 3:14 - IDENTIFIER _a[ 1:11 - THIS this ] ] ) ] } ] }")
-                .SetName("AutoClassGetAndSet");
-
-            yield return new TestCaseData(
-@"class Test
-{
-    getset a;
-}",
-@"{ class 1:11 - IDENTIFIER Test
-   instance { var 3:17 - IDENTIFIER _a }
-  fun 3:17 - IDENTIFIER a[ { return [ ( [ 3:17 - IDENTIFIER _a[ 1:11 - THIS this ] ] ) ] } ]
-  fun 3:17 - IDENTIFIER Seta[  ( -1:-1 - THIS this | 3:17 - IDENTIFIER value ) { [ [ 1:11 - THIS this ]3:17 - IDENTIFIER _a[ 3:17 - IDENTIFIER value ] ] } ] }")
-                .SetName("AutoClassGetSet");
-
             yield return new TestCaseData(
 @"var a,b,c;",
 @"{ { var 1:6 - IDENTIFIER a }{ { var 1:8 - IDENTIFIER b }{ var 1:10 - IDENTIFIER c } } }")
@@ -178,33 +104,9 @@ t.a += 1;",
             yield return new TestCaseData(
 @"class Test{var a,b,c;}",
 @"{ class 1:11 - IDENTIFIER Test
-   instance { var 1:18 - IDENTIFIER a }{ var 1:20 - IDENTIFIER b }{ var 1:22 - IDENTIFIER c } }")
+   instance { var 1:18 - IDENTIFIER a }{ var 1:20 - IDENTIFIER b }{ var 1:22 - IDENTIFIER c }{ 
+  fun 1:11 - IDENTIFIER init[  ( 0:0 - IDENTIFIER self )  ] } }")
                 .SetName("MultiFieldDeclare");
-
-            yield return new TestCaseData(
-@"
-class Test
-{
-    init(a, b) { this._a = a; print (b); }
-    get a = true;
-    set d = 7;
-    getset i, j, k;
-    func(funky) { d(funky); }
-}",
-@"{ class 2:11 - IDENTIFIER Test
-   instance { var 5:14 - IDENTIFIER _a[ True ] }{ var 6:14 - IDENTIFIER _d[ 7 ] }{ var 7:17 - IDENTIFIER _i }{ var 7:21 - IDENTIFIER _j }{ var 7:25 - IDENTIFIER _k }
-  fun 4:12 - IDENTIFIER init[  ( -1:-1 - THIS this | 4:14 - IDENTIFIER a | 4:18 - IDENTIFIER b ) { [ [ 4:28 - THIS this ]4:31 - IDENTIFIER _a[ 4:37 - IDENTIFIER a ] ] }
-    { [ call [ 4:45 - IDENTIFIER print ][ ( [ 4:49 - IDENTIFIER b ] ) ] ] } ]
-  fun 5:14 - IDENTIFIER a[ { return [ ( [ 5:14 - IDENTIFIER _a[ 2:11 - THIS this ] ] ) ] } ]
-  fun 6:14 - IDENTIFIER Setd[  ( -1:-1 - THIS this | 6:14 - IDENTIFIER value ) { [ [ 2:11 - THIS this ]6:14 - IDENTIFIER _d[ 6:14 - IDENTIFIER value ] ] } ]
-  fun 7:17 - IDENTIFIER i[ { return [ ( [ 7:17 - IDENTIFIER _i[ 2:11 - THIS this ] ] ) ] } ]
-  fun 7:17 - IDENTIFIER Seti[  ( -1:-1 - THIS this | 7:17 - IDENTIFIER value ) { [ [ 2:11 - THIS this ]7:17 - IDENTIFIER _i[ 7:17 - IDENTIFIER value ] ] } ]
-  fun 7:21 - IDENTIFIER j[ { return [ ( [ 7:21 - IDENTIFIER _j[ 2:11 - THIS this ] ] ) ] } ]
-  fun 7:21 - IDENTIFIER Setj[  ( -1:-1 - THIS this | 7:21 - IDENTIFIER value ) { [ [ 2:11 - THIS this ]7:21 - IDENTIFIER _j[ 7:21 - IDENTIFIER value ] ] } ]
-  fun 7:25 - IDENTIFIER k[ { return [ ( [ 7:25 - IDENTIFIER _k[ 2:11 - THIS this ] ] ) ] } ]
-  fun 7:25 - IDENTIFIER Setk[  ( -1:-1 - THIS this | 7:25 - IDENTIFIER value ) { [ [ 2:11 - THIS this ]7:25 - IDENTIFIER _k[ 7:25 - IDENTIFIER value ] ] } ]
-  fun 8:12 - IDENTIFIER func[  ( -1:-1 - THIS this | 8:18 - IDENTIFIER funky ) { [ call [ 8:25 - IDENTIFIER d ][ ( [ 8:31 - IDENTIFIER funky ] ) ] ] } ] }")
-                .SetName("ClassSugar");
 
             yield return new TestCaseData(
 @"",

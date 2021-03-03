@@ -87,7 +87,7 @@ namespace ULox
 
             Consume(TokenType.OPEN_BRACE, "Expect { befefore class body.");
 
-            var methods = new List<Stmt.Function>();
+            Stmt.Function init = null;
             var metaMethods = new List<Stmt.Function>();
             var fields = new List<Stmt.Var>();
             var metaFields = new List<Stmt.Var>();
@@ -106,28 +106,41 @@ namespace ULox
                 }
                 else
                 {
-                    (isClassMeta ? metaMethods : methods).Add(Function(funcType));
-                    //throw new ParseException(Peek(), "Unexpected token in class declaration.");
+                    var func = Function(funcType);
+                    if (!isClassMeta && func.name.Lexeme == Class.InitalizerFunctionName)
+                    {
+                        //todo force ordering if super also has an init, so if super has init(self, a,b), child must start with that
+
+                        if (init != null)
+                            throw new ClassException(func.name, $"Classes cannot have more than 1 init function.");
+
+                        init = func;
+
+                        if (init.function.parameters.Count == 0)
+                        {
+                            throw new ClassException(func.name,
+                                $"Class init expects {Class.InitalizerParamZeroName} as argument zero.");
+                        }
+                        else if (init.function.parameters[0].Lexeme != Class.InitalizerParamZeroName)
+                        {
+                            throw new ClassException(func.name,
+                                $"Class init argument zero found {init.function.parameters[0].Lexeme}" +
+                                $", expected {Class.InitalizerParamZeroName}.");
+                        }
+                    }
+                    else
+                    {
+                        metaMethods.Add(func);
+                    }
                 }
             }
 
             //validate duplicate methods
-            foreach (var method in methods)
-            {
-                if (methods.Count(x => x.name.Lexeme == method.name.Lexeme) > 1)
-                    throw new ClassException(method.name,
-                        $"Classes cannot have methods of identical names. Found more than 1 {method.name.Lexeme} in class {className.Lexeme}.");
-
-                if (fields.Count(x => x.name.Lexeme == method.name.Lexeme) > 0)
-                    throw new ClassException(method.name,
-                        $"Classes cannot have a field and a method of identical names. Found more than 1 {method.name.Lexeme} in class {className.Lexeme}.");
-            }
-
             foreach (var method in metaMethods)
             {
                 if (metaMethods.Count(x => x.name.Lexeme == method.name.Lexeme) > 1)
                     throw new ClassException(method.name,
-                        $"Classes cannot have metaMethods of identical names. Found more than 1 {method.name.Lexeme} in class {className.Lexeme}.");
+                        $"Classes cannot have Functions of identical names. Found more than 1 {method.name.Lexeme} in class {className.Lexeme}.");
 
                 if (metaFields.Count(x => x.name.Lexeme == method.name.Lexeme) > 0)
                     throw new ClassException(method.name,
@@ -152,15 +165,22 @@ namespace ULox
 
             _currentClassToken = previousClassToken;
 
+            if(init == null)
+            {
+                //generate an empty init
+                init = new Stmt.Function(className.Copy(TokenType.IDENTIFIER, Class.InitalizerFunctionName),
+                    Class.EmptyInitFuncExpr(), 
+                    EnvironmentVariableLocation.InvalidSlot);
+            }
+
             return new Stmt.Class(
                 className,
                 EnvironmentVariableLocation.InvalidSlot,
                 superclass,
-                methods,
+                init,
                 metaMethods,
                 fields,
-                metaFields,
-                null);
+                metaFields);
         }
 
         private List<Stmt.Var> FlattenChainOfVars(Stmt stmt)
@@ -196,8 +216,6 @@ namespace ULox
             var prev = Previous();
             List<Token> parameters = new List<Token>();
 
-            //todo if init and first param not self, yell
-
             Consume(TokenType.OPEN_PAREN, $"Expect '(' after {functionType} name.");
             if (!Check(TokenType.CLOSE_PAREN))
             {
@@ -212,6 +230,12 @@ namespace ULox
                 } while (Match(TokenType.COMMA));
             }
             Consume(TokenType.CLOSE_PAREN, "Expect ')' after parameters.");
+
+            if(functionType == FunctionType.Init)
+            {
+                if (parameters.Count == 0 || parameters[0].Lexeme != Class.InitalizerParamZeroName)
+                    throw new ParseException(prev, $"Expect {Class.InitalizerParamZeroName} as first param to {Class.InitalizerFunctionName}");
+            }
 
             Consume(TokenType.OPEN_BRACE, $"Expect '{{' before {functionType} body.");
             var body = Block();

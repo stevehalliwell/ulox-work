@@ -398,34 +398,18 @@ namespace ULox
             else
                 stmt.knownSlot = CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, null);
 
-            //  metas are now not able to have methods as they don't get 'created'
-            var metaClass = new Class(null, stmt.name.Lexeme + "_meta", null, null, null, null, null); 
-
-            var methods = new List<Function>();
-            foreach (Stmt.Function method in stmt.methods)
-            {
-                var function = new Function(
-                    method.name.Lexeme,
-                    method.function,
-                    CurrentEnvironment);
-
-                methods.Add(function);
-            }
-
+            
             var @class = new Class(
-                metaClass,
                 stmt.name.Lexeme,
                 superclass,
-                methods,
+                new Function(stmt.init.name.Lexeme, stmt.init.function, CurrentEnvironment),
                 stmt.fields,
-                CurrentEnvironment,
-                stmt.indexFieldMatches);
+                CurrentEnvironment);
 
 
             foreach (var method in stmt.metaMethods)
             {
                 var func = new Function(method.name.Lexeme, method.function, CurrentEnvironment);
-                metaClass.Set(func.Name, func);
                 @class.Set(func.Name, func);
             }
 
@@ -515,7 +499,7 @@ namespace ULox
                     }
                     catch (LoxException)
                     {
-                            throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
+                        throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
                     }
                 }
             }
@@ -534,8 +518,20 @@ namespace ULox
                 throw new RuntimeTypeException(expr.name, "Only instances have fields.");
             }
 
-            //todo this dict lookup in here is still a cause of much perf issues
-            obj.Set(expr.name.Lexeme, val);
+            //this was a set but the dict lookup can be cached
+            if (expr.varLoc.slot == EnvironmentVariableLocation.InvalidSlot)
+            {
+                expr.varLoc.slot = obj.FindSlot(expr.name.Lexeme);
+            }
+            if (expr.varLoc.slot != EnvironmentVariableLocation.InvalidSlot)
+            {
+                obj.AssignSlot(expr.varLoc.slot, val);
+            }
+            else
+            {
+                obj.Set(expr.name.Lexeme, val);
+            }
+                
             return val;
         }
 

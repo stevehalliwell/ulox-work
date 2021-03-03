@@ -3,7 +3,7 @@
     public class PODClass : Class
     {
         public PODClass(Environment enclosing) 
-            : base(null, "POD", null, null, null, enclosing, null)
+            : base("POD", null, null, null, enclosing)
         {
         }
     }
@@ -11,7 +11,7 @@
     public class ArrayClass : Class
     {
         public ArrayClass(Environment enclosing)
-            : base(null, "Array", null, null, null, enclosing, null) { }
+            : base("Array", null, null, null, enclosing) { }
 
         public override int Arity => 1;
 
@@ -24,7 +24,7 @@
     public class ListClass : Class
     {
         public ListClass(Environment enclosing)
-            : base(null, "List", null, null, null, enclosing, null) { }
+            : base("List", null, null, null, enclosing) { }
 
         public override int Arity => 0;
 

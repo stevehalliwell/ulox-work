@@ -6,35 +6,41 @@ namespace ULox
     public class Class : Instance, ICallable
     {
         public const string InitalizerFunctionName = "init";
+        public const string InitalizerParamZeroName = "self";
 
         private string _name;
-        private List<Function> _methods;
         private Class _superclass;
         public Class Super => _superclass;
         private List<Stmt.Var> _vars;
-        private List<short> _initVarIndexMatches;
-        private Function _ourInitializer;
         private Function _initializer;
 
         public string Name => _name;
 
+        public static Expr.Function EmptyInitFuncExpr()
+        {
+            return new Expr.Function(
+                        new List<Token>() { new Token().Copy(TokenType.IDENTIFIER, Class.InitalizerParamZeroName) },
+                        new List<Stmt>(),
+                        false, false, false);
+        }
+
         public Class(
-            Class metaClass,
             string name,
             Class superclass,
-            List<Function> methods,
+            Function init,
             List<Stmt.Var> fields,
-            IEnvironment enclosing,
-            List<short> initVarIndexMatches)
-            : base(metaClass, enclosing)
+            IEnvironment enclosing)
+            : base(null, enclosing)
         {
             _name = name;
-            _methods = methods;
             _superclass = superclass;
             _vars = fields;
-            _initVarIndexMatches = initVarIndexMatches;
-            _ourInitializer = methods?.Find(x => x.Name == Class.InitalizerFunctionName);
-            _initializer = _ourInitializer != null ? _ourInitializer : _superclass?._ourInitializer;
+            _initializer = init;
+
+            if(_initializer == null)
+            {
+                _initializer = new Function(Class.InitalizerFunctionName, EmptyInitFuncExpr(), enclosing);
+            }
         }
 
         public virtual int Arity => (_initializer?.Arity - 1 ?? 0);
@@ -49,25 +55,35 @@ namespace ULox
             //  and so on, will allow base class methods to use var index should they wish as ahead of time
             //  order is stable
             CreateFields(interpreter, instance, this);
-            CreateMethods(interpreter, instance, this);
 
-            if (_initializer != null)
+            var newArgs = new object[functionArgs.args.Length + 1];
+            newArgs[0] = instance;
+            functionArgs.args.CopyTo(newArgs, 1);
+            functionArgs = FunctionArguments.New(newArgs);
+
+            var paramList = _initializer.Params;
+            for (int i = 0; i < paramList.Count; i++)
             {
-                var newArgs = new object[functionArgs.args.Length + 1];
-                newArgs[0] = instance;
-                functionArgs.args.CopyTo(newArgs, 1);
-                functionArgs = FunctionArguments.New(newArgs);
-
-                for (int i = 0; i < _initVarIndexMatches?.Count; i += 2)
+                var instParamSlot = instance.FindSlot(paramList[i].Lexeme);
+                if (instParamSlot != EnvironmentVariableLocation.InvalidSlot)
                 {
-                    //we're using the indicies in pairs of out to in
-                    instance.AssignSlot(_initVarIndexMatches[i + 1], functionArgs.At(_initVarIndexMatches[i]));
+                    instance.AssignSlot(instParamSlot, functionArgs.At(i));
                 }
-
-                _initializer.Call(interpreter, functionArgs);
             }
 
+            CallInits(interpreter, instance, functionArgs, this);
+
             return instance;
+        }
+
+        private void CallInits(Interpreter interpreter, Instance instance, FunctionArguments functionArgs, Class fromClass)
+        {
+            if (fromClass == null)
+                return;
+
+            CallInits(interpreter, instance, functionArgs, fromClass._superclass);
+
+            fromClass._initializer.Call(interpreter, functionArgs);
         }
 
         private void CreateFields(Interpreter interpreter, Instance inst, Class fromClass)
@@ -84,22 +100,6 @@ namespace ULox
                     inst.Set(item.name.Lexeme, interpreter.Evaluate(item.initializer));
                     //this can be direct as there shouldn't be dups
                     //inst.DefineInAvailableSlot(item.name.Lexeme, interpreter.Evaluate(item.initializer));
-                }
-            }
-        }
-
-        private void CreateMethods(Interpreter interpreter, Instance inst, Class fromClass)
-        {
-            if (fromClass == null)
-                return;
-
-            CreateMethods(interpreter, inst, fromClass._superclass);
-
-            if (fromClass._methods != null)
-            {
-                foreach (var item in fromClass._methods)
-                {
-                    inst.Set(item.Name, item);
                 }
             }
         }

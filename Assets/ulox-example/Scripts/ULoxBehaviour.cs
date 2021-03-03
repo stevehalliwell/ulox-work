@@ -39,7 +39,7 @@ namespace ULox.Demo
 
             var atSlot = _uLoxScriptEnvironment.FetchLocalByName("OnCollision");
             if (atSlot is ICallable slotCallable &&
-                slotCallable.Arity == 0)   //todo this is ugly, ext users shouldn't have to deal with this
+                slotCallable.Arity == 0)
             {
                 _anonymousOnCollision = slotCallable;
             }

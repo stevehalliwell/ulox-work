@@ -1,4 +1,6 @@
-﻿namespace ULox
+﻿using System.Collections.Generic;
+
+namespace ULox
 {
     public enum FunctionType { None, Function, Method, Init, }
 
@@ -19,6 +21,8 @@
         }
 
         public int Arity => _declaration?.parameters?.Count ?? 0;
+
+        public IReadOnlyList<Token> Params => _declaration.parameters.AsReadOnly();
 
         public string Name => _name;
 

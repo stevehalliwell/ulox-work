@@ -197,14 +197,6 @@ namespace ULox
             return slot;
         }
 
-        private void MarkRead(string name)
-        {
-            if (_scopes.Last().localVariables.TryGetValue(name, out var varUse))
-            {
-                varUse.state = VariableUse.State.Read;
-            }
-        }
-
         private void EndScope()
         {
             foreach (var item in _scopes.Last().localVariables.Values)
@@ -238,7 +230,6 @@ namespace ULox
             return null;
         }
 
-        //todo warn when a function isn't a meta but doesn't use anything from the closure
         private void ResolveFunction(Expr.Function func, FunctionType functionType)
         {
             var enclosingFunctionType = _currentFunctionType;
@@ -262,27 +253,11 @@ namespace ULox
 
             if (functionType == FunctionType.Init)
             {
-                MarkRead("self");
-                //match params to the init to fiels we know we have to allow auto assigning
-                var initArgPair = new List<short>();
-                var initMethod = _currentClass.methods.FirstOrDefault(x => x.name.Lexeme == Class.InitalizerFunctionName);
-                if (initMethod != null)
+                foreach (var initParam in _currentClass.init?.function?.parameters)
                 {
-                    var initParams = initMethod.function.parameters;
-                    for (int paramIndex = 0; paramIndex < initParams.Count; paramIndex++)
-                    {
-
-                        var item = initParams[paramIndex];
-                        var matchingLoc = _currentClass.fields.FindIndex(x => x.name.Lexeme == item.Lexeme);
-                        if (matchingLoc >= 0)
-                        {
-                            ResolveLocal(item, true);
-                            initArgPair.Add((short)(paramIndex));
-                            initArgPair.Add((short)matchingLoc);
-                        }
-                    }
+                    ResolveLocal(initParam, true);
                 }
-                _currentClass.indexFieldMatches = initArgPair;
+                //todo fix _currentClass.indexFieldMatches = initArgPair;
             }
 
             func.NeedsClosure = _scopes.Count > 0 ? _scopes.Last().HasClosedOverVars : true;
@@ -393,17 +368,8 @@ namespace ULox
             }
             EndScopeNoWarnings();
 
-            foreach (Stmt.Function thisMeth in stmt.methods)
-            {
-                FunctionType declaration = FunctionType.Method;
-                if (thisMeth.name.Lexeme == Class.InitalizerFunctionName)
-                {
-                    declaration = FunctionType.Init;
-                }
-                //Declare(thisMeth.name);
-                //Define(thisMeth.name);
-                ResolveFunction(thisMeth.function, declaration);
-            }
+            if(stmt.init != null)
+                ResolveFunction(stmt.init.function, FunctionType.Init);
 
             _currentClass = enclosingClass;
         }

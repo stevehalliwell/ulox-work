@@ -60,7 +60,6 @@ namespace ULox
 
             if (v is Class vClass)
             {
-                //todo check for super/meta class
                 if (vClass.Super != null)
                 {
                     sb.AppendLine();

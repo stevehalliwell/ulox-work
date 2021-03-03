@@ -3,10 +3,6 @@ using System.Collections.Generic;
 
 namespace ULox.Tests
 {
-    //todo init that does work and assigns that to instance vars
-    //todo move creation to the class, have pass self to init
-    //todo more metafields and metamethods tests?
-    //todo more multi return tests
     public class InterpreterTests
     {
         public static IEnumerable<TestCaseData> Generator()
@@ -152,7 +148,7 @@ print(partial.BeginingOfStatement + partial.EndOfStatement); ",
   }
 }
 
-Bacon().eat();",
+Bacon.eat();",
 @"Crunch crunch crunch!")
                 .SetName("Class_Method");
 
@@ -166,7 +162,7 @@ Bacon().eat();",
 
 var cake = Cake();
 cake.flavor = ""German chocolate"";
-cake.taste(cake);",
+Cake.taste(cake);",
 @"The German chocolate cake is delicious!")
                 .SetName("Class_selfScope");
 
@@ -179,7 +175,7 @@ cake.taste(cake);",
 }
 
 var circ = Circle(4);
-print(circ.area(circ));",
+print(Circle.area(circ));",
 @"50.24")
                 .SetName("Class_init");
 
@@ -208,14 +204,14 @@ print( s);",
 }
 
 class BostonCream < Doughnut {
-    mycook(self) {
-    self.cook();
-    print(""Pipe full of custard and coat with chocolate."");
+    mycook() {
+        Doughnut.cook();
+        print(""Pipe full of custard and coat with chocolate."");
   }
 }
 
 var bc = BostonCream();
-bc.mycook(bc);",
+BostonCream.mycook();",
 @"Fry until golden brown.Pipe full of custard and coat with chocolate.")
                 .SetName("Child_Class_CallParentFunc");
 
@@ -611,7 +607,7 @@ print(t.a);
 var sq = Square();
 print(sq.Side);
 sq.Side = 2;
-print(sq.Area(sq));",
+print(Square.Area(sq));",
 @"null4")
                 .SetName("Class_Var_Func");
 
@@ -653,9 +649,11 @@ print(sq.Side);",
 {
     var a;
     a(){}
-}",
-@"IDENTIFIER|4:9 Classes cannot have a field and a method of identical names. Found more than 1 a in class Square.")
-                .SetName("Class_DupFieldnMethod");
+}
+
+print(""AOK"");",
+@"AOK")
+                .SetName("Class_VarNameMatchMethod");
 
             yield return new TestCaseData(
 @"class Square
@@ -672,7 +670,7 @@ print(sq.Side);",
      a(){}
     a(){}
 }",
-@"IDENTIFIER|3:11 Classes cannot have methods of identical names. Found more than 1 a in class Square.")
+@"IDENTIFIER|3:11 Classes cannot have Functions of identical names. Found more than 1 a in class Square.")
                 .SetName("Class_DupMethods");
 
             yield return new TestCaseData(
@@ -681,7 +679,7 @@ print(sq.Side);",
     class a(){}
     class a(){}
 }",
-@"IDENTIFIER|3:16 Classes cannot have metaMethods of identical names. Found more than 1 a in class Square.")
+@"IDENTIFIER|3:16 Classes cannot have Functions of identical names. Found more than 1 a in class Square.")
                 .SetName("Class_Static_DupMethods");
 
             yield return new TestCaseData(
@@ -703,7 +701,7 @@ print(a + b + c);",
     Say(self) { print(self.a + self.b + self.c); }
 }
 var tc = TestClass();
-tc.Say(tc);",
+TestClass.Say(tc);",
 @"Why Hello There")
                 .SetName("MultiVarFieldPrintMatch");
 
@@ -736,17 +734,9 @@ print(inst.b + inst.a);",
 @"class Base { BaseMeth(b) {print(b + ""Bar"");} }
 class Derived < Base { var c = ""Foo"";}
 var inst = Derived();
-inst.BaseMeth(inst.c);",
+Base.BaseMeth(inst.c);",
 @"FooBar")
                 .SetName("Inher_Base_Method");
-
-            yield return new TestCaseData(
-@"class Base { BaseMeth(b) {print(b + ""Bar"");} }
-class Derived < Base { var c = ""Foo"";}
-var inst = Derived();
-inst.BaseMeth(inst.c);",
-@"FooBar")
-                .SetName("InherMethodsAndField");
 
             yield return new TestCaseData(
 @"class Base
@@ -759,7 +749,7 @@ class Derived < Base
     ChildMeth(self,a) {print(""Well, ""); Derived.BaseMeth(a + self.fb);}
 }
 var inst = Derived();
-inst.ChildMeth(inst, ""is it "");",
+Derived.ChildMeth(inst, ""is it "");",
 @"Well, is it Foobar? Bar")
                 .SetName("MetaMethodAndInherField");
 
@@ -775,8 +765,8 @@ inst.ChildMeth(inst, ""is it "");",
 }
 
 var t = Test();
-print(t.Thing(t,true));
-print(t.Thing(t,false));
+print(Test.Thing(t,true));
+print(Test.Thing(t,false));
 ",
 @"2010")
                 .SetName("ClassInnerUseOfThis");
@@ -793,19 +783,18 @@ printr(t);",
 @"<inst Test>
   a : 1
   b : null
-  c : 2
-  init : <fn init>")
+  c : 2")
                 .SetName("ClassAutoInitVars");
 
             yield return new TestCaseData(
-@"class Test
+@"class MyTest
 {
     Meth(self) { self.b += 1; print(self.b); }
 }
 
-var t = Test();
+var t = MyTest();
 t.b = 7;
-t.Meth(t);",
+MyTest.Meth(t);",
 @"8")
                 .SetName("ResolveAccessOnRuntimeMember");
 
@@ -960,48 +949,18 @@ printr( a%b );",
 @"<inst Vector2>
   x : 4
   y : 6
-  init : <fn init>
-  _add : <fn _add>
-  _minus : <fn _minus>
-  _slash : <fn _slash>
-  _star : <fn _star>
-  _percent : <fn _percent>
 <inst Vector2>
   x : -2
   y : -2
-  init : <fn init>
-  _add : <fn _add>
-  _minus : <fn _minus>
-  _slash : <fn _slash>
-  _star : <fn _star>
-  _percent : <fn _percent>
 <inst Vector2>
   x : 3
   y : 8
-  init : <fn init>
-  _add : <fn _add>
-  _minus : <fn _minus>
-  _slash : <fn _slash>
-  _star : <fn _star>
-  _percent : <fn _percent>
 <inst Vector2>
   x : 0.333333333333333
   y : 0.5
-  init : <fn init>
-  _add : <fn _add>
-  _minus : <fn _minus>
-  _slash : <fn _slash>
-  _star : <fn _star>
-  _percent : <fn _percent>
 <inst Vector2>
   x : 1
-  y : 2
-  init : <fn init>
-  _add : <fn _add>
-  _minus : <fn _minus>
-  _slash : <fn _slash>
-  _star : <fn _star>
-  _percent : <fn _percent>")
+  y : 2")
                 .SetName("ClassMathOperators");
 
             yield return new TestCaseData(
@@ -1098,8 +1057,7 @@ var a = Vector2(1,2),b = Vector2(3,4);
 printr( AddV2( a, b ) );",
 @"<inst Vector2>
   x : 4
-  y : 6
-  init : <fn init>")
+  y : 6")
                 .SetName("Vector2Func");
 
             yield return new TestCaseData(
@@ -1219,6 +1177,30 @@ print(my.c);",
                 .SetName("Class_Create_init");
 
             yield return new TestCaseData(
+@"class MyClass
+{
+    var a,b,c = 10;
+    init(self, a,b)
+    {
+        self.c += a + b;
+    }
+}
+
+class ChildClass < MyClass
+{
+    var d = 5,e;
+    init(self, a,b,e)
+    {
+        self.c *= e + self.d;
+    }
+}
+
+var my = ChildClass(1,2,5);
+print(my.c);",
+@"130")
+                .SetName("Class_Create_init_Inher");
+
+            yield return new TestCaseData(
 @"fun Func()
 {
     print(""Foo"");
@@ -1229,6 +1211,23 @@ print(my.c);",
 Func();",
 @"Foo")
                 .SetName("Return_void");
+
+            yield return new TestCaseData(
+@"fun Fun()
+{
+    var a =1;
+    var a = 2;
+}",
+@"IDENTIFIER|4:14 Already a variable with this name in this scope.")
+                .SetName("DuplicateScopeVar");
+
+            yield return new TestCaseData(
+@"class TestClass
+{
+    init(){}
+}",
+@"IDENTIFIER|3:12 Class init expects self as argument zero.")
+                .SetName("InvalidInit");
 
             yield return new TestCaseData(
 @"print("""");",

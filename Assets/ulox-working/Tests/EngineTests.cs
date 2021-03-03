@@ -117,12 +117,12 @@ classof(a);",
                 .SetName("ClassofFailure");
 
             yield return new TestCaseData(
-@"class Cloneable { Clone(self) { return classof(self)(); } }
+@"class Cloner { Clone(target) { return classof(target)(); } }
 
-class Test < Cloneable { var a = 10;}
+class Test { var a = 10;}
 
 var t = Test();
-var nt = t.Clone(t);
+var nt = Cloner.Clone(t);
 print(nt.a);",
 @"10")
                 .SetName("CloneViaClassof");

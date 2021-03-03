@@ -31,11 +31,10 @@ namespace ULox
             "Block      : List<Stmt> statements",
             "Chain      : Stmt left, Stmt right",
             "Class      : Token name, short knownSlot, Expr.Get superclass," +
-                        " List<Stmt.Function> methods," +
+                        " Stmt.Function init," +
                         " List<Stmt.Function> metaMethods," +
                         " List<Stmt.Var> fields," +
-                        " List<Stmt.Var> metaFields," +
-                        " List<short> indexFieldMatches",
+                        " List<Stmt.Var> metaFields",
             "Expression : Expr expression",
             "Function   : Token name, Expr.Function function, short knownSlot",
             "If         : Expr condition, Stmt thenBranch," +

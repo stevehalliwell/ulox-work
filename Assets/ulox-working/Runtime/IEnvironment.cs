@@ -1,9 +1,12 @@
-﻿namespace ULox
+﻿using System;
+
+namespace ULox
 {
     public struct EnvironmentVariableLocation
     {
         public const short InvalidSlot = -1;
-        public static readonly EnvironmentVariableLocation Invalid = new EnvironmentVariableLocation { depth = ushort.MaxValue, slot = InvalidSlot };
+        public static readonly EnvironmentVariableLocation Invalid = 
+            new EnvironmentVariableLocation { depth = ushort.MaxValue, slot = InvalidSlot };
         public ushort depth;
         public short slot;
 
@@ -26,6 +29,7 @@
         short DefineInAvailableSlot(string name, object value);
         short FindSlot(string name);
         object FetchObject(short slot);
+        void ForEachValueName(Action<string> action);
     }
 
     public static class IEnvironmentExt

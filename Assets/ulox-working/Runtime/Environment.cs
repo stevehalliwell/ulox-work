@@ -7,7 +7,7 @@ namespace ULox
     {
         private IEnvironment _enclosing;
         protected Dictionary<string, short> valueIndicies = new Dictionary<string, short>();
-        protected List<object> objectList = new List<object>() { null, null, null, null, null };
+        protected List<object> objectList = new List<object>();
 
         public IReadOnlyDictionary<string, short> ReadOnlyValueIndicies => valueIndicies;
 
@@ -58,6 +58,14 @@ namespace ULox
 
             valueIndicies[name] = slot;
             objectList[slot] = value;
+        }
+
+        public void ForEachValueName(System.Action<string> action)
+        {
+            foreach (var item in valueIndicies)
+            {
+                action(item.Key);
+            }
         }
     }
 }
