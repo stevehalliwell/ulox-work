@@ -20,8 +20,7 @@ namespace ULox
         {
             return new Expr.Function(
                         new List<Token>() { new Token().Copy(TokenType.IDENTIFIER, Class.InitalizerParamZeroName) },
-                        new List<Stmt>(),
-                        false, false, false);
+                        new List<Stmt>());
         }
 
         public Class(

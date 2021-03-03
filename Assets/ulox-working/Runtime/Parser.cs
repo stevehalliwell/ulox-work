@@ -82,7 +82,7 @@ namespace ULox
             if (Match(TokenType.LESS))
             {
                 Consume(TokenType.IDENTIFIER, "Expect superclass name.");
-                superclass = new Expr.Get(null, Previous(), EnvironmentVariableLocation.Invalid);
+                superclass = new Expr.Get(null, Previous());
             }
 
             Consume(TokenType.OPEN_BRACE, "Expect { befefore class body.");
@@ -169,13 +169,11 @@ namespace ULox
             {
                 //generate an empty init
                 init = new Stmt.Function(className.Copy(TokenType.IDENTIFIER, Class.InitalizerFunctionName),
-                    Class.EmptyInitFuncExpr(), 
-                    EnvironmentVariableLocation.InvalidSlot);
+                    Class.EmptyInitFuncExpr());
             }
 
             return new Stmt.Class(
                 className,
-                EnvironmentVariableLocation.InvalidSlot,
                 superclass,
                 init,
                 metaMethods,
@@ -208,7 +206,7 @@ namespace ULox
         private Stmt.Function Function(FunctionType functionType)
         {
             var name = Consume(TokenType.IDENTIFIER, $"Expect {functionType} name.");
-            return new Stmt.Function(name, FunctionBody(functionType), EnvironmentVariableLocation.InvalidSlot);
+            return new Stmt.Function(name, FunctionBody(functionType));
         }
 
         private Expr.Function FunctionBody(FunctionType functionType)
@@ -239,7 +237,7 @@ namespace ULox
 
             Consume(TokenType.OPEN_BRACE, $"Expect '{{' before {functionType} body.");
             var body = Block();
-            return new Expr.Function(parameters, body, false, false, false);
+            return new Expr.Function(parameters, body);
         }
 
         private Stmt VarDeclaration()
@@ -259,13 +257,13 @@ namespace ULox
             if (Match(TokenType.COMMA))
             {
                 return new Stmt.Chain(
-                    new Stmt.Var(name, initializer, EnvironmentVariableLocation.InvalidSlot),
+                    new Stmt.Var(name, initializer),
                     VarDeclaration());
             }
             else
             {
                 Consume(TokenType.END_STATEMENT, "Expect end of statement after variable declaration.");
-                return new Stmt.Var(name, initializer, EnvironmentVariableLocation.InvalidSlot);
+                return new Stmt.Var(name, initializer);
             }
         }
 
@@ -479,19 +477,19 @@ namespace ULox
 
                     switch (equals.TokenType)
                     {
-                    case TokenType.MINUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value), EnvironmentVariableLocation.Invalid);
-                    case TokenType.PLUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value), EnvironmentVariableLocation.Invalid);
-                    case TokenType.STAR_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value), EnvironmentVariableLocation.Invalid);
-                    case TokenType.SLASH_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value), EnvironmentVariableLocation.Invalid);
-                    case TokenType.PERCENT_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value), EnvironmentVariableLocation.Invalid);
-                    case TokenType.ASSIGN: return new Expr.Set(obj, name, value, EnvironmentVariableLocation.Invalid);
+                    case TokenType.MINUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value));
+                    case TokenType.PLUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value));
+                    case TokenType.STAR_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value));
+                    case TokenType.SLASH_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value));
+                    case TokenType.PERCENT_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value));
+                    case TokenType.ASSIGN: return new Expr.Set(obj, name, value);
                     }
                 }
                 else if (expr is Expr.Grouping grouping)
                 {
                     switch (equals.TokenType)
                     {
-                    case TokenType.ASSIGN: return new Expr.Set(grouping, equals, value, EnvironmentVariableLocation.Invalid);
+                    case TokenType.ASSIGN: return new Expr.Set(grouping, equals, value);
                     }
                 }
                 else
@@ -613,7 +611,7 @@ namespace ULox
                 {
                     var name = Consume(TokenType.IDENTIFIER,
                         "Expect property name after '.'.");
-                    expr = new Expr.Get(expr, name, EnvironmentVariableLocation.Invalid);
+                    expr = new Expr.Get(expr, name);
                 }
                 else
                 {
@@ -644,7 +642,7 @@ namespace ULox
 
             if (Match(TokenType.IDENTIFIER))
             {
-                return new Expr.Get(null, Previous(), EnvironmentVariableLocation.Invalid);
+                return new Expr.Get(null, Previous());
             }
 
             if (Match(TokenType.OPEN_PAREN)) return GroupingExpression();

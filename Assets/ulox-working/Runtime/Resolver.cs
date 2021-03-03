@@ -260,8 +260,6 @@ namespace ULox
                 //todo fix _currentClass.indexFieldMatches = initArgPair;
             }
 
-            func.NeedsClosure = _scopes.Count > 0 ? _scopes.Last().HasClosedOverVars : true;
-            func.HasLocals = _scopes.Count > 0 ? _scopes.Last().HasLocals : true;
             EndScope();
 
             _currentFunctionType = enclosingFunctionType;
@@ -285,13 +283,11 @@ namespace ULox
             {
                 Resolve(stmt.retVals);
             }
-
-            if (_currentExprFunc != null) _currentExprFunc.HasReturns = true;
         }
 
         public void Visit(Stmt.Var stmt)
         {
-            stmt.knownSlot = Declare(stmt.name);
+            Declare(stmt.name);
             if (stmt.initializer != null)
             {
                 Resolve(stmt.initializer);
@@ -318,7 +314,7 @@ namespace ULox
 
         public void Visit(Stmt.Function stmt)
         {
-            stmt.knownSlot = Declare(stmt.name);
+            Declare(stmt.name);
             Define(stmt.name);
 
             ResolveFunction(stmt.function, FunctionType.Function);
@@ -336,7 +332,7 @@ namespace ULox
             var enclosingClass = _currentClass;
             _currentClass = stmt;
 
-            stmt.knownSlot = Declare(stmt.name);
+            Declare(stmt.name);
             Define(stmt.name);
 
             if (stmt.superclass != null &&
@@ -385,7 +381,7 @@ namespace ULox
                     throw new ResolverException(expr.name, "Can't read local variable in its own initializer.");
                 }
 
-                expr.varLoc = ResolveLocal(expr.name, true);
+                ResolveLocal(expr.name, true);
             }
             else
             {
@@ -402,7 +398,7 @@ namespace ULox
             if (expr.targetObj != null)
                 Resolve(expr.targetObj);
             else
-                expr.varLoc = ResolveLocal(expr.name, false);
+                ResolveLocal(expr.name, false);
 
             return null;
         }

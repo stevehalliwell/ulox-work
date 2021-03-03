@@ -11,18 +11,16 @@ namespace ULox
 
         private static string[] _requiredExprTypes = new string[]
         {
-            "Set      : Expr targetObj, Token name, Expr val, EnvironmentVariableLocation varLoc",//if obj is null uses slot if not use full varloc
+            "Set      : Expr targetObj, Token name, Expr val",
             "Binary   : Expr left, Token op, Expr right",
             "Call     : Expr callee, Token paren, Expr.Grouping arguments",
-            "Get      : Expr targetObj, Token name, EnvironmentVariableLocation varLoc",//if obj is null uses slot if not use full varloc
+            "Get      : Expr targetObj, Token name",
             "Grouping : List<Expr> expressions",
             "Literal  : object value",
             "Logical  : Expr left, Token op, Expr right",
             "Unary    : Token op, Expr right",
             "Conditional : Expr condition, Expr ifTrue, Expr ifFalse",
-            "Function : List<Token> parameters, List<Stmt> body," +
-                      " bool HasLocals, bool NeedsClosure, " +
-                      " bool HasReturns",
+            "Function : List<Token> parameters, List<Stmt> body",
             "Throw    : Token keyword, Expr expr",
         };
 
@@ -30,17 +28,17 @@ namespace ULox
         {
             "Block      : List<Stmt> statements",
             "Chain      : Stmt left, Stmt right",
-            "Class      : Token name, short knownSlot, Expr.Get superclass," +
+            "Class      : Token name, Expr.Get superclass," +
                         " Stmt.Function init," +
                         " List<Stmt.Function> metaMethods," +
                         " List<Stmt.Var> fields," +
                         " List<Stmt.Var> metaFields",
             "Expression : Expr expression",
-            "Function   : Token name, Expr.Function function, short knownSlot",
+            "Function   : Token name, Expr.Function function",
             "If         : Expr condition, Stmt thenBranch," +
                         " Stmt elseBranch",
             "Return     : Token keyword, Expr.Grouping retVals",
-            "Var        : Token name, Expr initializer, short knownSlot",
+            "Var        : Token name, Expr initializer",
             "MultiVar   : List<Token> names, Expr initializer",
             "While      : Expr condition, Stmt body," +
                         " Stmt increment",
@@ -152,12 +150,7 @@ namespace ULox
 
         private static bool IsReadOnlyField(string fieldItem)
         {
-            return !(fieldItem.Contains("EnvironmentVariableLocation") ||
-                                        fieldItem.Contains("Slot") ||
-                                        fieldItem.Contains("bool") ||
-                                        fieldItem.Contains("targetObj") ||
-                                        fieldItem.Contains("indexFieldMatches")
-                                        );
+            return !(fieldItem.Contains("targetObj"));
         }
     }
 }

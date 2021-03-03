@@ -6,17 +6,15 @@ namespace ULox
     {
         public class Set : Expr
         {
-            public Set( Expr targetObj, Token name, Expr val, EnvironmentVariableLocation varLoc)
+            public Set( Expr targetObj, Token name, Expr val)
             {
                 this.targetObj = targetObj;
                 this.name = name;
                 this.val = val;
-                this.varLoc = varLoc;
             }
             public Expr targetObj;
             public readonly Token name;
             public readonly Expr val;
-            public EnvironmentVariableLocation varLoc;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
         public class Binary : Expr
@@ -47,15 +45,13 @@ namespace ULox
         }
         public class Get : Expr
         {
-            public Get( Expr targetObj, Token name, EnvironmentVariableLocation varLoc)
+            public Get( Expr targetObj, Token name)
             {
                 this.targetObj = targetObj;
                 this.name = name;
-                this.varLoc = varLoc;
             }
             public Expr targetObj;
             public readonly Token name;
-            public EnvironmentVariableLocation varLoc;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
         public class Grouping : Expr
@@ -115,19 +111,13 @@ namespace ULox
         }
         public class Function : Expr
         {
-            public Function( List<Token> parameters, List<Stmt> body, bool HasLocals, bool NeedsClosure,  bool HasReturns)
+            public Function( List<Token> parameters, List<Stmt> body)
             {
                 this.parameters = parameters;
                 this.body = body;
-                this.HasLocals = HasLocals;
-                this.NeedsClosure = NeedsClosure;
-                this.HasReturns = HasReturns;
             }
             public readonly List<Token> parameters;
             public readonly List<Stmt> body;
-            public bool HasLocals;
-            public bool NeedsClosure;
-            public bool HasReturns;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
         public class Throw : Expr

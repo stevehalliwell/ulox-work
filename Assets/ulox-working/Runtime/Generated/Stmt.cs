@@ -26,10 +26,9 @@ namespace ULox
         }
         public class Class : Stmt
         {
-            public Class( Token name, short knownSlot, Expr.Get superclass, Stmt.Function init, List<Stmt.Function> metaMethods, List<Stmt.Var> fields, List<Stmt.Var> metaFields)
+            public Class( Token name, Expr.Get superclass, Stmt.Function init, List<Stmt.Function> metaMethods, List<Stmt.Var> fields, List<Stmt.Var> metaFields)
             {
                 this.name = name;
-                this.knownSlot = knownSlot;
                 this.superclass = superclass;
                 this.init = init;
                 this.metaMethods = metaMethods;
@@ -37,7 +36,6 @@ namespace ULox
                 this.metaFields = metaFields;
             }
             public readonly Token name;
-            public short knownSlot;
             public readonly Expr.Get superclass;
             public readonly Stmt.Function init;
             public readonly List<Stmt.Function> metaMethods;
@@ -56,15 +54,13 @@ namespace ULox
         }
         public class Function : Stmt
         {
-            public Function( Token name, Expr.Function function, short knownSlot)
+            public Function( Token name, Expr.Function function)
             {
                 this.name = name;
                 this.function = function;
-                this.knownSlot = knownSlot;
             }
             public readonly Token name;
             public readonly Expr.Function function;
-            public short knownSlot;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
         public class If : Stmt
@@ -93,15 +89,13 @@ namespace ULox
         }
         public class Var : Stmt
         {
-            public Var( Token name, Expr initializer, short knownSlot)
+            public Var( Token name, Expr initializer)
             {
                 this.name = name;
                 this.initializer = initializer;
-                this.knownSlot = knownSlot;
             }
             public readonly Token name;
             public readonly Expr initializer;
-            public short knownSlot;
             public override void Accept(Visitor visitor) => visitor.Visit(this);
         }
         public class MultiVar : Stmt

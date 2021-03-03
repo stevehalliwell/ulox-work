@@ -348,7 +348,7 @@ namespace ULox
                 }
             }
 
-            DefineVarInEnv(stmt, value);
+            CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, value);
         }
 
         public void Visit(Stmt.MultiVar stmt)
@@ -377,7 +377,7 @@ namespace ULox
         public void Visit(Stmt.Function stmt)
         {
             var func = new Function(stmt.name.Lexeme, stmt.function, CurrentEnvironment);
-            DefineFunctionInEnv(stmt, func);
+            CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, func);
         }
 
         public void Visit(Stmt.Class stmt)
@@ -393,10 +393,7 @@ namespace ULox
                 }
             }
 
-            if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
-                CurrentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, null);
-            else
-                stmt.knownSlot = CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, null);
+           var classSlot = CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, null);
 
             
             var @class = new Class(
@@ -421,30 +418,22 @@ namespace ULox
                 }
             }
 
-            CurrentEnvironment.AssignSlot(stmt.knownSlot, @class);
+            CurrentEnvironment.AssignSlot(classSlot, @class);
         }
 
         public object Visit(Expr.Get expr)
         {
             if (expr.targetObj == null)
             {
-                // it as a variable then
-                if (expr.varLoc != EnvironmentVariableLocation.Invalid)
-                {
-                    return CurrentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
-                }
-                else
-                {
-                    try
+                try
                     {
-                        expr.varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
-                        return CurrentEnvironment.Ancestor(expr.varLoc.depth).FetchObject(expr.varLoc.slot);
+                        var varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
+                        return CurrentEnvironment.Ancestor(varLoc.depth).FetchObject(varLoc.slot);
                     }
                     catch (LoxException)
                     {
                             throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
                     }
-                }
             }
 
             var obj = Evaluate(expr.targetObj);
@@ -458,13 +447,11 @@ namespace ULox
             {
                 object result = null;
 
-                if(expr.varLoc.slot == EnvironmentVariableLocation.InvalidSlot)
+                var slot = objInst.FindSlot(expr.name.Lexeme);
+
+                if(slot != EnvironmentVariableLocation.InvalidSlot)
                 {
-                    expr.varLoc.slot = objInst.FindSlot(expr.name.Lexeme);
-                }
-                if(expr.varLoc.slot != EnvironmentVariableLocation.InvalidSlot)
-                {
-                    result = objInst.FetchObject(expr.varLoc.slot);
+                    result = objInst.FetchObject(slot);
                 }
                 else
                 {
@@ -481,27 +468,17 @@ namespace ULox
         {
             if (expr.targetObj == null)
             {
-                //attempt to use as an assign
-                if (expr.varLoc != EnvironmentVariableLocation.Invalid)
-                {
-                    var assignVal = Evaluate(expr.val);
-                    CurrentEnvironment.Ancestor(expr.varLoc.depth).AssignSlot(expr.varLoc.slot, assignVal);
-                    return assignVal;
-                }
-                else
-                {
-                    try
+                try
                     {
-                        expr.varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
+                        var varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
                         var assignVal = Evaluate(expr.val);
-                        CurrentEnvironment.Ancestor(expr.varLoc.depth).AssignSlot(expr.varLoc.slot, assignVal);
+                        CurrentEnvironment.Ancestor(varLoc.depth).AssignSlot(varLoc.slot, assignVal);
                         return assignVal;
                     }
                     catch (LoxException)
                     {
                         throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
                     }
-                }
             }
 
             if(expr.targetObj is Expr.Grouping grouping)
@@ -517,15 +494,12 @@ namespace ULox
             {
                 throw new RuntimeTypeException(expr.name, "Only instances have fields.");
             }
+            
+            var slot = obj.FindSlot(expr.name.Lexeme);
 
-            //this was a set but the dict lookup can be cached
-            if (expr.varLoc.slot == EnvironmentVariableLocation.InvalidSlot)
+            if (slot != EnvironmentVariableLocation.InvalidSlot)
             {
-                expr.varLoc.slot = obj.FindSlot(expr.name.Lexeme);
-            }
-            if (expr.varLoc.slot != EnvironmentVariableLocation.InvalidSlot)
-            {
-                obj.AssignSlot(expr.varLoc.slot, val);
+                obj.AssignSlot(slot, val);
             }
             else
             {
@@ -559,7 +533,8 @@ namespace ULox
                     Visit(curExpr);  //that'll locate
                     if(curExpr.targetObj == null)
                     {
-                        CurrentEnvironment.Ancestor(curExpr.varLoc.depth).AssignSlot(curExpr.varLoc.slot, val);
+                        //TODO fix
+                        //CurrentEnvironment.Ancestor(curExpr.varLoc.depth).AssignSlot(curExpr.varLoc.slot, val);
                     }
                     else
                     {
@@ -599,23 +574,6 @@ namespace ULox
         {
             Execute(stmt.left);
             Execute(stmt.right);
-        }
-
-       
-        private void DefineFunctionInEnv(Stmt.Function stmt, Function func)
-        {
-            if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
-                CurrentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, func);
-            else
-                CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, func);
-        }
-
-        private void DefineVarInEnv(Stmt.Var stmt, object value)
-        {
-            if (stmt.knownSlot != EnvironmentVariableLocation.InvalidSlot)
-                CurrentEnvironment.DefineSlot(stmt.name.Lexeme, stmt.knownSlot, value);
-            else
-                CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, value);
         }
 
         public object Visit(Expr.Throw expr) => throw new RuntimeException(expr.keyword, Evaluate(expr.expr)?.ToString());
