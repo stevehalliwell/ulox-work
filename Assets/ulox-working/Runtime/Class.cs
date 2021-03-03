@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace ULox
 {
@@ -19,8 +18,8 @@ namespace ULox
         public static Expr.Function EmptyInitFuncExpr()
         {
             return new Expr.Function(
-                        new List<Token>() { new Token().Copy(TokenType.IDENTIFIER, Class.InitalizerParamZeroName) },
-                        new List<Stmt>());
+                       new List<Token>() { new Token().Copy(TokenType.IDENTIFIER, Class.InitalizerParamZeroName) },
+                       new List<Stmt>());
         }
 
         public Class(
@@ -36,7 +35,7 @@ namespace ULox
             _vars = fields;
             _initializer = init;
 
-            if(_initializer == null)
+            if (_initializer == null)
             {
                 _initializer = new Function(Class.InitalizerFunctionName, EmptyInitFuncExpr(), enclosing);
             }

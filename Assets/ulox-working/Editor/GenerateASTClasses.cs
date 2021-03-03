@@ -11,11 +11,13 @@ namespace ULox
 
         private static string[] _requiredExprTypes = new string[]
         {
+            "Assign   : Token name, Expr value",
             "Set      : Expr targetObj, Token name, Expr val",
             "Binary   : Expr left, Token op, Expr right",
             "Call     : Expr callee, Token paren, Expr.Grouping arguments",
             "Get      : Expr targetObj, Token name",
             "Grouping : List<Expr> expressions",
+            "Variable : Token name",
             "Literal  : object value",
             "Logical  : Expr left, Token op, Expr right",
             "Unary    : Token op, Expr right",
@@ -28,7 +30,7 @@ namespace ULox
         {
             "Block      : List<Stmt> statements",
             "Chain      : Stmt left, Stmt right",
-            "Class      : Token name, Expr.Get superclass," +
+            "Class      : Token name, Expr.Variable superclass," +
                         " Stmt.Function init," +
                         " List<Stmt.Function> metaMethods," +
                         " List<Stmt.Var> fields," +

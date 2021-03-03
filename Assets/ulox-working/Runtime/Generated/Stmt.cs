@@ -26,7 +26,7 @@ namespace ULox
         }
         public class Class : Stmt
         {
-            public Class( Token name, Expr.Get superclass, Stmt.Function init, List<Stmt.Function> metaMethods, List<Stmt.Var> fields, List<Stmt.Var> metaFields)
+            public Class( Token name, Expr.Variable superclass, Stmt.Function init, List<Stmt.Function> metaMethods, List<Stmt.Var> fields, List<Stmt.Var> metaFields)
             {
                 this.name = name;
                 this.superclass = superclass;
@@ -36,7 +36,7 @@ namespace ULox
                 this.metaFields = metaFields;
             }
             public readonly Token name;
-            public readonly Expr.Get superclass;
+            public readonly Expr.Variable superclass;
             public readonly Stmt.Function init;
             public readonly List<Stmt.Function> metaMethods;
             public readonly List<Stmt.Var> fields;

@@ -4,6 +4,17 @@ namespace ULox
 {
     public abstract class Expr
     {
+        public class Assign : Expr
+        {
+            public Assign( Token name, Expr value)
+            {
+                this.name = name;
+                this.value = value;
+            }
+            public readonly Token name;
+            public readonly Expr value;
+            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
+        }
         public class Set : Expr
         {
             public Set( Expr targetObj, Token name, Expr val)
@@ -61,6 +72,15 @@ namespace ULox
                 this.expressions = expressions;
             }
             public readonly List<Expr> expressions;
+            public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
+        }
+        public class Variable : Expr
+        {
+            public Variable( Token name)
+            {
+                this.name = name;
+            }
+            public readonly Token name;
             public override T Accept<T>(Visitor<T> visitor) => visitor.Visit(this);
         }
         public class Literal : Expr
@@ -136,11 +156,13 @@ namespace ULox
 
         public interface Visitor<T>
         {
+            T Visit(Assign expr);
             T Visit(Set expr);
             T Visit(Binary expr);
             T Visit(Call expr);
             T Visit(Get expr);
             T Visit(Grouping expr);
+            T Visit(Variable expr);
             T Visit(Literal expr);
             T Visit(Logical expr);
             T Visit(Unary expr);

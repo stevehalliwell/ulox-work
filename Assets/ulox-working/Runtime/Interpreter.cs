@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace ULox
 {
@@ -99,11 +98,11 @@ namespace ULox
             object left = Evaluate(expr.left);
             object right = Evaluate(expr.right);
 
-            if(left is Instance leftInst)
+            if (left is Instance leftInst)
             {
                 var classOperator = leftInst.GetOperator(expr.op.TokenType);
 
-                if(classOperator != null)
+                if (classOperator != null)
                 {
                     return classOperator.Call(this, FunctionArguments.New(left, right));
                 }
@@ -162,7 +161,7 @@ namespace ULox
 
                     if (left is double leftD && right is double rightD)
                         return leftD + rightD;
-                    
+
                     if (left is string leftS)
                     {
                         if (right is string rightS)
@@ -170,8 +169,8 @@ namespace ULox
                         else
                             return leftS + right.ToString();
                     }
-                    
-                    if(right is string rightS2)
+
+                    if (right is string rightS2)
                         return left.ToString() + rightS2;
 
                     throw new RuntimeTypeException(expr.op, "Operands must be numbers or strings.");
@@ -368,10 +367,9 @@ namespace ULox
 
             for (int i = 0; i < stmt.names.Count; i++)
             {
-                CurrentEnvironment.DefineInAvailableSlot(stmt.names[i].Lexeme, 
+                CurrentEnvironment.DefineInAvailableSlot(stmt.names[i].Lexeme,
                     (i < initialiserResults.Length ? initialiserResults[i] : null));
             }
-
         }
 
         public void Visit(Stmt.Function stmt)
@@ -393,16 +391,14 @@ namespace ULox
                 }
             }
 
-           var classSlot = CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, null);
+            var classSlot = CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, null);
 
-            
             var @class = new Class(
                 stmt.name.Lexeme,
                 superclass,
                 new Function(stmt.init.name.Lexeme, stmt.init.function, CurrentEnvironment),
                 stmt.fields,
                 CurrentEnvironment);
-
 
             foreach (var method in stmt.metaMethods)
             {
@@ -426,19 +422,19 @@ namespace ULox
             if (expr.targetObj == null)
             {
                 try
-                    {
-                        var varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
-                        return CurrentEnvironment.Ancestor(varLoc.depth).FetchObject(varLoc.slot);
-                    }
-                    catch (LoxException)
-                    {
-                            throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
-                    }
+                {
+                    var varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
+                    return CurrentEnvironment.Ancestor(varLoc.depth).FetchObject(varLoc.slot);
+                }
+                catch (LoxException)
+                {
+                    throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
+                }
             }
 
             var obj = Evaluate(expr.targetObj);
 
-            if(obj == null)
+            if (obj == null)
             {
                 throw new RuntimeAccessException(expr.name, "Evaluation resulted in null.");
             }
@@ -449,7 +445,7 @@ namespace ULox
 
                 var slot = objInst.FindSlot(expr.name.Lexeme);
 
-                if(slot != EnvironmentVariableLocation.InvalidSlot)
+                if (slot != EnvironmentVariableLocation.InvalidSlot)
                 {
                     result = objInst.FetchObject(slot);
                 }
@@ -469,24 +465,23 @@ namespace ULox
             if (expr.targetObj == null)
             {
                 try
-                    {
-                        var varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
-                        var assignVal = Evaluate(expr.val);
-                        CurrentEnvironment.Ancestor(varLoc.depth).AssignSlot(varLoc.slot, assignVal);
-                        return assignVal;
-                    }
-                    catch (LoxException)
-                    {
-                        throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
-                    }
+                {
+                    var varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
+                    var assignVal = Evaluate(expr.val);
+                    CurrentEnvironment.Ancestor(varLoc.depth).AssignSlot(varLoc.slot, assignVal);
+                    return assignVal;
+                }
+                catch (LoxException)
+                {
+                    throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
+                }
             }
 
-            if(expr.targetObj is Expr.Grouping grouping)
+            if (expr.targetObj is Expr.Grouping grouping)
             {
                 return HandleMultiSet(expr, grouping);
             }
 
-            
             var obj = Evaluate(expr.targetObj) as Instance;
             var val = Evaluate(expr.val);
 
@@ -494,7 +489,7 @@ namespace ULox
             {
                 throw new RuntimeTypeException(expr.name, "Only instances have fields.");
             }
-            
+
             var slot = obj.FindSlot(expr.name.Lexeme);
 
             if (slot != EnvironmentVariableLocation.InvalidSlot)
@@ -505,7 +500,7 @@ namespace ULox
             {
                 obj.Set(expr.name.Lexeme, val);
             }
-                
+
             return val;
         }
 
@@ -514,7 +509,7 @@ namespace ULox
             object[] resultsFromFunc = System.Array.Empty<object>();
             //we need the results first.
             var rawFunctionReturn = Evaluate(setExpr.val);
-            if(rawFunctionReturn is object[] retVals)
+            if (rawFunctionReturn is object[] retVals)
             {
                 resultsFromFunc = retVals;
             }
@@ -531,7 +526,7 @@ namespace ULox
                 {
                     var val = resultsFromFunc[i];
                     Visit(curExpr);  //that'll locate
-                    if(curExpr.targetObj == null)
+                    if (curExpr.targetObj == null)
                     {
                         //TODO fix
                         //CurrentEnvironment.Ancestor(curExpr.varLoc.depth).AssignSlot(curExpr.varLoc.slot, val);
@@ -574,6 +569,34 @@ namespace ULox
         {
             Execute(stmt.left);
             Execute(stmt.right);
+        }
+
+        public object Visit(Expr.Variable expr)
+        {
+            try
+            {
+                var varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
+                return CurrentEnvironment.Ancestor(varLoc.depth).FetchObject(varLoc.slot);
+            }
+            catch (LoxException)
+            {
+                throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
+            }
+        }
+
+        public object Visit(Expr.Assign expr)
+        {
+            var val = Evaluate(expr.value);
+            try
+            {
+                var varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
+                CurrentEnvironment.Ancestor(varLoc.depth).AssignSlot(varLoc.slot, val);
+            }
+            catch (LoxException)
+            {
+                throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
+            }
+            return val;
         }
 
         public object Visit(Expr.Throw expr) => throw new RuntimeException(expr.keyword, Evaluate(expr.expr)?.ToString());

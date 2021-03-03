@@ -160,11 +160,11 @@ namespace ULox.Tests
 
         public Object Visit(Expr.Set expr)
         {
-            if(expr.targetObj != null)
+            if (expr.targetObj != null)
                 Print(expr.targetObj);
             else
                 Print("assign ");
-            
+
             Print(expr.name);
             Print(expr.val);
             return null;
@@ -202,7 +202,7 @@ namespace ULox.Tests
                 }
                 Print(stmt.metaMethods);
             }
-            if (stmt.fields.Count > 0 )
+            if (stmt.fields.Count > 0)
             {
                 PrintLine();
                 Print(" instance ");
@@ -336,10 +336,25 @@ namespace ULox.Tests
         public void Visit(Stmt.TestCase stmt)
         {
             Print("testcase ");
-            if(stmt.valueGrouping != null)
+            if (stmt.valueGrouping != null)
                 Print(stmt.valueGrouping);
-            
+
             Print(stmt.block);
+        }
+
+        public Object Visit(Expr.Variable expr)
+        {
+            Print(expr.name);
+            return null;
+        }
+
+        public Object Visit(Expr.Assign expr)
+        {
+            Print("assign ");
+            Print(expr.name);
+            Print(expr.value);
+
+            return null;
         }
     }
 }

@@ -11,7 +11,10 @@ namespace ULox
         private Token _currentClassToken;
         private bool _skipTests = false;
 
-        public Parser(bool skipTests = false) { _skipTests = skipTests; }
+        public Parser(bool skipTests = false)
+        {
+            _skipTests = skipTests;
+        }
 
         public List<Stmt> Parse(List<Token> tokens)
         {
@@ -56,8 +59,8 @@ namespace ULox
         private Stmt TestDeclaration()
         {
             var testToken = Previous();
-            var testName = testToken.Copy(TokenType.IDENTIFIER,testToken.ToString());
-            if(Check(TokenType.IDENTIFIER))
+            var testName = testToken.Copy(TokenType.IDENTIFIER, testToken.ToString());
+            if (Check(TokenType.IDENTIFIER))
             {
                 testName = Consume(TokenType.IDENTIFIER, null);
             }
@@ -78,11 +81,11 @@ namespace ULox
             var previousClassToken = _currentClassToken;
             _currentClassToken = className;
 
-            Expr.Get superclass = null;
+            Expr.Variable superclass = null;
             if (Match(TokenType.LESS))
             {
                 Consume(TokenType.IDENTIFIER, "Expect superclass name.");
-                superclass = new Expr.Get(null, Previous());
+                superclass = new Expr.Variable(Previous());
             }
 
             Consume(TokenType.OPEN_BRACE, "Expect { befefore class body.");
@@ -165,7 +168,7 @@ namespace ULox
 
             _currentClassToken = previousClassToken;
 
-            if(init == null)
+            if (init == null)
             {
                 //generate an empty init
                 init = new Stmt.Function(className.Copy(TokenType.IDENTIFIER, Class.InitalizerFunctionName),
@@ -229,7 +232,7 @@ namespace ULox
             }
             Consume(TokenType.CLOSE_PAREN, "Expect ')' after parameters.");
 
-            if(functionType == FunctionType.Init)
+            if (functionType == FunctionType.Init)
             {
                 if (parameters.Count == 0 || parameters[0].Lexeme != Class.InitalizerParamZeroName)
                     throw new ParseException(prev, $"Expect {Class.InitalizerParamZeroName} as first param to {Class.InitalizerFunctionName}");
@@ -469,28 +472,45 @@ namespace ULox
                 Token equals = Previous();
                 Expr value = Assignment();
 
+                Token name;
+                Expr obj;
 
                 if (expr is Expr.Get exprGet)
                 {
-                    Token name = exprGet.name;
-                    Expr obj = exprGet.targetObj;
+                    name = exprGet.name;
+                    obj = exprGet.targetObj;
 
                     switch (equals.TokenType)
                     {
-                    case TokenType.MINUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value));
-                    case TokenType.PLUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value));
-                    case TokenType.STAR_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value));
-                    case TokenType.SLASH_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value));
-                    case TokenType.PERCENT_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value));
-                    case TokenType.ASSIGN: return new Expr.Set(obj, name, value);
+                        case TokenType.MINUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value));
+                        case TokenType.PLUS_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value));
+                        case TokenType.STAR_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value));
+                        case TokenType.SLASH_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value));
+                        case TokenType.PERCENT_EQUAL: return new Expr.Set(obj, name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value));
+                        case TokenType.ASSIGN: return new Expr.Set(obj, name, value);
+                    }
+                }
+                else if (expr is Expr.Variable exprVar)
+                {
+                    name = exprVar.name;
+
+                    switch (equals.TokenType)
+                    {
+                        case TokenType.MINUS_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.MINUS), value));
+                        case TokenType.PLUS_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.PLUS), value));
+                        case TokenType.STAR_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.STAR), value));
+                        case TokenType.SLASH_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.SLASH), value));
+                        case TokenType.PERCENT_EQUAL: return new Expr.Assign(name, new Expr.Binary(expr, equals.Copy(TokenType.PERCENT), value));
+                        case TokenType.ASSIGN: return new Expr.Assign(name, value);
                     }
                 }
                 else if (expr is Expr.Grouping grouping)
                 {
                     switch (equals.TokenType)
                     {
-                    case TokenType.ASSIGN: return new Expr.Set(grouping, equals, value);
+                        case TokenType.ASSIGN: return new Expr.Set(grouping, equals, value);
                     }
+                    return expr;
                 }
                 else
                 {
@@ -642,7 +662,7 @@ namespace ULox
 
             if (Match(TokenType.IDENTIFIER))
             {
-                return new Expr.Get(null, Previous());
+                return new Expr.Variable(Previous());
             }
 
             if (Match(TokenType.OPEN_PAREN)) return GroupingExpression();
@@ -687,13 +707,11 @@ namespace ULox
             if (Previous().TokenType != TokenType.OPEN_PAREN)
                 return new Expr.Grouping(new List<Expr>() { Expression() });
 
-
             var list = new List<Expr>();
 
             //handle empty grouping e.g func call
             if (!Match(TokenType.CLOSE_PAREN))
             {
-
                 //handle lists of expressions, this can then also be used for multi returns
                 do
                 {

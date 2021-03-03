@@ -364,7 +364,7 @@ namespace ULox
             }
             EndScopeNoWarnings();
 
-            if(stmt.init != null)
+            if (stmt.init != null)
                 ResolveFunction(stmt.init.function, FunctionType.Init);
 
             _currentClass = enclosingClass;
@@ -429,7 +429,7 @@ namespace ULox
         {
             if (expr.expr != null)
                 Resolve(expr.expr);
-            
+
             return null;
         }
 
@@ -443,7 +443,7 @@ namespace ULox
 
         public void Visit(Stmt.TestCase stmt)
         {
-            if(stmt.valueGrouping != null)
+            if (stmt.valueGrouping != null)
                 Resolve(stmt.valueGrouping);
 
             BeginScope();
@@ -451,6 +451,26 @@ namespace ULox
             DeclareDefineRead("testValue");
             Resolve(stmt.block);
             EndScopeNoWarnings();
+        }
+
+        public object Visit(Expr.Variable expr)
+        {
+            if (_scopes.Count > 0 &&
+                _scopes.Last().localVariables.TryGetValue(expr.name.Lexeme, out var existingFlag) &&
+                existingFlag.state == VariableUse.State.Declared)
+            {
+                throw new ResolverException(expr.name, "Can't read local variable in its own initializer.");
+            }
+
+            ResolveLocal(expr.name, true);
+            return null;
+        }
+
+        public object Visit(Expr.Assign expr)
+        {
+            Resolve(expr.value);
+            ResolveLocal(expr.name, false);
+            return null;
         }
     }
 }
