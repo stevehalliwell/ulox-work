@@ -35,7 +35,7 @@ namespace ULox.Demo
             _uLoxScriptEnvironment.RunScript(script.text);
 
             //get our own closure to run in
-            _uLoxScriptEnvironment.LocalEnvironemnt.DefineInAvailableSlot("thisGameObject", gameObject);
+            _uLoxScriptEnvironment.LocalEnvironemnt.Assign("thisGameObject", gameObject, true, false);
 
             var atSlot = _uLoxScriptEnvironment.FetchLocalByName("OnCollision");
             if (atSlot is ICallable slotCallable &&

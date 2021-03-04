@@ -3,6 +3,22 @@ using System.Collections.Generic;
 
 namespace ULox.Tests
 {
+    // TODO: calling same function with different types
+    // TODO: assigning to a value that doesn't exist
+    // TODO: local operator defines
+    // TODO: ENGINE calling a non callable
+    // TODO: ENGINE get a value that doesn't exist
+    // TODO: TEST skipping tests
+    // TODO: multi init error
+    // TODO: invalid param zero name init
+    // TODO: identical field 
+    //          and meta field names
+    // TODO: invalid assignment target
+    // TODO: grouping with 1 param
+    // TODO: right string with left num +
+    // TODO: multivar without initialiser
+    // TODO: invalid super name
+
     public class InterpreterTests
     {
         public static IEnumerable<TestCaseData> Generator()
@@ -296,7 +312,7 @@ return a;",
             yield return new TestCaseData(
 @"var a = 1;
 var a = 2;",
-@"Environment value redefinition not allowed. Requested a:10 collided.")
+@"IDENTIFIER|2:6 Environment value redefinition not allowed, 'a' collided.")
                 .SetName("CannotHaveDuplicateGlobals");
 
             yield return new TestCaseData(

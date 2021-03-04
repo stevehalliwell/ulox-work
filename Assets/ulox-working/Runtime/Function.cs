@@ -36,7 +36,7 @@ namespace ULox
             {
                 for (int i = 0; i < _declaration.parameters.Count; i++)
                 {
-                    environment.DefineSlot(_declaration.parameters[i].Lexeme, (short)i, functionArgs.args[i]);
+                    environment.Define(_declaration.parameters[i].Lexeme, functionArgs.args[i]);
                 }
             }
 

@@ -37,7 +37,7 @@ namespace ULox
 
             for (int i = 0; i < parts.Length - 1 && returnEnvironment != null; i++)
             {
-                returnEnvironment = returnEnvironment.FetchObject(returnEnvironment.FindSlot(parts[i])) as IEnvironment;
+                returnEnvironment = returnEnvironment.Fetch(parts[i], false) as IEnvironment;
             }
 
             return returnEnvironment;
@@ -78,7 +78,7 @@ namespace ULox
 
             if (containingEnvironment != null)
             {
-                return containingEnvironment.FetchObject(containingEnvironment.FindSlot(endToken));
+                return containingEnvironment.Fetch(endToken, false);
             }
 
             return null;
@@ -114,19 +114,11 @@ namespace ULox
         {
             var containingEnvironment = AddressToEnvironment(address, out var endToken);
 
-            value = Interpreter.SantizeObject(value);
+            var val = Interpreter.SantizeObject(value);
 
             if (containingEnvironment != null)
             {
-                var existingIndex = containingEnvironment.FindSlot(endToken);
-                if (existingIndex >= 0)
-                {
-                    containingEnvironment.AssignSlot(existingIndex, value);
-                }
-                else
-                {
-                    containingEnvironment.DefineInAvailableSlot(endToken, value);
-                }
+                containingEnvironment.Assign(endToken, val, true, false);
             }
         }
     }

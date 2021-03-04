@@ -18,14 +18,14 @@ namespace ULox
                 objs.Add(null);
             }
 
-            DefineInAvailableSlot("Get", new Callable(1, (args) => objs[(int)args.At<double>(0)]));
-            DefineInAvailableSlot("Set", new Callable(2, (args) => objs[(int)args.At<double>(0)] = args.At<double>(1)));
-            DefineInAvailableSlot("Count", new Callable(() => (double)objs.Count));
+            Define("Get", new Callable(1, (args) => objs[(int)args.At<double>(0)]));
+            Define("Set", new Callable(2, (args) => objs[(int)args.At<double>(0)] = args.At<double>(1)));
+            Define("Count", new Callable(() => (double)objs.Count));
             if (IsList)
             {
-                DefineInAvailableSlot("Add", new Callable(1, (args) => objs.Add(args.At(0))));
-                DefineInAvailableSlot("Remove", new Callable(1, (args) => objs.Remove(args.At(0))));
-                DefineInAvailableSlot("RemoveAt", new Callable(1, (args) => objs.RemoveAt((int)args.At<double>(0))));
+                Define("Add", new Callable(1, (args) => objs.Add(args.At(0))));
+                Define("Remove", new Callable(1, (args) => objs.Remove(args.At(0))));
+                Define("RemoveAt", new Callable(1, (args) => objs.RemoveAt((int)args.At<double>(0))));
             }
         }
 

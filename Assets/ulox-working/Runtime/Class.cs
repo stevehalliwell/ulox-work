@@ -62,11 +62,7 @@ namespace ULox
             var paramList = _initializer.Params;
             for (int i = 0; i < paramList.Count; i++)
             {
-                var instParamSlot = instance.FindSlot(paramList[i].Lexeme);
-                if (instParamSlot != EnvironmentVariableLocation.InvalidSlot)
-                {
-                    instance.AssignSlot(instParamSlot, functionArgs.At(i));
-                }
+                instance.AssignIfExists(paramList[i].Lexeme, functionArgs.At(i));
             }
 
             CallInits(interpreter, instance, functionArgs, this);

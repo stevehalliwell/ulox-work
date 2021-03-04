@@ -1,71 +1,84 @@
-﻿using System.Collections.Generic;
-using System.Linq;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace ULox
 {
     public class Environment : IEnvironment
     {
         private IEnvironment _enclosing;
-        protected Dictionary<string, short> valueIndicies = new Dictionary<string, short>();
-        protected List<object> objectList = new List<object>();
-
-        public IReadOnlyDictionary<string, short> ReadOnlyValueIndicies => valueIndicies;
+        protected Dictionary<string, object> values = new Dictionary<string, object>();
 
         public Environment(IEnvironment enclosing)
         {
             _enclosing = enclosing;
         }
 
-        public IEnvironment Enclosing
-        {
-            get => _enclosing;
-            set => _enclosing = value;
-        }
+        public IEnvironment Enclosing { get => _enclosing; set => _enclosing = value; }
 
-        public void AssignSlot(short slot, object val)
+        public void Assign(string tokenLexeme, object val, bool canDefine, bool checkEnclosing)
         {
-            objectList[slot] = val;
-        }
-
-        public object FetchObject(short slot)
-        {
-            return objectList[slot];
-        }
-
-        public short DefineInAvailableSlot(string name, object value)
-        {
-            var ind = (short)(valueIndicies.Count() > 0 ? (valueIndicies.Values.Max() + 1) : 0);
-            DefineSlot(name, ind, value);
-            return ind;
-        }
-
-        public short FindSlot(string name)
-        {
-            if (valueIndicies.TryGetValue(name, out short ind))
-                return ind;
-            return -1;
-        }
-
-        public void DefineSlot(string name, short slot, object value)
-        {
-            if (valueIndicies.ContainsKey(name) ||
-                valueIndicies.ContainsValue(slot))
+            if (values.ContainsKey(tokenLexeme))
             {
-                throw new LoxException($"Environment value redefinition not allowed. Requested {name}:{slot} collided.");
+                values[tokenLexeme] = val;
+                return;
             }
 
-            while (objectList.Count < slot + 1) { objectList.Add(null); }
+            if (canDefine)
+            {
+                Define(tokenLexeme, val);
+                return;
+            }
 
-            valueIndicies[name] = slot;
-            objectList[slot] = value;
+            if (checkEnclosing && _enclosing != null)
+            {
+                _enclosing.Assign(tokenLexeme, val, false, true);
+                return;
+            }
+
+            throw new LoxException($"Undefined variable {tokenLexeme}");
         }
 
-        public void ForEachValueName(System.Action<string> action)
+        public void Define(String name, object value)
         {
-            foreach (var item in valueIndicies)
+            values.Add(name, value);
+        }
+
+        public bool Exists(string address)
+        {
+            return values.ContainsKey(address);
+        }
+
+        private readonly object FAILURE_OBJECT = new object();
+
+        public object Fetch(string tokenLexeme, bool checkEnclosing)
+        {
+            var res = FetchNoThrow(tokenLexeme, checkEnclosing, FAILURE_OBJECT);
+
+            return res != FAILURE_OBJECT ? 
+                res :
+                throw new LoxException($"Undefined variable {tokenLexeme}");
+        }
+
+        public void VisitValues(Action<string, object> action)
+        {
+            foreach (var item in values)
             {
-                action(item.Key);
+                action.Invoke(item.Key, item.Value);
             }
+        }
+
+        public object FetchNoThrow(string tokenLexeme, bool checkEnclosing, object defaultIfNotFound)
+        {
+            if (values.TryGetValue(tokenLexeme, out object retval))
+            {
+                return retval;
+            }
+
+            if (checkEnclosing && _enclosing != null)
+                return _enclosing.Fetch(tokenLexeme, true);
+
+            return defaultIfNotFound;
         }
     }
 }

@@ -21,7 +21,7 @@ namespace ULox
         public Interpreter()
         {
             _environmentStack.Push(Globals);
-            Globals.DefineInAvailableSlot(GlobalsIdentifier, Globals);
+            Globals.Define(GlobalsIdentifier, Globals);
         }
 
         public IEnvironment PushNewEnvironemnt()
@@ -312,6 +312,7 @@ namespace ULox
         {
             var callee = Evaluate(expr.callee);
 
+            //TODO but if there's nothing there we can do better
             var args = GroupingMultiEval(expr.arguments);
 
             if (callee is ICallable calleeCallable)
@@ -347,7 +348,16 @@ namespace ULox
                 }
             }
 
-            CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, value);
+            try
+            {
+                CurrentEnvironment.Define(stmt.name.Lexeme, value);
+            }
+            catch (ArgumentException)
+            {
+                throw new EnvironmentException(
+                    stmt.name, 
+                    $"Environment value redefinition not allowed, '{stmt.name.Lexeme}' collided.");
+            }
         }
 
         public void Visit(Stmt.MultiVar stmt)
@@ -367,7 +377,7 @@ namespace ULox
 
             for (int i = 0; i < stmt.names.Count; i++)
             {
-                CurrentEnvironment.DefineInAvailableSlot(stmt.names[i].Lexeme,
+                CurrentEnvironment.Define(stmt.names[i].Lexeme,
                     (i < initialiserResults.Length ? initialiserResults[i] : null));
             }
         }
@@ -375,7 +385,16 @@ namespace ULox
         public void Visit(Stmt.Function stmt)
         {
             var func = new Function(stmt.name.Lexeme, stmt.function, CurrentEnvironment);
-            CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, func);
+            try
+            {
+                CurrentEnvironment.Define(stmt.name.Lexeme, func);
+            }
+            catch (ArgumentException)
+            {
+                throw new EnvironmentException(
+                    stmt.name,
+                    $"Environment value redefinition not allowed, '{stmt.name.Lexeme}' collided.");
+            }
         }
 
         public void Visit(Stmt.Class stmt)
@@ -391,7 +410,7 @@ namespace ULox
                 }
             }
 
-            var classSlot = CurrentEnvironment.DefineInAvailableSlot(stmt.name.Lexeme, null);
+            CurrentEnvironment.Define(stmt.name.Lexeme, null);
 
             var @class = new Class(
                 stmt.name.Lexeme,
@@ -414,47 +433,23 @@ namespace ULox
                 }
             }
 
-            CurrentEnvironment.AssignSlot(classSlot, @class);
+            CurrentEnvironment.Assign(stmt.name.Lexeme, @class, false, false);
         }
 
         public object Visit(Expr.Get expr)
         {
-            if (expr.targetObj == null)
-            {
-                try
-                {
-                    var varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
-                    return CurrentEnvironment.Ancestor(varLoc.depth).FetchObject(varLoc.slot);
-                }
-                catch (LoxException)
-                {
-                    throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
-                }
-            }
-
             var obj = Evaluate(expr.targetObj);
-
-            if (obj == null)
-            {
-                throw new RuntimeAccessException(expr.name, "Evaluation resulted in null.");
-            }
 
             if (obj is Instance objInst)
             {
-                object result = null;
-
-                var slot = objInst.FindSlot(expr.name.Lexeme);
-
-                if (slot != EnvironmentVariableLocation.InvalidSlot)
+                try
                 {
-                    result = objInst.FetchObject(slot);
+                    return objInst.Fetch(expr.name.Lexeme, false);
                 }
-                else
+                catch (LoxException)
                 {
                     throw new RuntimeAccessException(expr.name, $"Undefined property '{expr.name.Lexeme}' on {obj}.");
                 }
-
-                return result;
             }
 
             throw new RuntimeTypeException(expr.name, "Only instances have properties.");
@@ -462,21 +457,6 @@ namespace ULox
 
         public object Visit(Expr.Set expr)
         {
-            if (expr.targetObj == null)
-            {
-                try
-                {
-                    var varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
-                    var assignVal = Evaluate(expr.val);
-                    CurrentEnvironment.Ancestor(varLoc.depth).AssignSlot(varLoc.slot, assignVal);
-                    return assignVal;
-                }
-                catch (LoxException)
-                {
-                    throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
-                }
-            }
-
             if (expr.targetObj is Expr.Grouping grouping)
             {
                 return HandleMultiSet(expr, grouping);
@@ -490,16 +470,7 @@ namespace ULox
                 throw new RuntimeTypeException(expr.name, "Only instances have fields.");
             }
 
-            var slot = obj.FindSlot(expr.name.Lexeme);
-
-            if (slot != EnvironmentVariableLocation.InvalidSlot)
-            {
-                obj.AssignSlot(slot, val);
-            }
-            else
-            {
-                obj.Set(expr.name.Lexeme, val);
-            }
+            obj.Set(expr.name.Lexeme, val);
 
             return val;
         }
@@ -518,24 +489,19 @@ namespace ULox
                 resultsFromFunc = new object[] { retVal }; //todo cache alloc?
             }
 
-            for (int i = 0; i < grouping.expressions.Count; i++)
+            for (int i = 0; i < grouping.expressions.Count && i < resultsFromFunc.Length; i++)
             {
-                var curExpr = grouping.expressions[i] as Expr.Get;
-
-                if (i < resultsFromFunc.Length)
+                var curExpr = grouping.expressions[i];
+                var val = resultsFromFunc[i];
+                
+                if (curExpr is Expr.Get getExpr)
                 {
-                    var val = resultsFromFunc[i];
-                    Visit(curExpr);  //that'll locate
-                    if (curExpr.targetObj == null)
-                    {
-                        //TODO fix
-                        //CurrentEnvironment.Ancestor(curExpr.varLoc.depth).AssignSlot(curExpr.varLoc.slot, val);
-                    }
-                    else
-                    {
-                        var obj = Evaluate(curExpr.targetObj) as Instance;
-                        obj.Set(curExpr.name.Lexeme, val);
-                    }
+                    var obj = Evaluate(getExpr.targetObj) as Instance;
+                    obj.Set(getExpr.name.Lexeme, val); 
+                }
+                else if (curExpr is Expr.Variable varExpr)
+                {
+                    CurrentEnvironment.Assign(varExpr.name.Lexeme, val, false, true);
                 }
             }
 
@@ -575,8 +541,7 @@ namespace ULox
         {
             try
             {
-                var varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
-                return CurrentEnvironment.Ancestor(varLoc.depth).FetchObject(varLoc.slot);
+                return CurrentEnvironment.Fetch(expr.name.Lexeme, true);
             }
             catch (LoxException)
             {
@@ -589,11 +554,11 @@ namespace ULox
             var val = Evaluate(expr.value);
             try
             {
-                var varLoc = CurrentEnvironment.FindLocation(expr.name.Lexeme);
-                CurrentEnvironment.Ancestor(varLoc.depth).AssignSlot(varLoc.slot, val);
+                CurrentEnvironment.Assign(expr.name.Lexeme, val, false, true);
             }
             catch (LoxException)
             {
+                // TODO: unhit
                 throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
             }
             return val;
@@ -603,7 +568,7 @@ namespace ULox
 
         public void Visit(Stmt.Test stmt)
         {
-            PushNewEnvironemnt().DefineInAvailableSlot("testName", stmt.name.Lexeme);
+            PushNewEnvironemnt().Define("testName", stmt.name.Lexeme);
             _testSuiteManager.SetSuite(stmt.name.Lexeme);
             Visit(stmt.block);
             _testSuiteManager.EndCurrentSuite();
@@ -633,8 +598,8 @@ namespace ULox
                 _testSuiteManager.StartCase(stmt, valueExpr);
 
                 var env = PushNewEnvironemnt();
-                env.DefineInAvailableSlot("testCaseName", stmt.name.Lexeme);
-                env.DefineInAvailableSlot("testValue", valueExpr);
+                env.Assign("testCaseName", stmt.name.Lexeme, true, false);
+                env.Assign("testValue", valueExpr, true, false);
                 Visit(stmt.block);
             }
             catch (LoxException e)

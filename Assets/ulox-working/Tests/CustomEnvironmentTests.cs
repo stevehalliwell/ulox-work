@@ -215,7 +215,7 @@ RunScript(""Test(5);"");";
                 test._engine.Interpreter.PopEnvironemnt();
             }
 
-            Assert.IsTrue(test.InterpreterResult.StartsWith("Environment value redefinition not allowed. Requested Test:1 collided."));
+            Assert.IsTrue(test.InterpreterResult.StartsWith("IDENTIFIER|1:9 Environment value redefinition not allowed,"));
         }
 
         [Test]

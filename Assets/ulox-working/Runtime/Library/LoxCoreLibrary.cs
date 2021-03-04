@@ -77,14 +77,14 @@ namespace ULox
             }
             else if (v is Environment vEnv)
             {
-                foreach (var val in vEnv.ReadOnlyValueIndicies)
+                vEnv.VisitValues((key,value) =>
                 {
                     sb.AppendLine();
                     sb.Append(prefix);
-                    sb.Append(val.Key);
+                    sb.Append(key);
                     sb.Append(" : ");
-                    PrintRecursive(vEnv.FetchObject(val.Value), sb, prefix, remainingDepth);
-                }
+                    PrintRecursive(value, sb, prefix, remainingDepth);
+                });
             }
         }
     }

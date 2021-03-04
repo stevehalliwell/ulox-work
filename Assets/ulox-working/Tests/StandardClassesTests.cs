@@ -130,7 +130,7 @@ outter.inner.a = 10;", true);
 
             test.Run(@"var collide = List();", true);
 
-            Assert.IsTrue(test.InterpreterResult.StartsWith("Environment value redefinition not allowed."));
+            Assert.IsTrue(test.InterpreterResult.StartsWith("IDENTIFIER|1:12 Environment value redefinition not allowed, \'collide\' collided."));
         }
 
         [Test]

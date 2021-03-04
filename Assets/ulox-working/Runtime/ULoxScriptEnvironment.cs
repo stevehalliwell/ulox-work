@@ -43,28 +43,12 @@
 
         public object FetchLocalByName(string name)
         {
-            var loc = _ourEnvironment.FindSlot(name);
-
-            if (loc != -1)
-            {
-                return _ourEnvironment.FetchObject(loc);
-            }
-
-            return null;
+            return _ourEnvironment.Fetch(name, false);
         }
 
         public void AssignLocalByName(string name, object val)
         {
-            var loc = _ourEnvironment.FindSlot(name);
-
-            if (loc != -1)
-            {
-                _ourEnvironment.AssignSlot(loc, Interpreter.SantizeObject(val));
-            }
-            else
-            {
-                _ourEnvironment.DefineInAvailableSlot(name, Interpreter.SantizeObject(val));
-            }
+            _ourEnvironment.Assign(name, Interpreter.SantizeObject(val), true, false);
         }
     }
 }

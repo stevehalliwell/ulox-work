@@ -13,14 +13,7 @@
 
         public virtual void Set(string name, object val)
         {
-            if (valueIndicies.TryGetValue(name, out var index))
-            {
-                objectList[index] = val;
-            }
-            else
-            {
-                DefineInAvailableSlot(name, val);
-            }
+            Assign(name, val, true, false);
         }
 
         public override string ToString() => $"<inst {_class.Name}>";
@@ -93,14 +86,15 @@
             //    break;
             }
 
-            var loc = FindSlot(operatorName);
-            if (loc != EnvironmentVariableLocation.InvalidSlot)
-                return FetchObject(loc) as Function;
+            var op = FetchNoThrow(operatorName, false, null);
+            if (op != null)
+                return op as Function;
 
-            loc = _class.FindSlot(operatorName);
-            return loc != EnvironmentVariableLocation.InvalidSlot ? 
-                _class.FetchObject(loc) as Function : 
-                null;
+            op = _class.FetchNoThrow(operatorName, false, null);
+            if (op != null)
+                return op as Function;
+            
+            return null;
         }
     }
 }

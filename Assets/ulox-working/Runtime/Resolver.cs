@@ -14,13 +14,11 @@ namespace ULox
             public enum State { Declared, Defined, Read };
 
             public State state;
-            public short slot;
 
-            public VariableUse(Token Name, State _state, short _slot)
+            public VariableUse(Token Name, State _state)
             {
                 name = Name;
                 state = _state;
-                slot = _slot;
             }
         }
 
@@ -28,8 +26,6 @@ namespace ULox
         {
             public Dictionary<string, VariableUse> localVariables = new Dictionary<string, VariableUse>();
             public List<int> fetchedVariableDistances = new List<int>();
-            public bool HasLocals => localVariables.Count(x => x.Value.state == VariableUse.State.Read) > 0;
-            public bool HasClosedOverVars => fetchedVariableDistances.Count(x => x > 0) > 0;
         }
 
         private List<ScopeInfo> _scopes = new List<ScopeInfo>();
@@ -128,9 +124,8 @@ namespace ULox
             EndScope();
         }
 
-        private EnvironmentVariableLocation ResolveLocal(Token name, bool isRead)
+        private void ResolveLocal(Token name, bool isRead)
         {
-            EnvironmentVariableLocation retval = EnvironmentVariableLocation.Invalid;
             for (int i = _scopes.Count - 1; i >= 0; i--)
             {
                 if (_scopes[i].localVariables.TryGetValue(name.Lexeme, out var varUse))
@@ -139,20 +134,9 @@ namespace ULox
                     {
                         varUse.state = VariableUse.State.Read;
                     }
-
-                    retval = new EnvironmentVariableLocation()
-                    {
-                        depth = (ushort)(_scopes.Count - i - 1),
-                        slot = varUse.slot
-                    };
                     break;
                 }
             }
-
-            if (_scopes.Count > 0)
-                _scopes.Last().fetchedVariableDistances.Add(retval.depth);
-
-            return retval;
         }
 
         private void BeginScope()
@@ -160,9 +144,9 @@ namespace ULox
             _scopes.Add(new ScopeInfo());
         }
 
-        private short Declare(Token name)
+        private void Declare(Token name)
         {
-            if (_scopes.Count == 0) return EnvironmentVariableLocation.InvalidSlot;
+            if (_scopes.Count == 0) return;
 
             var scope = _scopes.Last();
             if (scope.localVariables.ContainsKey(name.Lexeme))
@@ -170,9 +154,7 @@ namespace ULox
                 throw new ResolverException(name, "Already a variable with this name in this scope.");
             }
 
-            var slot = (short)scope.localVariables.Count;
-            scope.localVariables.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared, slot));
-            return slot;
+            scope.localVariables.Add(name.Lexeme, new VariableUse(name, VariableUse.State.Declared));
         }
 
         private void Define(Token name)
@@ -182,19 +164,18 @@ namespace ULox
             _scopes.Last().localVariables[name.Lexeme].state = VariableUse.State.Defined;
         }
 
-        private short DeclareDefineRead(string name)
+        private void DeclareDefineRead(string name)
         {
-            if (_scopes.Count == 0) return EnvironmentVariableLocation.InvalidSlot;
+            if (_scopes.Count == 0) return;
 
             var scope = _scopes.Last();
             if (scope.localVariables.ContainsKey(name))
             {
+                // TODO: unhit
                 throw new LoxException($"Already a variable of name {name} in this scope.");
             }
 
-            var slot = (short)scope.localVariables.Count;
-            scope.localVariables.Add(name, new VariableUse(new Token(TokenType.IDENTIFIER, name, name, -1, -1), VariableUse.State.Read, slot));
-            return slot;
+            scope.localVariables.Add(name, new VariableUse(new Token(TokenType.IDENTIFIER, name, name, -1, -1), VariableUse.State.Read));
         }
 
         private void EndScope()
@@ -297,6 +278,7 @@ namespace ULox
 
         public void Visit(Stmt.MultiVar stmt)
         {
+            // TODO: unhit
             if (stmt.initializer == null ||
                 !(stmt.initializer is Expr.Call))
                 throw new ResolverException(stmt.names[0], "MultiVar statement is being used but is not assigned to a initialised by a function.");
@@ -372,22 +354,8 @@ namespace ULox
 
         public object Visit(Expr.Get expr)
         {
-            if (expr.targetObj == null)
-            {
-                if (_scopes.Count > 0 &&
-                    _scopes.Last().localVariables.TryGetValue(expr.name.Lexeme, out var existingFlag) &&
-                    existingFlag.state == VariableUse.State.Declared)
-                {
-                    throw new ResolverException(expr.name, "Can't read local variable in its own initializer.");
-                }
-
-                ResolveLocal(expr.name, true);
-            }
-            else
-            {
-                Resolve(expr.targetObj);
-                ResolveLocal(expr.name, true);
-            }
+            Resolve(expr.targetObj);
+            ResolveLocal(expr.name, true);
 
             return null;
         }
@@ -395,10 +363,7 @@ namespace ULox
         public object Visit(Expr.Set expr)
         {
             Resolve(expr.val);
-            if (expr.targetObj != null)
-                Resolve(expr.targetObj);
-            else
-                ResolveLocal(expr.name, false);
+            Resolve(expr.targetObj);
 
             return null;
         }
