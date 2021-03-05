@@ -17,5 +17,5 @@ fun Update()
 	if(y < -limit and vy < 0) { vy *= -1; }
 	if(y > limit  and vy > 0) { vy *= -1; }
 
-	SetGameObjectPosition(thisGameObject, x, y);
+	SetGameObjectPosition(thisGameObject, x, y, 0);
 }

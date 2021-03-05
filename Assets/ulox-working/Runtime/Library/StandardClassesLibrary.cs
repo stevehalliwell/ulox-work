@@ -1,6 +1,6 @@
 ﻿namespace ULox
 {
-    public class StandardClasses : ILoxEngineLibraryBinder
+    public class StandardClassesLibrary : ILoxEngineLibraryBinder
     {
         public void BindToEngine(Engine engine)
         {

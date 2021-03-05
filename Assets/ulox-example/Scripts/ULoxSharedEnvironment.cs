@@ -18,8 +18,8 @@ namespace ULox.Demo
         {
             _engine = new Engine(
                 new LoxCoreLibrary(Debug.Log),
-                new StandardClasses(),
-                new UnityFunctions(availablePrefabs));
+                new StandardClassesLibrary(),
+                new UnityFunctionsLibrary(availablePrefabs));
         }
     }
 }

@@ -20,8 +20,8 @@ namespace ULox.Demo
         {
             engine = new Engine(
                 new LoxCoreLibrary(Debug.Log),
-                new StandardClasses(),
-                new UnityFunctions(availablePrefabs));
+                new StandardClassesLibrary(),
+                new UnityFunctionsLibrary(availablePrefabs));
 
             engine.SetValue("SetUIText",
                 new Callable(1, (args) => text.text = args.At<string>(0)));

@@ -406,7 +406,7 @@ namespace ULox
                 if (superclass == null)
                 {
                     throw new RuntimeTypeException(stmt.superclass.name,
-                        "Superclass must be a class.");
+                        $"Superclass must be a class. '{stmt.name.Lexeme}' was given '{stmt.superclass.name.Lexeme}' which is not a class.");
                 }
             }
 
@@ -558,7 +558,6 @@ namespace ULox
             }
             catch (LoxException)
             {
-                // TODO: unhit
                 throw new EnvironmentException(expr.name, $"Undefined variable {expr.name.Lexeme}");
             }
             return val;

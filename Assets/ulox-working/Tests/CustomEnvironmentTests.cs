@@ -10,6 +10,19 @@ namespace ULox.Tests
     public class CustomEnvironmentTests
     {
         [Test]
+        public void LocalEnvironment_Props_AreCorrect()
+        {
+            var test = new CustomEnvironmentTestLoxEngine();
+
+            test.Run("var a = 5;", true);
+
+            var localEnv = new ULoxScriptEnvironment(test._engine);
+            localEnv.RunScript("print(a);");
+
+            Assert.AreEqual(test._engine, localEnv.SharedEngine);
+            Assert.AreNotEqual(test._engine.Interpreter.CurrentEnvironment, localEnv.LocalEnvironemnt);
+        }
+        [Test]
         public void LocalEnvironment_ReadGlobal_Success()
         {
             var test = new CustomEnvironmentTestLoxEngine();
@@ -284,7 +297,7 @@ print(testVar);", true);
         internal class CustomEnvironmentTestLoxEngine : TestLoxEngine
         {
             public CustomEnvironmentTestLoxEngine()
-                : base(new StandardClasses(), new EngineFunctions())
+                : base(new StandardClassesLibrary(), new EngineFunctions())
             {
             }
         }

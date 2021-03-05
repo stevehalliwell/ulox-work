@@ -28,7 +28,7 @@ namespace ULox.Tests
                 : base(new TestingLibrary(true), 
                       new AssertLibrary(), 
                       new EngineFunctions(), 
-                      new StandardClasses()) { }
+                      new StandardClassesLibrary()) { }
         }
     }
 }

@@ -4,7 +4,7 @@ SetUIText(string)
 CreateGameObject(string):int - gameobject id
 DestroyGameObject(int) - gameobject id
 GetKey(string):bool
-SetGameObjectPosition(int, x, y) - gameobject id
+SetGameObjectPosition(int, x, y, z) - gameobject id
 SetGameObjectVelocity(int, x, y) - gameobject id
 ReloadScene - reload the current unity scene
 
@@ -69,7 +69,7 @@ fun CreateBall()
 {
 	DestroyGameObject(ballID);
 	ballID = CreateGameObject(ballName);
-	SetGameObjectPosition(ballID, paddleXPos, ballStartY);
+	SetGameObjectPosition(ballID, paddleXPos, ballStartY, 0);
 	SetGameObjectVelocity(ballID, ballStartVelX, ballStartVelY);
 }
 
@@ -79,7 +79,7 @@ fun SetupGame()
 	SetUIText("Welcome to uLox Breakout.\n\nPress space to begin.");
 
 	paddleID = CreateGameObject(paddleName);
-	SetGameObjectPosition(paddleID, paddleXPos, paddleYPos);
+	SetGameObjectPosition(paddleID, paddleXPos, paddleYPos, 0);
 	
 	//create grid of blocks
 	for(var x = 0; x < xBlocks; x += 1)
@@ -87,7 +87,7 @@ fun SetupGame()
 		for(var y = 0; y < yBlocks; y += 1)
 		{
 			var objID = CreateGameObject(blockName);
-			SetGameObjectPosition(objID, xStart + x*xStep, yStart + y*yStep);
+			SetGameObjectPosition(objID, xStart + x*xStep, yStart + y*yStep, 0);
 		}
 	}
 
@@ -117,7 +117,7 @@ fun MovePaddle()
 	if(paddleXPos < -paddleLimits) {paddleXPos = -paddleLimits;}
 	if(paddleXPos > paddleLimits) {paddleXPos = paddleLimits;}
 
-	SetGameObjectPosition(paddleID, paddleXPos, paddleYPos);
+	SetGameObjectPosition(paddleID, paddleXPos, paddleYPos, 0);
 }
 
 fun UpdateGameLoop()

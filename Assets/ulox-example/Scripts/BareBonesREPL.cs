@@ -19,8 +19,8 @@ namespace ULox.Demo
         {
             engine = new Engine(
                 new LoxCoreLibrary(Debug.Log),
-                new StandardClasses(),
-                new UnityFunctions());
+                new StandardClassesLibrary(),
+                new UnityFunctionsLibrary(new System.Collections.Generic.List<GameObject>()));
 
             inputField.onEndEdit.AddListener(RunREPLStep);
             StartCoroutine(Reselect());

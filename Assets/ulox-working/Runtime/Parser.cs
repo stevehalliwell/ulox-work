@@ -115,7 +115,7 @@ namespace ULox
                         //todo force ordering if super also has an init, so if super has init(self, a,b), child must start with that
 
                         if (init != null)
-                            throw new ClassException(func.name, $"Classes cannot have more than 1 init function.");
+                            throw new ClassException(func.name, $"Classes cannot have more than 1 init function. '{className.Lexeme}' has multiple.");
 
                         init = func;
 
@@ -127,8 +127,8 @@ namespace ULox
                         else if (init.function.parameters[0].Lexeme != Class.InitalizerParamZeroName)
                         {
                             throw new ClassException(func.name,
-                                $"Class init argument zero found {init.function.parameters[0].Lexeme}" +
-                                $", expected {Class.InitalizerParamZeroName}.");
+                                $"Class init argument zero found '{init.function.parameters[0].Lexeme}'" +
+                                $", expected '{Class.InitalizerParamZeroName}'.");
                         }
                     }
                     else
@@ -143,25 +143,25 @@ namespace ULox
             {
                 if (metaMethods.Count(x => x.name.Lexeme == method.name.Lexeme) > 1)
                     throw new ClassException(method.name,
-                        $"Classes cannot have Functions of identical names. Found more than 1 {method.name.Lexeme} in class {className.Lexeme}.");
+                        $"Classes cannot have Functions of identical names. Found more than 1 '{method.name.Lexeme}' in class '{className.Lexeme}'.");
 
                 if (metaFields.Count(x => x.name.Lexeme == method.name.Lexeme) > 0)
                     throw new ClassException(method.name,
-                        $"Classes cannot have a metaFields and a metaMethods of identical names. Found more than 1 {method.name.Lexeme} in class {className.Lexeme}.");
+                        $"Classes cannot have a metaFields and a metaMethods of identical names. Found more than 1 '{method.name.Lexeme}' in class '{className.Lexeme}'.");
             }
 
             foreach (var field in fields)
             {
                 if (fields.Count(x => x.name.Lexeme == field.name.Lexeme) > 1)
                     throw new ClassException(field.name,
-                        $"Classes cannot have fields of identical names. Found more than 1 {field.name.Lexeme} in class {className.Lexeme}.");
+                        $"Classes cannot have fields of identical names. Found more than 1 {field.name.Lexeme} in class '{className.Lexeme}'.");
             }
 
             foreach (var field in metaFields)
             {
                 if (metaFields.Count(x => x.name.Lexeme == field.name.Lexeme) > 1)
                     throw new ClassException(field.name,
-                        $"Classes cannot have metaFields of identical names. Found more than 1 {field.name.Lexeme} in class {className.Lexeme}.");
+                        $"Classes cannot have metaFields of identical names. Found more than 1 {field.name.Lexeme} in class '{className.Lexeme}'.");
             }
 
             Consume(TokenType.CLOSE_BRACE, "Expect } after class body.");
@@ -514,6 +514,7 @@ namespace ULox
                 }
                 else
                 {
+                    // TODO: nohit
                     throw new ParseException(equals, "Invalid assignment target.");
                 }
             }

@@ -1,5 +1,10 @@
 ﻿namespace ULox
 {
+    public class PanicException : System.Exception
+    {
+        public PanicException(string message = "") : base(message) { }
+    }
+ 
     public class LoxException : System.Exception
     {
         public LoxException(string msg) : base(msg) { }
@@ -9,14 +14,14 @@
         { }
     }
 
-    public class PanicException : System.Exception
-    {
-        public PanicException(string message = "") : base(message) { }
-    }
-
     public class AssertException : LoxException
     {
         public AssertException(string msg) : base(msg) { }
+    }
+
+    public class LibraryException : LoxException
+    {
+        public LibraryException(string msg) : base(msg) { }
     }
 
     public class TestException : LoxException
@@ -90,17 +95,16 @@
         public ClassException(Token token, string msg) : base(token, msg) { }
     }
 
-    public class InterpreterControlException : System.Exception
+    public class InterpreterControlFlowException : System.Exception
     {
         public Token From { get; set; }
 
-        public InterpreterControlException(Token from)
+        public InterpreterControlFlowException(Token from)
         {
             From = from;
         }
     }
-
-    public class Return : InterpreterControlException
+    public class Return : InterpreterControlFlowException
     {
         public object Value { get; set; }
 
@@ -110,12 +114,12 @@
         }
     }
 
-    public class Break : InterpreterControlException
+    public class Break : InterpreterControlFlowException
     {
         public Break(Token from) : base(from) { }
     }
 
-    public class Continue : InterpreterControlException
+    public class Continue : InterpreterControlFlowException
     {
         public Continue(Token from) : base(from) { }
     }

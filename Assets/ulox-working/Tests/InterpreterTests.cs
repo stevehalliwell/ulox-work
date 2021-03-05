@@ -3,21 +3,9 @@ using System.Collections.Generic;
 
 namespace ULox.Tests
 {
-    // TODO: calling same function with different types
-    // TODO: assigning to a value that doesn't exist
-    // TODO: local operator defines
     // TODO: ENGINE calling a non callable
     // TODO: ENGINE get a value that doesn't exist
     // TODO: TEST skipping tests
-    // TODO: multi init error
-    // TODO: invalid param zero name init
-    // TODO: identical field 
-    //          and meta field names
-    // TODO: invalid assignment target
-    // TODO: grouping with 1 param
-    // TODO: right string with left num +
-    // TODO: multivar without initialiser
-    // TODO: invalid super name
 
     public class InterpreterTests
     {
@@ -677,7 +665,7 @@ print(""AOK"");",
     class var a;
     class a(){}
 }",
-@"IDENTIFIER|4:16 Classes cannot have a metaFields and a metaMethods of identical names. Found more than 1 a in class Square.")
+@"IDENTIFIER|4:16 Classes cannot have a metaFields and a metaMethods of identical names. Found more than 1 'a' in class 'Square'.")
                 .SetName("Class_Static_DupFieldnMethod");
 
             yield return new TestCaseData(
@@ -686,7 +674,7 @@ print(""AOK"");",
      a(){}
     a(){}
 }",
-@"IDENTIFIER|3:11 Classes cannot have Functions of identical names. Found more than 1 a in class Square.")
+@"IDENTIFIER|3:11 Classes cannot have Functions of identical names. Found more than 1 'a' in class 'Square'.")
                 .SetName("Class_DupMethods");
 
             yield return new TestCaseData(
@@ -695,7 +683,7 @@ print(""AOK"");",
     class a(){}
     class a(){}
 }",
-@"IDENTIFIER|3:16 Classes cannot have Functions of identical names. Found more than 1 a in class Square.")
+@"IDENTIFIER|3:16 Classes cannot have Functions of identical names. Found more than 1 'a' in class 'Square'.")
                 .SetName("Class_Static_DupMethods");
 
             yield return new TestCaseData(
@@ -1244,6 +1232,116 @@ Func();",
 }",
 @"IDENTIFIER|3:12 Class init expects self as argument zero.")
                 .SetName("InvalidInit");
+
+            yield return new TestCaseData(
+@"a = 7;",
+@"IDENTIFIER|1:1 Undefined variable a")
+                .SetName("InvalidAssign");
+
+            yield return new TestCaseData(
+@"var a = 7;
+var a = 1;",
+@"IDENTIFIER|2:6 Environment value redefinition not allowed, 'a' collided.")
+                .SetName("DuplicateVarInScope");
+
+            yield return new TestCaseData(
+@"var (a,b,c);",
+@"IDENTIFIER|1:7 MultiVar statement is being used but is not assigned to be initialised by a function.")
+                .SetName("MultiVarNoAssign");
+
+            yield return new TestCaseData(
+@"print( 7 + ""hello"");",
+@"7hello")
+                .SetName("RightStringConcat");
+
+            yield return new TestCaseData(
+@"class Vector2
+{
+    var x,y;
+    init(self,x,y){}
+}
+
+fun AddV2(lhs, rhs)
+{
+    return Vector2(lhs.x + rhs.x, lhs.y + rhs.y);
+}
+
+var a = Vector2(1,2),b = Vector2(3,4);
+a._add = AddV2;
+
+printr( a + b );",
+@"<inst Vector2>
+  x : 4
+  y : 6")
+                .SetName("Vector2LocalFunc");
+
+            yield return new TestCaseData(
+@"class Error
+{
+    init(self){}
+    init(self,a){}
+}",
+@"IDENTIFIER|4:12 Classes cannot have more than 1 init function. 'Error' has multiple.")
+                .SetName("TooManyInits");
+
+            yield return new TestCaseData(
+@"class Error
+{
+    init(this,a){}
+}",
+@"IDENTIFIER|3:12 Class init argument zero found 'this', expected 'self'.")
+                .SetName("MisnamedInit");
+
+            yield return new TestCaseData(
+@"class Error {var a,a;}",
+@"IDENTIFIER|1:21 Classes cannot have fields of identical names. Found more than 1 a in class 'Error'.")
+                .SetName("DupField");
+
+            yield return new TestCaseData(
+@"class Error {class var a,a;}",
+@"IDENTIFIER|1:28 Classes cannot have metaFields of identical names. Found more than 1 a in class 'Error'.")
+                .SetName("DupMetaField");
+
+            yield return new TestCaseData(
+@"class Error
+{
+    init(){}
+}",
+@"IDENTIFIER|3:12 Class init expects self as argument zero.")
+                .SetName("EmptyInit");
+
+            yield return new TestCaseData(
+@"fun T(){}
+
+var (a,b,c) = T();",
+@"IDENTIFIER|3:7 MultiVar being used but was not given valid initialiser results from function.")
+                .SetName("InvalidMultiVarAssignRuntime");
+
+            yield return new TestCaseData(
+@"fun U (){}
+class T < U{}",
+@"IDENTIFIER|2:14 Superclass must be a class. 'T' was given 'U' which is not a class.")
+                .SetName("SuperclassMustBeClass");
+
+            yield return new TestCaseData(
+@"fun T()
+{
+    var retval = 7;
+    return (retval);
+}
+print(T());",
+@"7")
+                .SetName("SingleReturnGrouping");
+
+            yield return new TestCaseData(
+@"fun AddThese(lhs,rhs)
+{
+    return lhs + rhs;
+}
+
+print( AddThese( AddThese(1,2), AddThese(""Oh"","" Hi"") ) );",
+@"3Oh Hi")
+                .SetName("DynamicTypingConfirmation");
 
             yield return new TestCaseData(
 @"print("""");",

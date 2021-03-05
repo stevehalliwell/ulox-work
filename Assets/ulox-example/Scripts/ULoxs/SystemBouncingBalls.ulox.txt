@@ -3,7 +3,7 @@ Code we expect from Unity's side;
 SetUIText(string)
 CreateFromPrefab(string):GameObject (returns a GameObject reference that we'll pass back to unity)
 GetKey(string):bool
-SetGameObjectPosition(GameObject, x, y)
+SetGameObjectPosition(GameObject, x, y, z)
 ReloadScene - reload the current unity scene
 
 
@@ -44,7 +44,7 @@ class Ball
 		if(self.y < -limit and self.vy < 0) { self.vy *= -1; }
 		if(self.y > limit  and self.vy > 0) { self.vy *= -1; }
 
-		SetGameObjectPosition(self.go, self.x, self.y);
+		SetGameObjectPosition(self.go, self.x, self.y, 0);
 	}
 }
 

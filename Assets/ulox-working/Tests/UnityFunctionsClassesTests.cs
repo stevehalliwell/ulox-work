@@ -20,6 +20,21 @@ if(v <= 3 and v >= -1) { print (true); }",
                 .SetName("RandRange_Valid");
 
             yield return new TestCaseData(
+@"print (GetKey(""space""));",
+@"False")
+                .SetName("NoKey");
+
+            yield return new TestCaseData(
+@"print (CreateFromPrefab(""NO_SUCH_PREFAB"") == null);",
+@"Unable to find prefab in 'UnityFunctionsLibrary' named 'NO_SUCH_PREFAB'.")
+                .SetName("NoPrefab");
+
+            yield return new TestCaseData(
+@"SetGameObjectPosition(null, 1 ,2, 3);",
+@"Unable to SetGameObjectPosition in 'UnityFunctionsLibrary'. Provided arg 0 is not a gameobject or component: 'null'.")
+                .SetName("NoGOToSet");
+
+            yield return new TestCaseData(
 @"print ("""");",
 @"")
                 .SetName("Empty");
@@ -39,8 +54,8 @@ if(v <= 3 and v >= -1) { print (true); }",
         internal class UnityFunctionsClassesTestLoxEngine : TestLoxEngine
         {
             public UnityFunctionsClassesTestLoxEngine()
-                : base(new StandardClasses(),
-                      new UnityFunctions())
+                : base(new StandardClassesLibrary(),
+                      new UnityFunctionsLibrary(new List<UnityEngine.GameObject>()))
             {
             }
         }

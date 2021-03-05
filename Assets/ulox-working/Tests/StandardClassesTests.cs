@@ -154,7 +154,7 @@ outter.inner.a = 10;", true);
         internal class StandardClassesTestLoxEngine : TestLoxEngine
         {
             public StandardClassesTestLoxEngine()
-                : base(new StandardClasses())
+                : base(new StandardClassesLibrary())
             {
             }
         }

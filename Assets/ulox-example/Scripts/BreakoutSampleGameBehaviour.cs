@@ -25,8 +25,8 @@ namespace ULox.Demo
         {
             engine = new Engine(
                 new LoxCoreLibrary(Debug.Log),
-                new StandardClasses(),
-                new UnityFunctions());
+                new StandardClassesLibrary(),
+                new UnityFunctionsLibrary(new List<GameObject>()));
 
             engine.SetValue("SetUIText",
                 new Callable(1, (args) => text.text = args.At<string>(0)));
@@ -35,7 +35,12 @@ namespace ULox.Demo
             engine.SetValue("CreateGameObject",
                 new Callable(1, (args) => CreateGameObject(args.At<string>(0))));
             engine.SetValue("SetGameObjectPosition",
-                new Callable(3, (args) => SetGameObjectPosition(Convert.ToInt32(args.At<double>(0)), Convert.ToSingle(args.At<double>(1)), Convert.ToSingle(args.At<double>(2)))));
+                new Callable(4, (args) 
+                    => SetGameObjectPosition(
+                        Convert.ToInt32(args.At<double>(0)), 
+                        Convert.ToSingle(args.At<double>(1)), 
+                        Convert.ToSingle(args.At<double>(2)),
+                        Convert.ToSingle(args.At<double>(3)))));
             engine.SetValue("SetGameObjectVelocity",
                 new Callable(3, (args) => SetGameObjectVelocity(Convert.ToInt32(args.At<double>(0)), Convert.ToSingle(args.At<double>(1)), Convert.ToSingle(args.At<double>(2)))));
             engine.SetValue("DestroyGameObject",
@@ -95,11 +100,11 @@ namespace ULox.Demo
             }
         }
 
-        private void SetGameObjectPosition(int id, float x, float y)
+        private void SetGameObjectPosition(int id, float x, float y, float z)
         {
             if (createdObjects.TryGetValue(id, out var go))
             {
-                go.transform.position = new Vector2(x, y);
+                go.transform.position = new Vector3(x, y, z);
             }
         }
 

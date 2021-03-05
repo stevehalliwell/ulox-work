@@ -169,12 +169,6 @@ namespace ULox
             if (_scopes.Count == 0) return;
 
             var scope = _scopes.Last();
-            if (scope.localVariables.ContainsKey(name))
-            {
-                // TODO: unhit
-                throw new LoxException($"Already a variable of name {name} in this scope.");
-            }
-
             scope.localVariables.Add(name, new VariableUse(new Token(TokenType.IDENTIFIER, name, name, -1, -1), VariableUse.State.Read));
         }
 
@@ -278,10 +272,9 @@ namespace ULox
 
         public void Visit(Stmt.MultiVar stmt)
         {
-            // TODO: unhit
             if (stmt.initializer == null ||
                 !(stmt.initializer is Expr.Call))
-                throw new ResolverException(stmt.names[0], "MultiVar statement is being used but is not assigned to a initialised by a function.");
+                throw new ResolverException(stmt.names[0], "MultiVar statement is being used but is not assigned to be initialised by a function.");
 
             if (stmt.initializer != null)
             {
