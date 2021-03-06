@@ -31,7 +31,7 @@ namespace ULox
             { "continue", TokenType.CONTINUE},
             { "true",   TokenType.TRUE},
             { "false",  TokenType.FALSE},
-            { Interpreter.NulIdentifier,   TokenType.NULL},
+            { Interpreter.NullIdentifier,   TokenType.NULL},
             { "fun",    TokenType.FUNCTION},
             { "class",  TokenType.CLASS},
             { ".",      TokenType.DOT},
@@ -249,14 +249,14 @@ namespace ULox
             return ch >= '0' && ch <= '9';
         }
 
-        private bool IsAlpha(int c)
+        private static bool IsAlpha(int c)
         {
             return (c >= 'a' && c <= 'z') ||
                 (c >= 'A' && c <= 'Z') ||
                 c == '_';
         }
 
-        private bool IsAlphaNumber(int c)
+        private static bool IsAlphaNumber(int c)
         {
             return IsAlpha(c) || IsDigit(c);
         }

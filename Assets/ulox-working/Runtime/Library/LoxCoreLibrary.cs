@@ -6,7 +6,7 @@ namespace ULox
     {
         private Action<string> _logger;
 
-        private void PrintViaLogger(object o) => _logger?.Invoke(o?.ToString() ?? Interpreter.NulIdentifier);
+        private void PrintViaLogger(object o) => _logger?.Invoke(o?.ToString() ?? Interpreter.NullIdentifier);
 
         public LoxCoreLibrary(Action<string> logger)
         {
@@ -55,7 +55,7 @@ namespace ULox
                 return;
             }
 
-            sb.Append(v?.ToString() ?? Interpreter.NulIdentifier);
+            sb.Append(v?.ToString() ?? Interpreter.NullIdentifier);
             prefix += "  ";
 
             if (v is Class vClass)

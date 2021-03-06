@@ -80,5 +80,11 @@ namespace ULox
 
             return defaultIfNotFound;
         }
+
+        public void Reset(IEnvironment environment)
+        {
+            values.Clear();
+            _enclosing = environment;
+        }
     }
 }

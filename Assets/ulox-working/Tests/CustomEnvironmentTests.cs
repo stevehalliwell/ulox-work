@@ -173,18 +173,18 @@ RunScript(""Test(5);"");";
 
             for (int i = 0; i < 3; i++)
             {
-                envs.Add(test._engine.Interpreter.PushNewEnvironemnt());
+                envs.Add(test._engine.Interpreter.EnvironmentStack.PushNew());
                 test.Run(initialTestString, true);
-                test._engine.Interpreter.PopSpecificEnvironemnt(envs.Last());
+                test._engine.Interpreter.EnvironmentStack.PopTarget(envs.Last());
             }
 
             var secondTestString = @"Test();";
 
             for (int i = 0; i < 3; i++)
             {
-                test._engine.Interpreter.PushEnvironemnt(envs[i]);
+                test._engine.Interpreter.EnvironmentStack.PushTarget(envs[i]);
                 test.Run(secondTestString, true);
-                test._engine.Interpreter.PopEnvironemnt();
+                test._engine.Interpreter.EnvironmentStack.Pop();
             }
 
             Assert.AreEqual("111", test.InterpreterResult);
@@ -198,9 +198,9 @@ RunScript(""Test(5);"");";
 
             test.Run("print(5);", true);
 
-            test._engine.Interpreter.PushEnvironemnt(new Environment(null));
+            test._engine.Interpreter.EnvironmentStack.PushTarget(new Environment(null));
             test.Run("print(5);", true);
-            test._engine.Interpreter.PopEnvironemnt();
+            test._engine.Interpreter.EnvironmentStack.Pop();
 
             test.Run("print(5);", true);
 
@@ -216,16 +216,16 @@ RunScript(""Test(5);"");";
 
             for (int i = 0; i < 3; i++)
             {
-                envs.Add(test._engine.Interpreter.PushNewEnvironemnt());
+                envs.Add(test._engine.Interpreter.EnvironmentStack.PushNew());
                 test.Run(initialTestString, true);
-                test._engine.Interpreter.PopSpecificEnvironemnt(envs.Last());
+                test._engine.Interpreter.EnvironmentStack.PopTarget(envs.Last());
             }
 
             for (int i = 0; i < 3; i++)
             {
-                test._engine.Interpreter.PushEnvironemnt(envs[i]);
+                test._engine.Interpreter.EnvironmentStack.PushTarget(envs[i]);
                 test.Run(initialTestString, true);
-                test._engine.Interpreter.PopEnvironemnt();
+                test._engine.Interpreter.EnvironmentStack.Pop();
             }
 
             Assert.IsTrue(test.InterpreterResult.StartsWith("IDENTIFIER|1:9 Environment value redefinition not allowed,"));
@@ -237,12 +237,12 @@ RunScript(""Test(5);"");";
             var test = new CustomEnvironmentTestLoxEngine();
             test.Run(@"
 var myvar = 10;
-PushLocalEnvironment();
+var env = PushLocalEnvironment();
 //put a print callable in the local scope
 var print = print;
 var innerScript = ""var myvar = 5; print(myvar); print = null;"";
 RunScriptInLocalSandbox(innerScript);
-PopLocalEnvironment();
+PopLocalEnvironment(env);
 print(myvar);", true);
             
             Assert.AreEqual("510", test.InterpreterResult);
@@ -255,10 +255,10 @@ print(myvar);", true);
             test.Run(@"
 var innerScript = ""holder.data = 5;"";
 var pod = POD();
-PushLocalEnvironment();
+var locEnv = PushLocalEnvironment();
 var holder = pod;
 RunScriptInLocalSandbox(innerScript);
-PopLocalEnvironment();
+PopLocalEnvironment(locEnv);
 print(pod.data);", true);
 
             Assert.AreEqual("5", test.InterpreterResult);
@@ -270,9 +270,9 @@ print(pod.data);", true);
             var test = new CustomEnvironmentTestLoxEngine();
             test.Run(@"
 var innerScript = ""Globals.testVar = 5;"";
-PushLocalEnvironment();
+var env = PushLocalEnvironment();
 RunScript(innerScript);
-PopLocalEnvironment();
+PopLocalEnvironment(env);
 print(Globals.testVar);
 print(testVar);", true);
 
@@ -285,9 +285,9 @@ print(testVar);", true);
             var test = new CustomEnvironmentTestLoxEngine();
             test.Run(@"
 var innerScript = ""Globals.testVar = 5;"";
-PushLocalEnvironment();
+var env = PushLocalEnvironment();
 RunScriptInLocalSandbox(innerScript);
-PopLocalEnvironment();
+PopLocalEnvironment(env);
 print(Globals.testVar);
 print(testVar);", true);
 

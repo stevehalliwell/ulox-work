@@ -23,22 +23,22 @@
         public ULoxScriptEnvironment(Engine engine)
         {
             _engine = engine;
-            _ourEnvironment = engine.Interpreter.PushNewEnvironemnt();
-            engine.Interpreter.PopSpecificEnvironemnt(_ourEnvironment);
+            _ourEnvironment = engine.Interpreter.EnvironmentStack.PushNew();
+            engine.Interpreter.EnvironmentStack.PopTarget(_ourEnvironment);
         }
 
         public void RunScript(string script)
         {
-            _engine.Interpreter.PushEnvironemnt(_ourEnvironment);
+            _engine.Interpreter.EnvironmentStack.PushTarget(_ourEnvironment);
             _engine.Run(script);
-            _engine.Interpreter.PopSpecificEnvironemnt(_ourEnvironment);
+            _engine.Interpreter.EnvironmentStack.PopTarget(_ourEnvironment);
         }
 
         public void CallFunction(ICallable callable, params object[] objs)
         {
-            _engine.Interpreter.PushEnvironemnt(_ourEnvironment);
+            _engine.Interpreter.EnvironmentStack.PushTarget(_ourEnvironment);
             _engine.CallFunction(callable, objs);
-            _engine.Interpreter.PopSpecificEnvironemnt(_ourEnvironment);
+            _engine.Interpreter.EnvironmentStack.PopTarget(_ourEnvironment);
         }
 
         public object FetchLocalByName(string name)

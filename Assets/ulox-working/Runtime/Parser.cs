@@ -680,7 +680,7 @@ namespace ULox
                 TokenType.STAR,
                 TokenType.QUESTION))
             {
-                throw new ParseException(Previous(), "Missing left-had operand.");
+                throw new ParseException(Previous(), "Missing left-hand operand.");
             }
 
             throw new ParseException(Peek(), "Expect expression.");
@@ -723,30 +723,6 @@ namespace ULox
             }
             return new Expr.Grouping(list);
         }
-
-        //private void Synchronize()
-        //{
-        //    Advance();
-
-        //    while (!IsAtEnd())
-        //    {
-        //        if (Previous().TokenType == TokenType.END_STATEMENT) return;
-
-        //        switch (Peek().TokenType)
-        //        {
-        //        case TokenType.CLASS:
-        //        case TokenType.FUNCTION:
-        //        case TokenType.VAR:
-        //        case TokenType.FOR:
-        //        case TokenType.IF:
-        //        case TokenType.WHILE:
-        //        case TokenType.RETURN:
-        //            return;
-        //        }
-
-        //        Advance();
-        //    }
-        //}
 
         private Token Consume(TokenType type, string msg)
         {

@@ -9,6 +9,7 @@
         object Fetch(string tokenLexeme, bool checkEnclosing);
         object FetchNoThrow(string tokenLexeme, bool checkEnclosing, object defaultIfNotFound);
         void VisitValues(System.Action<string, object> action);
+        void Reset(IEnvironment currentEnvironment);
     }
 
     public static class IEnvironmentExt

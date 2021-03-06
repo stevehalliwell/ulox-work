@@ -3,52 +3,25 @@ using System.Collections.Generic;
 
 namespace ULox
 {
-    public class Interpreter : Expr.Visitor<Object>,
+    public partial class Interpreter : Expr.Visitor<Object>,
                                Stmt.Visitor
     {
         public const string GlobalsIdentifier = "Globals";
-        public const string NulIdentifier = "null";
+        public const string NullIdentifier = "null";
 
         private Environment _globals = new Instance(null, null);
-        public IEnvironment CurrentEnvironment => _environmentStack.Peek();
-        private Stack<IEnvironment> _environmentStack = new Stack<IEnvironment>();
+        private EnvironmentStack _environmentStack;
         private TestSuiteManager _testSuiteManager = new TestSuiteManager();
 
         public TestSuiteManager TestSuiteManager => _testSuiteManager;
-
         public Environment Globals => _globals;
+        public IEnvironment CurrentEnvironment => _environmentStack.CurrentEnvironment;
+        public EnvironmentStack EnvironmentStack => _environmentStack;
 
         public Interpreter()
         {
-            _environmentStack.Push(Globals);
+            _environmentStack = new EnvironmentStack(Globals);
             Globals.Define(GlobalsIdentifier, Globals);
-        }
-
-        public IEnvironment PushNewEnvironemnt()
-        {
-            var ret = new Environment(CurrentEnvironment);
-            _environmentStack.Push(ret);
-            return ret;
-        }
-
-        public void PushEnvironemnt(IEnvironment env)
-        {
-            _environmentStack.Push(env);
-        }
-
-        public bool PopSpecificEnvironemnt(IEnvironment env)
-        {
-            if (_environmentStack.Peek() == env)
-            {
-                _environmentStack.Pop();
-                return true;
-            }
-            return false;
-        }
-
-        public IEnvironment PopEnvironemnt()
-        {
-            return _environmentStack.Pop();
         }
 
         public void Interpret(List<Stmt> statements)
@@ -66,7 +39,7 @@ namespace ULox
                 if (item is Stmt.Expression stmtExpr)
                 {
                     var res = Evaluate(stmtExpr.expression);
-                    output?.Invoke(res?.ToString() ?? NulIdentifier);
+                    output?.Invoke(res?.ToString() ?? NullIdentifier);
                 }
                 else
                 {
@@ -79,7 +52,7 @@ namespace ULox
         {
             try
             {
-                _environmentStack.Push(environment);
+                _environmentStack.PushTarget(environment);
                 foreach (var stmt in statements)
                 {
                     Execute(stmt);
@@ -567,11 +540,11 @@ namespace ULox
 
         public void Visit(Stmt.Test stmt)
         {
-            PushNewEnvironemnt().Define("testName", stmt.name.Lexeme);
+            _environmentStack.PushNew().Define("testName", stmt.name.Lexeme);
             _testSuiteManager.SetSuite(stmt.name.Lexeme);
             Visit(stmt.block);
             _testSuiteManager.EndCurrentSuite();
-            PopEnvironemnt();
+            _environmentStack.Pop();
         }
 
         public void Visit(Stmt.TestCase stmt)
@@ -596,7 +569,7 @@ namespace ULox
             {
                 _testSuiteManager.StartCase(stmt, valueExpr);
 
-                var env = PushNewEnvironemnt();
+                var env = _environmentStack.PushNew();
                 env.Assign("testCaseName", stmt.name.Lexeme, true, false);
                 env.Assign("testValue", valueExpr, true, false);
                 Visit(stmt.block);
@@ -609,7 +582,7 @@ namespace ULox
             }
             finally
             {
-                PopEnvironemnt();
+                _environmentStack.Pop();
                 _testSuiteManager.EndingCase();
             }
         }

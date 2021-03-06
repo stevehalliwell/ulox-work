@@ -45,7 +45,7 @@ namespace ULox
             sb.Append(IsList ? "<list [" : "<array [");
             foreach (var item in objs)
             {
-                sb.Append(item?.ToString() ?? Interpreter.NulIdentifier);
+                sb.Append(item?.ToString() ?? Interpreter.NullIdentifier);
                 sb.Append(",");
             }
             sb.Append("]>");

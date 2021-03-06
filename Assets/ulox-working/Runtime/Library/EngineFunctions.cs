@@ -15,9 +15,11 @@
                     interp.CurrentEnvironment.Enclosing = curEnclosing;
                 }));
             engine.SetValue("PushLocalEnvironment", 
-                new Callable(0, (interp, args) => interp.PushNewEnvironemnt()));
+                new Callable(0, (Interpreter interp, FunctionArguments args)
+                    => interp.EnvironmentStack.PushNew()));
             engine.SetValue("PopLocalEnvironment",
-                new Callable(0, (Interpreter interp) => interp.PopEnvironemnt()));
+                new Callable(1, (Interpreter interp, FunctionArguments args)
+                    => interp.EnvironmentStack.PopTarget(args.At(0) as IEnvironment)));
         }
     }
 }

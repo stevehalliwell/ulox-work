@@ -426,7 +426,7 @@ print(a);",
 
             yield return new TestCaseData(
 @"print(+ 5);",
-@"PLUS|1:7 Missing left-had operand.")
+@"PLUS|1:7 Missing left-hand operand.")
                 .SetName("MissingLHS");
 
             yield return new TestCaseData(
