@@ -28,7 +28,7 @@ namespace ULox
             Function init,
             List<Stmt.Var> fields,
             IEnvironment enclosing)
-            : base(null, enclosing)
+            : base(null)
         {
             _name = name;
             _superclass = superclass;
@@ -37,7 +37,7 @@ namespace ULox
 
             if (_initializer == null)
             {
-                _initializer = new Function(Class.InitalizerFunctionName, EmptyInitFuncExpr(), enclosing);
+                _initializer = new Function(Class.InitalizerFunctionName, EmptyInitFuncExpr());
             }
         }
 
@@ -47,16 +47,15 @@ namespace ULox
 
         public virtual object Call(Interpreter interpreter, FunctionArguments functionArgs)
         {
-            var instance = new Instance(this, interpreter.CurrentEnvironment);
+            var instance = new Instance(this);
 
             //calling recursively pre-fix so most base class does its vars, then its child, then its child,
             //  and so on, will allow base class methods to use var index should they wish as ahead of time
             //  order is stable
             CreateFields(interpreter, instance, this);
 
-            var newArgs = new object[functionArgs.args.Length + 1];
-            newArgs[0] = instance;
-            functionArgs.args.CopyTo(newArgs, 1);
+            var newArgs = functionArgs.args;
+            newArgs.Insert(0, instance);
             functionArgs = FunctionArguments.New(newArgs);
 
             var paramList = _initializer.Params;

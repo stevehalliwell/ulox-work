@@ -9,7 +9,7 @@ namespace ULox
         public const string GlobalsIdentifier = "Globals";
         public const string NullIdentifier = "null";
 
-        private Environment _globals = new Instance(null, null);
+        private Environment _globals = new Instance(null);
         private EnvironmentStack _environmentStack;
         private TestSuiteManager _testSuiteManager = new TestSuiteManager();
 
@@ -48,7 +48,7 @@ namespace ULox
             }
         }
 
-        public void ExecuteBlock(List<Stmt> statements, Environment environment)
+        public void ExecuteBlock(List<Stmt> statements, IEnvironment environment)
         {
             try
             {
@@ -160,23 +160,20 @@ namespace ULox
             if (expr.expressions.Count == 1)
                 return Evaluate(expr.expressions[0]);
             else
-                return GroupingMultiEval(expr);
-        }
-
-        private object[] GroupingMultiEval(Expr.Grouping expr)
-        {
-            //todo would be nice not to need to alloc and array conver all of these
-            var argList = new List<object>();   //todo cache alloc?
-            foreach (var item in expr.expressions)
             {
-                var res = Evaluate(item);
-                if (res is object[] resArray)
-                    argList.AddRange(resArray);
-                else
-                    argList.Add(res);
-            }
+                //todo would be nice not to need to alloc and array conver all of these
+                var argList = new List<object>();   //todo cache alloc?
+                foreach (var item in expr.expressions)
+                {
+                    var res = Evaluate(item);
+                    if (res is object[] resArray)
+                        argList.AddRange(resArray);
+                    else
+                        argList.Add(res);
+                }
 
-            return argList.ToArray();
+                return argList.ToArray();
+            }
         }
 
         public object Visit(Expr.Literal expr) => expr.value;
@@ -230,7 +227,7 @@ namespace ULox
 
         public void Visit(Stmt.Block stmt)
         {
-            ExecuteBlock(stmt.statements, new Environment(CurrentEnvironment));
+            ExecuteBlock(stmt.statements, EnvironmentStack.GetLocalEnvironment());
         }
 
         public void Visit(Stmt.If stmt)
@@ -285,17 +282,25 @@ namespace ULox
         {
             var callee = Evaluate(expr.callee);
 
-            //TODO but if there's nothing there we can do better
-            var args = GroupingMultiEval(expr.arguments);
+            //todo this gets hit constantly, but cannot be cached easily as you can call in a call
+            var argList = new List<object>();
+            foreach (var item in expr.arguments.expressions)
+            {
+                var res = Evaluate(item);
+                if (res is object[] resArray)
+                    argList.AddRange(resArray);
+                else
+                    argList.Add(res);
+            }
 
             if (callee is ICallable calleeCallable)
             {
-                if (args.Length != calleeCallable.Arity)
+                if (argList.Count != calleeCallable.Arity)
                     throw new RuntimeCallException(expr.paren,
-                        $"Expected { calleeCallable.Arity} args but got { args.Length }");
+                        $"Expected { calleeCallable.Arity} args but got { argList.Count }");
 
-                //the callee will be a Method if it has a this
-                return calleeCallable.Call(this, FunctionArguments.New(args));
+                //todo we can remove function argument class perhaps
+                return calleeCallable.Call(this, FunctionArguments.New(argList));
             }
 
             throw new RuntimeTypeException(expr.paren, "Can only call function types");
@@ -303,8 +308,7 @@ namespace ULox
 
         public object Visit(Expr.Function expr)
         {
-            //todo if it doesn't use closure does it need current env?
-            return new Function(null, expr, CurrentEnvironment);
+            return new Function(null, expr);
         }
 
         public void Visit(Stmt.Return stmt) => throw new Return(stmt.keyword, Visit(stmt.retVals));
@@ -357,7 +361,7 @@ namespace ULox
 
         public void Visit(Stmt.Function stmt)
         {
-            var func = new Function(stmt.name.Lexeme, stmt.function, CurrentEnvironment);
+            var func = new Function(stmt.name.Lexeme, stmt.function);
             try
             {
                 CurrentEnvironment.Define(stmt.name.Lexeme, func);
@@ -388,13 +392,13 @@ namespace ULox
             var @class = new Class(
                 stmt.name.Lexeme,
                 superclass,
-                new Function(stmt.init.name.Lexeme, stmt.init.function, CurrentEnvironment),
+                new Function(stmt.init.name.Lexeme, stmt.init.function),
                 stmt.fields,
                 CurrentEnvironment);
 
             foreach (var method in stmt.metaMethods)
             {
-                var func = new Function(method.name.Lexeme, method.function, CurrentEnvironment);
+                var func = new Function(method.name.Lexeme, method.function);
                 @class.Set(func.Name, func);
             }
 
@@ -432,53 +436,52 @@ namespace ULox
         {
             if (expr.targetObj is Expr.Grouping grouping)
             {
-                return HandleMultiSet(expr, grouping);
-            }
+                Expr.Set setExpr = expr;
 
-            var obj = Evaluate(expr.targetObj) as Instance;
-            var val = Evaluate(expr.val);
-
-            if (obj == null)
-            {
-                throw new RuntimeTypeException(expr.name, "Only instances have fields.");
-            }
-
-            obj.Set(expr.name.Lexeme, val);
-
-            return val;
-        }
-
-        private object HandleMultiSet(Expr.Set setExpr, Expr.Grouping grouping)
-        {
-            object[] resultsFromFunc = System.Array.Empty<object>();
-            //we need the results first.
-            var rawFunctionReturn = Evaluate(setExpr.val);
-            if (rawFunctionReturn is object[] retVals)
-            {
-                resultsFromFunc = retVals;
-            }
-            else if (rawFunctionReturn is object retVal)
-            {
-                resultsFromFunc = new object[] { retVal }; //todo cache alloc?
-            }
-
-            for (int i = 0; i < grouping.expressions.Count && i < resultsFromFunc.Length; i++)
-            {
-                var curExpr = grouping.expressions[i];
-                var val = resultsFromFunc[i];
-                
-                if (curExpr is Expr.Get getExpr)
+                object[] resultsFromFunc = System.Array.Empty<object>();
+                //we need the results first.
+                var rawFunctionReturn = Evaluate(setExpr.val);
+                if (rawFunctionReturn is object[] retVals)
                 {
-                    var obj = Evaluate(getExpr.targetObj) as Instance;
-                    obj.Set(getExpr.name.Lexeme, val); 
+                    resultsFromFunc = retVals;
                 }
-                else if (curExpr is Expr.Variable varExpr)
+                else if (rawFunctionReturn is object retVal)
                 {
-                    CurrentEnvironment.Assign(varExpr.name.Lexeme, val, false, true);
+                    resultsFromFunc = new object[] { retVal }; //todo cache alloc?
                 }
-            }
 
-            return resultsFromFunc;
+                for (int i = 0; i < grouping.expressions.Count && i < resultsFromFunc.Length; i++)
+                {
+                    var curExpr = grouping.expressions[i];
+                    var val = resultsFromFunc[i];
+
+                    if (curExpr is Expr.Get getExpr)
+                    {
+                        var obj = Evaluate(getExpr.targetObj) as Instance;
+                        obj.Set(getExpr.name.Lexeme, val);
+                    }
+                    else if (curExpr is Expr.Variable varExpr)
+                    {
+                        CurrentEnvironment.Assign(varExpr.name.Lexeme, val, false, true);
+                    }
+                }
+
+                return resultsFromFunc;
+            }
+            else
+            {
+                var obj = Evaluate(expr.targetObj) as Instance;
+                var val = Evaluate(expr.val);
+
+                if (obj == null)
+                {
+                    throw new RuntimeTypeException(expr.name, "Only instances have fields.");
+                }
+
+                obj.Set(expr.name.Lexeme, val);
+
+                return val;
+            }
         }
 
         public object Visit(Expr.Conditional expr)
@@ -555,8 +558,18 @@ namespace ULox
             }
             else
             {
-                var exprResArr = GroupingMultiEval(stmt.valueGrouping);
-                foreach (var valueExpr in exprResArr)
+                //similar logic to the multivar but we don't need te abstraction
+                var exprResList = new List<object>();
+                foreach (var item in stmt.valueGrouping.expressions)
+                {
+                    var res = Evaluate(item);
+                    if (res is object[] resArray)
+                        exprResList.AddRange(resArray);
+                    else
+                        exprResList.Add(res);
+                }
+
+                foreach (var valueExpr in exprResList)
                 {
                     RunTestCaseInternal(stmt, valueExpr);
                 }

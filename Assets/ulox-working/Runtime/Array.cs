@@ -9,7 +9,7 @@ namespace ULox
         public bool IsList { get; protected set; } = false;
 
         public Array(int count, bool asList, Class @class, IEnvironment enclosing)
-            : base(@class, enclosing)
+            : base(@class)
         {
             IsList = asList;
             objs = new List<object>();

@@ -4,7 +4,7 @@
     {
         public void BindToEngine(Engine engine)
         {
-            engine.SetValue("Assert", new Instance(null, engine.Interpreter.CurrentEnvironment));
+            engine.SetValue("Assert", new Instance(null));
 
             engine.SetValue("Assert.AreEqual",
                 new Callable(3, (interp, args) =>

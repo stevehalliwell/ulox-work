@@ -75,7 +75,7 @@ namespace ULox
                 return retval;
             }
 
-            if (checkEnclosing && _enclosing != null)
+            if (checkEnclosing && _enclosing != null && _enclosing != this)
                 return _enclosing.Fetch(tokenLexeme, true);
 
             return defaultIfNotFound;

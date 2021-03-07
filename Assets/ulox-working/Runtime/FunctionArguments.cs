@@ -1,12 +1,16 @@
-﻿namespace ULox
+﻿using System.Collections.Generic;
+
+namespace ULox
 {
-    public struct FunctionArguments
+    public class FunctionArguments
     {
-        public object[] args;
+        public List<object> args;
 
         public T At<T>(int i) => (T)args[i];
         public object At(int i) => args[i];
         public static FunctionArguments New(params object[] arguments) =>
-            new FunctionArguments() { args = arguments}; 
+            new FunctionArguments() { args = new List<object>(arguments)};
+        public static FunctionArguments New(List<object> arguments) =>
+            new FunctionArguments() { args = arguments };
     }
 }

@@ -1,10 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 
 namespace ULox
 {
-    public class Resolver : Expr.Visitor<Object>,
+    public class Resolver : Expr.Visitor<object>,
                                 Stmt.Visitor
     {
         private class VariableUse
@@ -25,10 +23,9 @@ namespace ULox
         private class ScopeInfo
         {
             public Dictionary<string, VariableUse> localVariables = new Dictionary<string, VariableUse>();
-            public List<int> fetchedVariableDistances = new List<int>();
         }
 
-        private List<ScopeInfo> _scopes = new List<ScopeInfo>();
+        private Stack<ScopeInfo> _scopes = new Stack<ScopeInfo>();
         private FunctionType _currentFunctionType = FunctionType.None;
         private Expr.Function _currentExprFunc;
         private Stmt.Class _currentClass;
@@ -119,36 +116,34 @@ namespace ULox
 
         public void Visit(Stmt.Block stmt)
         {
-            BeginScope();
             Resolve(stmt.statements);
-            EndScope();
         }
 
         private void ResolveLocal(Token name, bool isRead)
         {
-            for (int i = _scopes.Count - 1; i >= 0; i--)
+            if (_scopes.Count == 0) return;
+
+            var scope = _scopes.Peek();
+
+            if (scope.localVariables.TryGetValue(name.Lexeme, out var varUse))
             {
-                if (_scopes[i].localVariables.TryGetValue(name.Lexeme, out var varUse))
+                if (isRead)
                 {
-                    if (isRead)
-                    {
-                        varUse.state = VariableUse.State.Read;
-                    }
-                    break;
+                    varUse.state = VariableUse.State.Read;
                 }
             }
         }
 
         private void BeginScope()
         {
-            _scopes.Add(new ScopeInfo());
+            _scopes.Push(new ScopeInfo());
         }
 
         private void Declare(Token name)
         {
             if (_scopes.Count == 0) return;
 
-            var scope = _scopes.Last();
+            var scope = _scopes.Peek();
             if (scope.localVariables.ContainsKey(name.Lexeme))
             {
                 throw new ResolverException(name, "Already a variable with this name in this scope.");
@@ -160,21 +155,23 @@ namespace ULox
         private void Define(Token name)
         {
             if (_scopes.Count == 0) return;
-            var count = _scopes.Last().localVariables.Count;
-            _scopes.Last().localVariables[name.Lexeme].state = VariableUse.State.Defined;
+            var scope = _scopes.Peek();
+            var count = scope.localVariables.Count;
+            scope.localVariables[name.Lexeme].state = VariableUse.State.Defined;
         }
 
         private void DeclareDefineRead(string name)
         {
             if (_scopes.Count == 0) return;
 
-            var scope = _scopes.Last();
+            var scope = _scopes.Peek();
             scope.localVariables.Add(name, new VariableUse(new Token(TokenType.IDENTIFIER, name, name, -1, -1), VariableUse.State.Read));
         }
 
         private void EndScope()
         {
-            foreach (var item in _scopes.Last().localVariables.Values)
+            var scope = _scopes.Peek();
+            foreach (var item in scope.localVariables.Values)
             {
                 if (item.state != VariableUse.State.Read)
                 {
@@ -186,7 +183,7 @@ namespace ULox
 
         private void EndScopeNoWarnings()
         {
-            _scopes.RemoveAt(_scopes.Count - 1);
+            _scopes.Pop();
         }
 
         private void Warning(Token name, string msg)
@@ -232,7 +229,6 @@ namespace ULox
                 {
                     ResolveLocal(initParam, true);
                 }
-                //todo fix _currentClass.indexFieldMatches = initArgPair;
             }
 
             EndScope();
@@ -414,7 +410,7 @@ namespace ULox
         public object Visit(Expr.Variable expr)
         {
             if (_scopes.Count > 0 &&
-                _scopes.Last().localVariables.TryGetValue(expr.name.Lexeme, out var existingFlag) &&
+                _scopes.Peek().localVariables.TryGetValue(expr.name.Lexeme, out var existingFlag) &&
                 existingFlag.state == VariableUse.State.Declared)
             {
                 throw new ResolverException(expr.name, "Can't read local variable in its own initializer.");

@@ -105,26 +105,6 @@ print(last);",
                 .SetName("Recursive_Fib");
 
             yield return new TestCaseData(
-@"fun makeCounter()
-{
-    var i = 0;
-    fun count()
-    {
-        i = i + 1;
-        return i;
-    }
-
-    return count;
-}
-
-var counter = makeCounter();
-counter();
-counter();
-print(counter());",
-@"3")
-                .SetName("Closure_Counter");
-
-            yield return new TestCaseData(
 @"class Bagel {}
 var bagel = Bagel();
 print(bagel);",
@@ -773,7 +753,7 @@ print(Test.Thing(t,true));
 print(Test.Thing(t,false));
 ",
 @"2010")
-                .SetName("ClassInnerUseOfThis");
+                .SetName("ClassInnerUseOfSelf");
 
             yield return new TestCaseData(
 @"class Test
@@ -832,6 +812,25 @@ var c,d;
 print(c+d);",
 @"3")
                 .SetName("MultiReturnsAssigns");
+
+            yield return new TestCaseData(
+@"fun MethInner()
+{
+    var a = 1, b = 2;
+    return (a,b);
+}
+fun Meth()
+{
+    var z = 3;
+    return (MethInner(),z);
+}
+
+var c,d,e;
+(c,d,e) = Meth();
+
+print(c+d+e);",
+@"6")
+                .SetName("NestedMultiReturnsAssigns");
 
             yield return new TestCaseData(
 @"fun Meth()
@@ -1093,6 +1092,13 @@ printr( AddV2( a, b ) );",
 @"testcase Test1 (""Foo"",""Bar"") { print(""Hello "" + testValue); }",
 @"Hello FooHello Bar")
                 .SetName("TestCaseValuesRun");
+
+            yield return new TestCaseData(
+@"fun TestValues() {return (""Foo"",""Bar"");}
+
+testcase Test1 (TestValues()) { print(""Hello "" + testValue); }",
+@"Hello FooHello Bar")
+                .SetName("TestCaseValuesRunViaMulti");
 
             yield return new TestCaseData(
 @"test TestA 

@@ -6,10 +6,11 @@ namespace ULox
     {
         private Stack<IEnvironment> _environmentStack = new Stack<IEnvironment>();
         private Stack<IEnvironment> _availableEnvironments = new Stack<IEnvironment>();
-        private Environment globals;
+        private Environment _globals;
 
         public EnvironmentStack(Environment globals)
         {
+            _globals = globals;
             CurrentFallbackEnvironment = globals;
             PushTarget(CurrentFallbackEnvironment);
         }
@@ -17,15 +18,31 @@ namespace ULox
         public IEnvironment CurrentEnvironment => _environmentStack.Peek();
         public IEnvironment CurrentFallbackEnvironment { get; set; }
 
-        public IEnvironment PushNew()
+        public IEnvironment GetLocalEnvironment()
         {
             if (_availableEnvironments.Count == 0)
-                _availableEnvironments.Push(new Environment(CurrentEnvironment));
+                _availableEnvironments.Push(new Environment(null));
 
-            var ret = _availableEnvironments.Pop();
-            ret.Reset(CurrentEnvironment);
-            _environmentStack.Push(ret);
-            return ret;
+            var res = _availableEnvironments.Pop();
+            res.Reset(CurrentEnvironment);
+            return res;
+        }
+
+        public IEnvironment GetGlobalEnvironment()
+        {
+            if (_availableEnvironments.Count == 0)
+                _availableEnvironments.Push(new Environment(null));
+
+            var res = _availableEnvironments.Pop();
+            res.Reset(_globals);
+            return res;
+        }
+
+        public IEnvironment PushNew()
+        {
+            var env = GetLocalEnvironment();
+            _environmentStack.Push(env);
+            return env;
         }
 
         public void PushTarget(IEnvironment env)

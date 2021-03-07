@@ -8,16 +8,13 @@ namespace ULox
     {
         private string _name;
         private Expr.Function _declaration;
-        private IEnvironment _closure;
 
         public Function(
             string name,
-            Expr.Function declaration,
-            IEnvironment closure)
+            Expr.Function declaration)
         {
             _name = name;
             _declaration = declaration;
-            _closure = closure;
         }
 
         public int Arity => _declaration?.parameters?.Count ?? 0;
@@ -30,7 +27,7 @@ namespace ULox
         {
             //if doesn't have locals does it need the new env? since we don't know if we are going to be 
             //  used by a closure, yes we do
-            var environment = new Environment(_closure);
+            var environment = interpreter.EnvironmentStack.GetGlobalEnvironment();
 
             if (_declaration.parameters != null)
             {
