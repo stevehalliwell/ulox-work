@@ -38,6 +38,7 @@ namespace ULox
             { "throw",  TokenType.THROW},
             { "test",  TokenType.TEST},
             { "testcase",  TokenType.TESTCASE},
+            { "print",  TokenType.PRINT},
         };
 
         public Scanner()
@@ -233,6 +234,14 @@ namespace ULox
                 workingSpaceStringBuilder.Append(_currentChar);
 
                 Advance();
+            }
+
+            //we don't want this but when doing expression only mode the last char and the close of quote can be the same
+            if (_currentChar == '"')
+            {
+                var str = System.Text.RegularExpressions.Regex.Unescape(workingSpaceStringBuilder.ToString());
+                AddToken(TokenType.STRING, str, str);
+                return;
             }
 
             throw new ScannerException(TokenType.IDENTIFIER, _line, _characterNumber, "Unterminated String");

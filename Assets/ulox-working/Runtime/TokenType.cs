@@ -66,6 +66,8 @@
         TEST,
         TESTCASE,
 
+        PRINT,
+
         EOF,
 
         NONE,

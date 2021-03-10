@@ -14,6 +14,16 @@
         { }
     }
 
+    public class CompilerException : LoxException
+    {
+        public CompilerException(string msg) : base(msg) { }
+    }
+
+    public class VMException : LoxException
+    {
+        public VMException(string msg) : base(msg) { }
+    }
+
     public class AssertException : LoxException
     {
         public AssertException(string msg) : base(msg) { }

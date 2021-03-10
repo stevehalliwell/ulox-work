@@ -162,8 +162,21 @@ new TokenType[]
             TokenType.EOF,
 })
                 .SetName("Conditional");
-        }
 
+            yield return new TestCaseData(
+@"""hello"" + "" "" + ""world""",
+new TokenType[]
+{
+            TokenType.STRING,
+            TokenType.PLUS,
+            TokenType.STRING,
+            TokenType.PLUS,
+            TokenType.STRING,
+            TokenType.EOF,
+})
+                .SetName("SimpleString");
+        }
+        
         [Test]
         [TestCaseSource(nameof(FloatDeclareTestStrings))]
         public void Scanner_FloatVarDeclare_TokenTypeMatch(string testString)
