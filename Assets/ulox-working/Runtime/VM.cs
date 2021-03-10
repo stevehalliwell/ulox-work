@@ -13,6 +13,14 @@ namespace ULox
     {
         private int ip;
         private Stack<Value> valueStack = new Stack<Value>();
+        private Dictionary<string, Value> globals = new Dictionary<string, Value>();
+
+        private System.Action<string> _printer;
+
+        public VM(System.Action<string> printer)
+        {
+            _printer = printer;
+        }
 
         public string GenerateStackDump()
         {
@@ -29,12 +37,12 @@ namespace ULox
                 switch (opCode)
                 {
                 case OpCode.CONSTANT:
-                    var index = chunk.instructions[ip];
+                    var constantIndex = chunk.instructions[ip];
                     ip++;
-                    valueStack.Push(chunk.ReadConstant(index));
+                    valueStack.Push(chunk.ReadConstant(constantIndex));
                     break;
                 case OpCode.RETURN:
-                    break;// return InterpreterResult.OK;
+                     return InterpreterResult.OK;
                 case OpCode.NEGATE:
                     valueStack.Push(Value.New(-valueStack.Pop().val.asDouble));
                     break;
@@ -62,7 +70,45 @@ namespace ULox
                     valueStack.Push(Value.Null());
                     break;
                 case OpCode.PRINT:
-                    UnityEngine.Debug.Log(valueStack.Pop().ToString());
+                    _printer(valueStack.Pop().ToString());
+                    break;
+                case OpCode.POP:
+                    _ = valueStack.Pop();
+                    break;
+                case OpCode.DEFINE_GLOBAL:
+                    {
+                        var global = chunk.instructions[ip];
+                        ip++;
+                        var globalName = chunk.ReadConstant(global);
+                        globals[globalName.val.asString] = valueStack.Peek();
+                        _ = valueStack.Pop();
+                    }
+                    break;
+                case OpCode.FETCH_GLOBAL:
+                    {
+                        var global = chunk.instructions[ip];
+                        ip++;
+                        var globalName = chunk.ReadConstant(global);
+                        var actualName = globalName.val.asString;
+                        if (!globals.TryGetValue(actualName, out var globalValue))
+                        {
+                            throw new VMException($"Global var of name '{actualName}' was not found.");
+                        }
+                        valueStack.Push(globalValue);
+                    }
+                    break;
+                case OpCode.ASSIGN_GLOBAL:
+                    {
+                        var global = chunk.instructions[ip];
+                        ip++;
+                        var globalName = chunk.ReadConstant(global);
+                        var actualName = globalName.val.asString;
+                        if (!globals.ContainsKey(actualName))
+                        {
+                            throw new VMException($"Global var of name '{actualName}' was not found.");
+                        }
+                        globals[actualName] = valueStack.Peek();
+                    }
                     break;
                 case OpCode.NONE:
                     break;

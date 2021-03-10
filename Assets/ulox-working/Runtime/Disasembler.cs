@@ -34,6 +34,9 @@ namespace ULox
                 switch (opCode)
                 {
                 case OpCode.CONSTANT:
+                case OpCode.DEFINE_GLOBAL:
+                case OpCode.FETCH_GLOBAL:
+                case OpCode.ASSIGN_GLOBAL:
                     stringBuilder.Append(" ");
                     i++;
                     var ind = chunk.instructions[i];
@@ -54,6 +57,7 @@ namespace ULox
                 case OpCode.LESS:
                 case OpCode.EQUAL:
                 case OpCode.PRINT:
+                case OpCode.POP:
                 default:
                     break;
                 }

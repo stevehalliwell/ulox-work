@@ -20,11 +20,13 @@ namespace ULox
             lines.Add(line);
         }
 
-        public void WriteConstant(Value val, int line)
+        public byte WriteConstant(Value val, int line)
         {
             instructions.Add((byte)OpCode.CONSTANT);
-            instructions.Add(AddConstant(val));
+            var at = AddConstant(val);
+            instructions.Add(at);
             lines.Add(line);
+            return at;
         }
 
         public void WriteSimple(OpCode opCode, int line)

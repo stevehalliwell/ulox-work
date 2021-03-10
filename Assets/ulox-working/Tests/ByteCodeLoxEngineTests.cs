@@ -37,7 +37,7 @@ namespace ULox.Tests
         public void Manual_Chunk_VM()
         {
             var chunk = GenerateManualChunk();
-            VM vm = new VM();
+            VM vm = new VM(null);
 
             Assert.AreEqual(vm.Interpret(chunk), InterpreterResult.OK);
         }
@@ -47,9 +47,9 @@ namespace ULox.Tests
         {
             var engine = new ByteCodeLoxEngine();
 
-            engine.Run("1+2");
+            engine.Run("print 1+2;");
 
-            Assert.AreEqual(engine.StackDump, "3");
+            Assert.AreEqual(engine.InterpreterResult, "3");
         }
 
         [Test]
@@ -57,9 +57,9 @@ namespace ULox.Tests
         {
             var engine = new ByteCodeLoxEngine();
 
-            engine.Run("!true");
+            engine.Run("print !true;");
 
-            Assert.AreEqual(engine.StackDump, "False");
+            Assert.AreEqual(engine.InterpreterResult, "False");
         }
 
         [Test]
@@ -67,9 +67,9 @@ namespace ULox.Tests
         {
             var engine = new ByteCodeLoxEngine();
 
-            engine.Run("1 < 2 == false");
+            engine.Run("print 1 < 2 == false;");
 
-            Assert.AreEqual(engine.StackDump, "False");
+            Assert.AreEqual(engine.InterpreterResult, "False");
         }
 
         [Test]
@@ -77,9 +77,9 @@ namespace ULox.Tests
         {
             var engine = new ByteCodeLoxEngine();
 
-            engine.Run("\"hello\" + \" \" + \"world\"");
+            engine.Run("print \"hello\" + \" \" + \"world\";");
 
-            Assert.AreEqual(engine.StackDump, "hello world");
+            Assert.AreEqual(engine.InterpreterResult, "hello world");
         }
 
         [Test]
@@ -89,7 +89,26 @@ namespace ULox.Tests
 
             engine.Run("print 1 + 2 * 3;");
 
-            //Assert.AreEqual(engine.StackDump, "False");
+            Assert.AreEqual(engine.InterpreterResult, "7");
+        }
+
+
+
+        [Test]
+        public void Engine_Cycle_Global_Var()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"var myVar = 10; 
+var myNull; 
+print myVar; 
+print myNull;
+
+var myOtherVar = myVar * 2;
+
+print myOtherVar;");
+
+            Assert.AreEqual(engine.InterpreterResult, "10null20");
         }
 
         public class ByteCodeLoxEngine
@@ -102,7 +121,7 @@ namespace ULox.Tests
             {
                 _scanner = new Scanner();
                 _compiler = new Compiler();
-                _vm = new VM();
+                _vm = new VM(AppendResult);
             }
 
             public string InterpreterResult { get; private set; } = string.Empty;

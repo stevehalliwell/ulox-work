@@ -9,6 +9,12 @@
         TRUE,
         FALSE,
 
+        POP, 
+
+        DEFINE_GLOBAL,
+        FETCH_GLOBAL,
+        ASSIGN_GLOBAL,
+
         NOT,
         EQUAL,
         GREATER,

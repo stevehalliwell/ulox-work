@@ -19,12 +19,12 @@ namespace ULox
 
     public class ParseRule
     {
-        public System.Action prefix, infix;
+        public System.Action<bool> prefix, infix;
         public Precedence precedence;
 
         public ParseRule(
-            System.Action prefix,
-            System.Action infix,
+            System.Action<bool> prefix,
+            System.Action<bool> infix,
             Precedence pre)
         {
             this.prefix = prefix;
@@ -73,6 +73,7 @@ namespace ULox
             rules[(int)TokenType.GREATER] = new ParseRule(null, Binary, Precedence.Comparison);
             rules[(int)TokenType.GREATER_EQUAL] = new ParseRule(null, Binary, Precedence.Comparison);
             rules[(int)TokenType.STRING] = new ParseRule(String, null, Precedence.None);
+            rules[(int)TokenType.IDENTIFIER] = new ParseRule(Variable, null, Precedence.None);
         }
 
         public bool Compile(Chunk chunk, List<Token> inTokens)
@@ -92,13 +93,50 @@ namespace ULox
 
         private void Declaration()
         {
-            Statement();
+            if (Match(TokenType.VAR))
+                VarStatement();
+            else
+                Statement();
         }
-        
+
+        private void VarStatement()
+        {
+            var global = ParseVariable("Expect variable name");
+
+            if (Match(TokenType.ASSIGN))
+                Expression();
+            else
+                EmitOpCode(OpCode.NULL);
+
+
+            Consume(TokenType.END_STATEMENT, "Expect ; after variable declaration.");
+            DefineVariable(global);
+        }
+
+        private byte ParseVariable(string msg)
+        {
+            Consume(TokenType.IDENTIFIER, msg);
+            return IdentifierString();
+        }
+
+        private void DefineVariable(byte global)
+        {
+            EmitBytes((byte)OpCode.DEFINE_GLOBAL, global);
+        }
+
         private void Statement()
         {
             if (Match(TokenType.PRINT))
                 PrintStatement();
+            else
+                ExpressionStatement();
+        }
+
+        private void ExpressionStatement()
+        {
+            Expression();
+            Consume(TokenType.END_STATEMENT, "Expect ; after expression statement.");
+            EmitOpCode(OpCode.POP);
         }
 
         private void Expression()
@@ -113,13 +151,34 @@ namespace ULox
             EmitOpCode(OpCode.PRINT);
         }
 
-        private void Grouping()
+        private void Grouping(bool canAssign)
         {
             Expression();
             Consume(TokenType.CLOSE_PAREN, "Expect ')' after expression.");
         }
 
-        void Unary()
+        private void Variable(bool canAssign)
+        {
+            NamedVariable(canAssign);
+        }
+
+        private void NamedVariable(bool canAssign)
+        {
+            //TODO if we already have the name don't store a dup
+            var globalID = IdentifierString();
+
+            if (canAssign && Match(TokenType.ASSIGN))
+            {
+                Expression();
+                EmitBytes((byte)OpCode.ASSIGN_GLOBAL, globalID);
+            }
+            else
+            {
+                EmitBytes((byte)OpCode.FETCH_GLOBAL, globalID);
+            }
+        }
+
+        void Unary(bool canAssign)
         {
             var op = previousToken.TokenType;
 
@@ -134,7 +193,7 @@ namespace ULox
             }
         }
 
-        void Binary()
+        void Binary(bool canAssign)
         {
             TokenType operatorType = previousToken.TokenType;
 
@@ -161,7 +220,7 @@ namespace ULox
 
         }
 
-        void Literal()
+        void Literal(bool canAssign)
         {
             switch(previousToken.TokenType)
             {
@@ -176,14 +235,19 @@ namespace ULox
             return rules[(int)operatorType];
         }
 
-        void Number()
+        private void Number(bool canAssign)
         {
             currentChunk.WriteConstant(Value.New((double)previousToken.Literal), previousToken.Line);
         }
 
-        void String()
+        private void String(bool canAssign)
         {
             currentChunk.WriteConstant(Value.New((string)previousToken.Literal), previousToken.Line);
+        }
+
+        private byte IdentifierString()
+        {
+            return currentChunk.WriteConstant(Value.New((string)previousToken.Literal), previousToken.Line);
         }
 
         private void EndCompile() => EmitReturn();
@@ -248,13 +312,19 @@ namespace ULox
                 throw new CompilerException("Expected prefix handler, but got null.");
             }
 
-            rule.prefix();
+            var canAssign = pre <= Precedence.Assignment;
+            rule.prefix(canAssign);
 
             while (pre <= GetRule(currentToken.TokenType).precedence)
             {
                 Advance();
                 rule = GetRule(previousToken.TokenType);
-                rule.infix();
+                rule.infix(canAssign);
+            }
+
+            if (canAssign && Match(TokenType.ASSIGN))
+            {
+                throw new CompilerException("Invalid assignment target.");
             }
         }
     }
