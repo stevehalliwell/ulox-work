@@ -85,6 +85,31 @@ namespace ULox
             rules[(int)TokenType.GREATER_EQUAL] = new ParseRule(null, Binary, Precedence.Comparison);
             rules[(int)TokenType.STRING] = new ParseRule(String, null, Precedence.None);
             rules[(int)TokenType.IDENTIFIER] = new ParseRule(Variable, null, Precedence.None);
+            rules[(int)TokenType.AND] = new ParseRule(null, And, Precedence.And);
+            rules[(int)TokenType.OR] = new ParseRule(null, Or, Precedence.Or);
+        }
+
+        private void And(bool canAssign)
+        {
+            int endJump = EmitJump(OpCode.JUMP_IF_FALSE);
+
+            EmitOpCode(OpCode.POP);
+            ParsePrecedence(Precedence.And);
+
+            PatchJump(endJump);
+        }
+
+        private void Or(bool canAssign)
+        {
+            int elseJump = EmitJump(OpCode.JUMP_IF_FALSE);
+            int endJump = EmitJump(OpCode.JUMP);
+
+            PatchJump(elseJump);
+            EmitOpCode(OpCode.POP);
+
+            ParsePrecedence(Precedence.Or);
+
+            PatchJump(endJump);
         }
 
         public bool Compile(Chunk chunk, List<Token> inTokens)

@@ -160,9 +160,6 @@ var b = 1;
 
             engine.Run(@"if(1 > 2) print ""ERROR""; print ""End"";");
 
-
-            var dis = engine.Disassembly;
-
             Assert.AreEqual(engine.InterpreterResult, "End");
         }
 
@@ -178,8 +175,20 @@ else
     print ""The ""; 
 print ""End"";");
 
+            Assert.AreEqual(engine.InterpreterResult, "The End");
+        }
 
-            var dis = engine.Disassembly;
+        [Test]
+        public void Engine_Cycle_If_Else_Logic_Constants()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+if(1 > 2 or 2 > 3) 
+    print ""ERROR""; 
+else if (1 == 1 and 2 == 2)
+    print ""The ""; 
+print ""End"";");
 
             Assert.AreEqual(engine.InterpreterResult, "The End");
         }
