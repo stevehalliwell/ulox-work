@@ -17,6 +17,9 @@
         FETCH_LOCAL,
         ASSIGN_LOCAL,
 
+        JUMP_IF_FALSE,
+        JUMP,
+
         NOT,
         EQUAL,
         GREATER,

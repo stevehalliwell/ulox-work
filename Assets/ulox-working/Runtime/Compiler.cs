@@ -186,6 +186,10 @@ namespace ULox
             {
                 PrintStatement();
             }
+            else if (Match(TokenType.IF))
+            {
+                IfStatement();
+            }
             else if (Match(TokenType.OPEN_BRACE))
             {
                 BeginScope();
@@ -197,7 +201,39 @@ namespace ULox
                 ExpressionStatement();
             }
         }
-        
+
+        private void IfStatement()
+        {
+            Consume(TokenType.OPEN_PAREN, "Expect '(' after if.");
+            Expression();
+            Consume(TokenType.CLOSE_PAREN, "Expect ')' after if.");
+
+            int thenjump = EmitJump(OpCode.JUMP_IF_FALSE);
+            EmitOpCode(OpCode.POP);
+
+            Statement();
+
+            int elseJump = EmitJump(OpCode.JUMP);
+
+            PatchJump(thenjump);
+            EmitOpCode(OpCode.POP);
+
+            if (Match(TokenType.ELSE)) Statement();
+
+            PatchJump(elseJump);
+        }
+
+        private void PatchJump(int thenjump)
+        {
+            int jump = currentChunk.instructions.Count - thenjump - 2;
+
+            if (jump > ushort.MaxValue)
+                throw new CompilerException($"Cannot jump '{jump}'. Max jump is '{ushort.MaxValue}'");
+
+            currentChunk.instructions[thenjump] = (byte)((jump >> 8) & 0xff);
+            currentChunk.instructions[thenjump + 1] = (byte)(jump & 0xff);
+        }
+
         private void BeginScope()
         {
             scopeDepth++;
@@ -417,6 +453,12 @@ namespace ULox
             {
                 currentChunk.WriteByte(b[i], previousToken.Line);
             }
+        }
+
+        private int EmitJump(OpCode op)
+        {
+            EmitBytes((byte)op, 0xff, 0xff);
+            return currentChunk.instructions.Count - 2;
         }
 
         private void Advance()

@@ -131,8 +131,6 @@ var b = 1;
     print a+b;
 }");
 
-            var dis = engine.Disassembly;
-
             Assert.AreEqual(engine.InterpreterResult, "3");
         }
 
@@ -153,6 +151,37 @@ var b = 1;
 }");
 
             Assert.AreEqual(engine.InterpreterResult, "36");
+        }
+
+        [Test]
+        public void Engine_Cycle_If_Jump_Constants()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"if(1 > 2) print ""ERROR""; print ""End"";");
+
+
+            var dis = engine.Disassembly;
+
+            Assert.AreEqual(engine.InterpreterResult, "End");
+        }
+
+        [Test]
+        public void Engine_Cycle_If_Else_Constants()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+if(1 > 2) 
+    print ""ERROR""; 
+else 
+    print ""The ""; 
+print ""End"";");
+
+
+            var dis = engine.Disassembly;
+
+            Assert.AreEqual(engine.InterpreterResult, "The End");
         }
 
         public class ByteCodeLoxEngine
@@ -179,7 +208,7 @@ var b = 1;
             {
                 try
                 {
-                   var tokens = _scanner.Scan(testString);
+                    var tokens = _scanner.Scan(testString);
                     var chunk = new Chunk("main");
                     _compiler.Compile(chunk, tokens);
                     _disasembler.DoChunk(chunk);

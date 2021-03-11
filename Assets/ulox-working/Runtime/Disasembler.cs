@@ -34,6 +34,15 @@ namespace ULox
 
                 switch (opCode)
                 {
+                case OpCode.JUMP_IF_FALSE:
+                case OpCode.JUMP:
+                    stringBuilder.Append(" ");
+                    i++;
+                    var bhi = chunk.instructions[i];
+                    i++;
+                    var blo = chunk.instructions[i];
+                    stringBuilder.Append((ushort)((bhi << 8) | blo));
+                    break;
                 case OpCode.CONSTANT:
                 case OpCode.DEFINE_GLOBAL:
                 case OpCode.FETCH_GLOBAL:

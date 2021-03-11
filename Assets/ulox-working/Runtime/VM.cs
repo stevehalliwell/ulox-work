@@ -31,18 +31,16 @@ namespace ULox
         {
             while(true)
             {
-                var opCode = (OpCode)chunk.instructions[ip];
-                ip++;
+                OpCode opCode = ReadOpCode(chunk);
 
                 switch (opCode)
                 {
                 case OpCode.CONSTANT:
-                    var constantIndex = chunk.instructions[ip];
-                    ip++;
+                    var constantIndex = ReadByte(chunk);
                     valueStack.Push(chunk.ReadConstant(constantIndex));
                     break;
                 case OpCode.RETURN:
-                     return InterpreterResult.OK;
+                    return InterpreterResult.OK;
                 case OpCode.NEGATE:
                     valueStack.Push(Value.New(-valueStack.Pop().val.asDouble));
                     break;
@@ -75,32 +73,41 @@ namespace ULox
                 case OpCode.POP:
                     _ = valueStack.Pop();
                     break;
+                case OpCode.JUMP_IF_FALSE:
+                    {
+                        ushort jump = ReadUShort(chunk);
+                        if (valueStack.Peek().IsFalsey)
+                            ip += jump;
+                    }
+                    break;
+                case OpCode.JUMP:
+                    {
+                        ushort jump = ReadUShort(chunk);
+                        ip += jump;
+                    }
+                    break;
                 case OpCode.FETCH_LOCAL:
                     {
-                        var slot = chunk.instructions[ip];
-                        ip++;
+                        var slot = ReadByte(chunk);
                         valueStack.Push(valueStack[slot]);
                     }
                     break;
                 case OpCode.ASSIGN_LOCAL:
                     {
-                        var slot = chunk.instructions[ip];
-                        ip++;
+                        var slot = ReadByte(chunk);
                         valueStack[slot] = valueStack.Peek();
                     }
                     break;
                 case OpCode.DEFINE_GLOBAL:
                     {
-                        var global = chunk.instructions[ip];
-                        ip++;
+                        var global = ReadByte(chunk);
                         var globalName = chunk.ReadConstant(global);
                         globals[globalName.val.asString] = valueStack.Pop();
                     }
                     break;
                 case OpCode.FETCH_GLOBAL:
                     {
-                        var global = chunk.instructions[ip];
-                        ip++;
+                        var global = ReadByte(chunk);
                         var globalName = chunk.ReadConstant(global);
                         var actualName = globalName.val.asString;
                         if (!globals.TryGetValue(actualName, out var globalValue))
@@ -112,8 +119,7 @@ namespace ULox
                     break;
                 case OpCode.ASSIGN_GLOBAL:
                     {
-                        var global = chunk.instructions[ip];
-                        ip++;
+                        var global = ReadByte(chunk);
                         var globalName = chunk.ReadConstant(global);
                         var actualName = globalName.val.asString;
                         if (!globals.ContainsKey(actualName))
@@ -131,6 +137,29 @@ namespace ULox
             }
 
             return InterpreterResult.OK;
+        }
+
+        private OpCode ReadOpCode(Chunk chunk)
+        {
+            var opCode = (OpCode)chunk.instructions[ip];
+            ip++;
+            return opCode;
+        }
+
+        private byte ReadByte(Chunk chunk)
+        {
+            var b = chunk.instructions[ip];
+            ip++;
+            return b;
+        }
+
+        private ushort ReadUShort(Chunk chunk)
+        {
+            var bhi = chunk.instructions[ip];
+            ip++;
+            var blo = chunk.instructions[ip];
+            ip++;
+            return (ushort)((bhi << 8) | blo);
         }
 
         private void DoMathOp(OpCode opCode)
