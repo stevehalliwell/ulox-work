@@ -14,6 +14,8 @@
         DEFINE_GLOBAL,
         FETCH_GLOBAL,
         ASSIGN_GLOBAL,
+        FETCH_LOCAL,
+        ASSIGN_LOCAL,
 
         NOT,
         EQUAL,

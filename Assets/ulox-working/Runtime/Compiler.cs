@@ -2,39 +2,50 @@
 
 namespace ULox
 {
-    public enum Precedence
-    {
-        None,
-        Assignment,
-        Or,
-        And,
-        Equality,
-        Comparison,
-        Term,
-        Factor,
-        Unary,
-        Call,
-        Primary,
-    }
-
-    public class ParseRule
-    {
-        public System.Action<bool> prefix, infix;
-        public Precedence precedence;
-
-        public ParseRule(
-            System.Action<bool> prefix,
-            System.Action<bool> infix,
-            Precedence pre)
-        {
-            this.prefix = prefix;
-            this.infix = infix;
-            this.precedence = pre;
-        }
-    }
-
     public class Compiler
     {
+        public enum Precedence
+        {
+            None,
+            Assignment,
+            Or,
+            And,
+            Equality,
+            Comparison,
+            Term,
+            Factor,
+            Unary,
+            Call,
+            Primary,
+        }
+
+        public class ParseRule
+        {
+            public System.Action<bool> prefix, infix;
+            public Precedence precedence;
+
+            public ParseRule(
+                System.Action<bool> prefix,
+                System.Action<bool> infix,
+                Precedence pre)
+            {
+                this.prefix = prefix;
+                this.infix = infix;
+                this.precedence = pre;
+            }
+        }
+
+        public class Local
+        {
+            public string name;
+            public int depth;
+        }
+
+        private Local[] locals = new Local[byte.MaxValue + 1];
+        private int localCount;
+        private int scopeDepth;
+
+
         private Token currentToken, previousToken;
         private List<Token> tokens;
         private int tokenIndex;
@@ -113,23 +124,103 @@ namespace ULox
             DefineVariable(global);
         }
 
-        private byte ParseVariable(string msg)
+        private byte ParseVariable(string errMsg)
         {
-            Consume(TokenType.IDENTIFIER, msg);
+            Consume(TokenType.IDENTIFIER, errMsg);
+
+            DeclareVariable();
+            if (scopeDepth > 0) return 0;
             return IdentifierString();
+        }
+
+        private void DeclareVariable()
+        {
+            if (scopeDepth == 0) return;
+
+            var declName = (string)previousToken.Literal;
+
+            for (int i = localCount - 1; i >= 0; i--)
+            {
+                var local = locals[i];
+                if (local.depth != -1 && local.depth < scopeDepth)
+                    break;
+
+                if (declName == local.name)
+                    throw new CompilerException($"Already a variable with name '{declName}' in this scope.");
+            }
+
+            AddLocal(declName);
+        }
+
+        private void AddLocal(string name)
+        {
+            if (localCount == byte.MaxValue)
+                throw new CompilerException("Too many local variables.");
+
+            locals[localCount++] = new Local()
+            {
+                name = name,
+                depth = -1
+            };
         }
 
         private void DefineVariable(byte global)
         {
+            if (scopeDepth > 0)
+            {
+                MarkInitialised();
+                return;
+            }
+
             EmitBytes((byte)OpCode.DEFINE_GLOBAL, global);
+        }
+
+        private void MarkInitialised()
+        {
+            locals[localCount - 1].depth = scopeDepth;
         }
 
         private void Statement()
         {
             if (Match(TokenType.PRINT))
+            {
                 PrintStatement();
+            }
+            else if (Match(TokenType.OPEN_BRACE))
+            {
+                BeginScope();
+                Block();
+                EndScope();
+            }
             else
+            {
                 ExpressionStatement();
+            }
+        }
+        
+        private void BeginScope()
+        {
+            scopeDepth++;
+        }
+
+        private void EndScope()
+        {
+            scopeDepth--;
+
+            while(localCount > 0 &&
+                locals[localCount -1].depth > scopeDepth)
+            {
+                EmitOpCode(OpCode.POP);
+                localCount--;
+            }
+        }
+
+        private void Block()
+        {
+            while (!Check(TokenType.CLOSE_BRACE) && !Check(TokenType.EOF))
+                Declaration();
+
+            Consume(TokenType.CLOSE_BRACE, "Expect '}' after block.");
         }
 
         private void ExpressionStatement()
@@ -165,17 +256,44 @@ namespace ULox
         private void NamedVariable(bool canAssign)
         {
             //TODO if we already have the name don't store a dup
-            var globalID = IdentifierString();
+
+            OpCode getOp = OpCode.FETCH_GLOBAL, setOp = OpCode.ASSIGN_GLOBAL;
+            var argID = ResolveLocal((string)previousToken.Literal);
+            if (argID != -1)
+            {
+                getOp = OpCode.FETCH_LOCAL;
+                setOp = OpCode.ASSIGN_LOCAL;
+            }
+            else
+            {
+                argID = AddStringConstant();
+            }
 
             if (canAssign && Match(TokenType.ASSIGN))
             {
                 Expression();
-                EmitBytes((byte)OpCode.ASSIGN_GLOBAL, globalID);
+                EmitBytes((byte)setOp, (byte)argID);
             }
             else
             {
-                EmitBytes((byte)OpCode.FETCH_GLOBAL, globalID);
+                EmitBytes((byte)getOp, (byte)argID);
             }
+        }
+
+        private int ResolveLocal(string name)
+        {
+            for (int i = localCount - 1; i >= 0; i--)
+            {
+                var local = locals[i];
+                if (name == local.name)
+                {
+                    if (local.depth == -1)
+                        throw new CompilerException("Cannot referenece a variable in it's own initialiser.");
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         void Unary(bool canAssign)
@@ -248,6 +366,11 @@ namespace ULox
         private byte IdentifierString()
         {
             return currentChunk.WriteConstant(Value.New((string)previousToken.Literal), previousToken.Line);
+        }
+
+        private byte AddStringConstant()
+        {
+            return currentChunk.AddConstant(Value.New((string)previousToken.Literal));
         }
 
         private void EndCompile() => EmitReturn();

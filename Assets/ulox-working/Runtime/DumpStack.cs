@@ -7,15 +7,12 @@ namespace ULox
     {
         private StringBuilder sb = new StringBuilder();
 
-        public string Generate(Stack<Value> valueStack)
+        public string Generate(IndexableStack<Value> valueStack)
         {
-            var copy = new Stack<Value>(valueStack);
-
-            while (copy.Count > 0)
+            for (int i = valueStack.Count - 1; i >= 0; i--)
             {
-                var value = copy.Pop();
-                sb.Append(value.ToString());
-                if (copy.Count != 0)
+                sb.Append(valueStack[i].ToString());
+                if (i > 0)
                     sb.AppendLine();
             }
 

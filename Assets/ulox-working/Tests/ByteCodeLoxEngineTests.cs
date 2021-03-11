@@ -28,7 +28,7 @@ namespace ULox.Tests
             var chunk = GenerateManualChunk();
             var dis = new Disasembler();
 
-            dis.DoChunk(ref chunk);
+            dis.DoChunk(chunk);
 
             Debug.Log(dis.GetString());
         }
@@ -92,8 +92,6 @@ namespace ULox.Tests
             Assert.AreEqual(engine.InterpreterResult, "7");
         }
 
-
-
         [Test]
         public void Engine_Cycle_Global_Var()
         {
@@ -111,21 +109,70 @@ print myOtherVar;");
             Assert.AreEqual(engine.InterpreterResult, "10null20");
         }
 
+        [Test]
+        public void Engine_Cycle_Blocks_Constants()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"{print 1+2;}");
+
+            Assert.AreEqual(engine.InterpreterResult, "3");
+        }
+
+        [Test]
+        public void Engine_Cycle_Blocks_Globals()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+var a = 2; 
+var b = 1;
+{
+    print a+b;
+}");
+
+            var dis = engine.Disassembly;
+
+            Assert.AreEqual(engine.InterpreterResult, "3");
+        }
+
+        [Test]
+        public void Engine_Cycle_Blocks_Locals()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+{
+    var a = 2; 
+    var b = 1;
+    print a+b;
+    {
+        var c = 3;
+        print a+b+c;
+    }
+}");
+
+            Assert.AreEqual(engine.InterpreterResult, "36");
+        }
+
         public class ByteCodeLoxEngine
         {
             private Scanner _scanner;
             private Compiler _compiler;
             private VM _vm;
+            private Disasembler _disasembler;
 
             public ByteCodeLoxEngine()
             {
                 _scanner = new Scanner();
                 _compiler = new Compiler();
+                _disasembler = new Disasembler();
                 _vm = new VM(AppendResult);
             }
 
             public string InterpreterResult { get; private set; } = string.Empty;
             public string StackDump => _vm.GenerateStackDump();
+            public string Disassembly => _disasembler.GetString();
 
             protected void AppendResult(string str) => InterpreterResult += str;
             public virtual void Run(string testString)
@@ -135,6 +182,7 @@ print myOtherVar;");
                    var tokens = _scanner.Scan(testString);
                     var chunk = new Chunk("main");
                     _compiler.Compile(chunk, tokens);
+                    _disasembler.DoChunk(chunk);
                     _vm.Interpret(chunk);
                 }
                 catch (LoxException e)
@@ -148,6 +196,10 @@ print myOtherVar;");
                 catch (System.IndexOutOfRangeException e)
                 {
                     AppendResult(e.Message);
+                }
+                catch (System.Exception e)
+                {
+                    throw e;
                 }
             }
         }

@@ -37,7 +37,9 @@ namespace ULox
 
         public byte AddConstant(Value val)
         {
-            System.Diagnostics.Debug.Assert(constants.Count < byte.MaxValue);
+            if (constants.Count >= byte.MaxValue)
+                throw new CompilerException($"Cannot have more than '{byte.MaxValue}' constants per chunk.");
+
             constants.Add(val);
             return (byte) (constants.Count - 1);
         }

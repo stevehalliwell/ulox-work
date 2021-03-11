@@ -8,13 +8,14 @@ namespace ULox
 
         public string GetString() => stringBuilder.ToString();
 
-        public void DoChunk(ref Chunk chunk)
+        public void DoChunk(Chunk chunk)
         {
             stringBuilder.AppendLine(chunk.Name);
             var instructionCount = 0;
 
             for (int i = 0; i < chunk.instructions.Count; i++, instructionCount++)
             {
+                //todo instruction count is wrong
                 stringBuilder.Append(i.ToString("0000"));
 
                 var opCode = (OpCode)chunk.instructions[i];
@@ -37,6 +38,8 @@ namespace ULox
                 case OpCode.DEFINE_GLOBAL:
                 case OpCode.FETCH_GLOBAL:
                 case OpCode.ASSIGN_GLOBAL:
+                case OpCode.FETCH_LOCAL:
+                case OpCode.ASSIGN_LOCAL:
                     stringBuilder.Append(" ");
                     i++;
                     var ind = chunk.instructions[i];

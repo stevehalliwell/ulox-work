@@ -12,7 +12,7 @@ namespace ULox
     public class VM
     {
         private int ip;
-        private Stack<Value> valueStack = new Stack<Value>();
+        private IndexableStack<Value> valueStack = new IndexableStack<Value>();
         private Dictionary<string, Value> globals = new Dictionary<string, Value>();
 
         private System.Action<string> _printer;
@@ -75,13 +75,26 @@ namespace ULox
                 case OpCode.POP:
                     _ = valueStack.Pop();
                     break;
+                case OpCode.FETCH_LOCAL:
+                    {
+                        var slot = chunk.instructions[ip];
+                        ip++;
+                        valueStack.Push(valueStack[slot]);
+                    }
+                    break;
+                case OpCode.ASSIGN_LOCAL:
+                    {
+                        var slot = chunk.instructions[ip];
+                        ip++;
+                        valueStack[slot] = valueStack.Peek();
+                    }
+                    break;
                 case OpCode.DEFINE_GLOBAL:
                     {
                         var global = chunk.instructions[ip];
                         ip++;
                         var globalName = chunk.ReadConstant(global);
-                        globals[globalName.val.asString] = valueStack.Peek();
-                        _ = valueStack.Pop();
+                        globals[globalName.val.asString] = valueStack.Pop();
                     }
                     break;
                 case OpCode.FETCH_GLOBAL:
@@ -107,7 +120,7 @@ namespace ULox
                         {
                             throw new VMException($"Global var of name '{actualName}' was not found.");
                         }
-                        globals[actualName] = valueStack.Peek();
+                        globals[actualName] = valueStack.Pop();
                     }
                     break;
                 case OpCode.NONE:
@@ -131,7 +144,9 @@ namespace ULox
                 return;
             }
 
-            System.Diagnostics.Debug.Assert(lhs.type == Value.Type.Double && lhs.type == rhs.type);
+            if (lhs.type != Value.Type.Double && lhs.type != rhs.type)
+                throw new VMException($"Cannot perform math op on non math types '{lhs.type}' and '{rhs.type}'.");
+
             var res = Value.New(0);
             switch (opCode)
             {
