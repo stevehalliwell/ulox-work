@@ -215,6 +215,10 @@ namespace ULox
             {
                 IfStatement();
             }
+            else if(Match(TokenType.WHILE))
+            {
+                WhileStatement();
+            }
             else if (Match(TokenType.OPEN_BRACE))
             {
                 BeginScope();
@@ -225,6 +229,25 @@ namespace ULox
             {
                 ExpressionStatement();
             }
+        }
+
+        private void WhileStatement()
+        {
+            int loopStart = currentChunk.instructions.Count;
+
+            Consume(TokenType.OPEN_PAREN, "Expect '(' after if.");
+            Expression();
+            Consume(TokenType.CLOSE_PAREN, "Expect ')' after if.");
+            
+            int exitJump = EmitJump(OpCode.JUMP_IF_FALSE);
+            
+            EmitOpCode(OpCode.POP);
+            Statement();
+
+            EmitLoop(loopStart);
+
+            PatchJump(exitJump);
+            EmitOpCode(OpCode.POP);
         }
 
         private void IfStatement()
@@ -484,6 +507,17 @@ namespace ULox
         {
             EmitBytes((byte)op, 0xff, 0xff);
             return currentChunk.instructions.Count - 2;
+        }
+
+        private void EmitLoop(int loopStart)
+        {
+            EmitOpCode(OpCode.LOOP);
+            int offset = currentChunk.instructions.Count - loopStart + 2;
+
+            if (offset > ushort.MaxValue)
+                throw new CompilerException($"Cannot loop '{offset}'. Max loop is '{ushort.MaxValue}'");
+
+            EmitBytes((byte)((offset >> 8) & 0xff),(byte)(offset & 0xff));
         }
 
         private void Advance()

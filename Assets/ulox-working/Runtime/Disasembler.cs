@@ -36,6 +36,7 @@ namespace ULox
                 {
                 case OpCode.JUMP_IF_FALSE:
                 case OpCode.JUMP:
+                case OpCode.LOOP:
                     stringBuilder.Append(" ");
                     i++;
                     var bhi = chunk.instructions[i];

@@ -193,6 +193,25 @@ print ""End"";");
             Assert.AreEqual(engine.InterpreterResult, "The End");
         }
 
+        [Test]
+        public void Engine_Cycle_While()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+var i = 0;
+while(i < 2)
+{
+    print ""hip, "";
+    i = i + 1;
+}
+
+print ""hurray"";");
+
+
+            Assert.AreEqual(engine.InterpreterResult, "hip, hip, hurray");
+        }
+
         public class ByteCodeLoxEngine
         {
             private Scanner _scanner;

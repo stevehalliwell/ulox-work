@@ -86,6 +86,12 @@ namespace ULox
                         ip += jump;
                     }
                     break;
+                case OpCode.LOOP:
+                    {
+                        ushort jump = ReadUShort(chunk);
+                        ip -= jump;
+                    }
+                    break;
                 case OpCode.FETCH_LOCAL:
                     {
                         var slot = ReadByte(chunk);
@@ -126,7 +132,7 @@ namespace ULox
                         {
                             throw new VMException($"Global var of name '{actualName}' was not found.");
                         }
-                        globals[actualName] = valueStack.Pop();
+                        globals[actualName] = valueStack.Peek();
                     }
                     break;
                 case OpCode.NONE:
