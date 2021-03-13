@@ -9,17 +9,38 @@ namespace ULox
         RUNTIME_ERROR,
     }
 
+    public class CallFrame
+    {
+        public Chunk chunk;
+        public int ip;
+        public int stackStart;
+    }
+
+
     public class VM
     {
-        private int ip;
         private IndexableStack<Value> valueStack = new IndexableStack<Value>();
         private Dictionary<string, Value> globals = new Dictionary<string, Value>();
+        private IndexableStack<CallFrame> callFrames = new IndexableStack<CallFrame>();
+        private int CurrentCallFrame => callFrames.Count-1;
+
+        private int CurrentIP
+        {
+            get { return callFrames[CurrentCallFrame].ip; }
+            set { callFrames[CurrentCallFrame].ip = value; }
+        }
 
         private System.Action<string> _printer;
 
         public VM(System.Action<string> printer)
         {
-            _printer = printer;
+            _printer = printer; 
+            callFrames.Add(new CallFrame()
+            {
+                chunk = null,
+                ip = 0,
+                stackStart = 0
+            });
         }
 
         public string GenerateStackDump()
@@ -29,7 +50,14 @@ namespace ULox
 
         public InterpreterResult Interpret(Chunk chunk)
         {
-            while(true)
+            callFrames.Add(new CallFrame() 
+            {
+                chunk = chunk,
+                ip = CurrentIP,
+                stackStart = valueStack.Count
+            });
+
+            while (true)
             {
                 OpCode opCode = ReadOpCode(chunk);
 
@@ -77,31 +105,31 @@ namespace ULox
                     {
                         ushort jump = ReadUShort(chunk);
                         if (valueStack.Peek().IsFalsey)
-                            ip += jump;
+                            CurrentIP += jump;
                     }
                     break;
                 case OpCode.JUMP:
                     {
                         ushort jump = ReadUShort(chunk);
-                        ip += jump;
+                        CurrentIP += jump;
                     }
                     break;
                 case OpCode.LOOP:
                     {
                         ushort jump = ReadUShort(chunk);
-                        ip -= jump;
+                        CurrentIP -= jump;
                     }
                     break;
                 case OpCode.FETCH_LOCAL:
                     {
                         var slot = ReadByte(chunk);
-                        valueStack.Push(valueStack[slot]);
+                        valueStack.Push(FetchLocalStack(slot));
                     }
                     break;
                 case OpCode.ASSIGN_LOCAL:
                     {
                         var slot = ReadByte(chunk);
-                        valueStack[slot] = valueStack.Peek();
+                        AssignLocalStack(slot, valueStack.Peek());
                     }
                     break;
                 case OpCode.DEFINE_GLOBAL:
@@ -145,26 +173,36 @@ namespace ULox
             return InterpreterResult.OK;
         }
 
+        private void AssignLocalStack(byte slot, Value val)
+        {
+            valueStack[slot + callFrames[CurrentCallFrame].stackStart] = val;
+        }
+
+        private Value FetchLocalStack(byte slot)
+        {
+            return valueStack[slot + callFrames[CurrentCallFrame].stackStart];
+        }
+
         private OpCode ReadOpCode(Chunk chunk)
         {
-            var opCode = (OpCode)chunk.instructions[ip];
-            ip++;
+            var opCode = (OpCode)chunk.instructions[CurrentIP];
+            CurrentIP++;
             return opCode;
         }
 
         private byte ReadByte(Chunk chunk)
         {
-            var b = chunk.instructions[ip];
-            ip++;
+            var b = chunk.instructions[CurrentIP];
+            CurrentIP++;
             return b;
         }
 
         private ushort ReadUShort(Chunk chunk)
         {
-            var bhi = chunk.instructions[ip];
-            ip++;
-            var blo = chunk.instructions[ip];
-            ip++;
+            var bhi = chunk.instructions[CurrentIP];
+            CurrentIP++;
+            var blo = chunk.instructions[CurrentIP];
+            CurrentIP++;
             return (ushort)((bhi << 8) | blo);
         }
 

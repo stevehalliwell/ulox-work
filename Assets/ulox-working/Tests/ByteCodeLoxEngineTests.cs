@@ -13,8 +13,8 @@ namespace ULox.Tests
 
             chunk.WriteConstant(Value.New(0.5), 1);
             chunk.WriteConstant(Value.New(1), 1);
-            chunk.WriteSimple(OpCode.NEGATE,1);
-            chunk.WriteSimple(OpCode.ADD,1);
+            chunk.WriteSimple(OpCode.NEGATE, 1);
+            chunk.WriteSimple(OpCode.ADD, 1);
             chunk.WriteConstant(Value.New(2), 1);
             chunk.WriteSimple(OpCode.MULTIPLY, 1);
             chunk.WriteSimple(OpCode.RETURN, 2);
@@ -212,52 +212,56 @@ print ""hurray"";");
             Assert.AreEqual(engine.InterpreterResult, "hip, hip, hurray");
         }
 
-        public class ByteCodeLoxEngine
+        [Test]
+        public void Engine_Cycle_For()
         {
-            private Scanner _scanner;
-            private Compiler _compiler;
-            private VM _vm;
-            private Disasembler _disasembler;
+            var engine = new ByteCodeLoxEngine();
 
-            public ByteCodeLoxEngine()
+            engine.Run(@"
+for(var i = 0; i < 2; i = i + 1)
+{
+    print ""hip, "";
+}
+
+print ""hurray"";");
+
+
+            Assert.AreEqual(engine.InterpreterResult, "hip, hip, hurray");
+        }
+    }
+
+    public class ByteCodeLoxEngine
+    {
+        private Scanner _scanner;
+        private Compiler _compiler;
+        private VM _vm;
+        private Disasembler _disasembler;
+
+        public ByteCodeLoxEngine()
+        {
+            _scanner = new Scanner();
+            _compiler = new Compiler();
+            _disasembler = new Disasembler();
+            _vm = new VM(AppendResult);
+        }
+
+        public string InterpreterResult { get; private set; } = string.Empty;
+        public string StackDump => _vm.GenerateStackDump();
+        public string Disassembly => _disasembler.GetString();
+
+        protected void AppendResult(string str) => InterpreterResult += str;
+        public virtual void Run(string testString)
+        {
+            try
             {
-                _scanner = new Scanner();
-                _compiler = new Compiler();
-                _disasembler = new Disasembler();
-                _vm = new VM(AppendResult);
+                var tokens = _scanner.Scan(testString);
+                var chunk = _compiler.Compile(tokens);
+                _disasembler.DoChunk(chunk);
+                _vm.Interpret(chunk);
             }
-
-            public string InterpreterResult { get; private set; } = string.Empty;
-            public string StackDump => _vm.GenerateStackDump();
-            public string Disassembly => _disasembler.GetString();
-
-            protected void AppendResult(string str) => InterpreterResult += str;
-            public virtual void Run(string testString)
+            catch (LoxException e)
             {
-                try
-                {
-                    var tokens = _scanner.Scan(testString);
-                    var chunk = new Chunk("main");
-                    _compiler.Compile(chunk, tokens);
-                    _disasembler.DoChunk(chunk);
-                    _vm.Interpret(chunk);
-                }
-                catch (LoxException e)
-                {
-                    AppendResult(e.Message);
-                }
-                catch (System.ArgumentOutOfRangeException e)
-                {
-                    AppendResult(e.Message);
-                }
-                catch (System.IndexOutOfRangeException e)
-                {
-                    AppendResult(e.Message);
-                }
-                catch (System.Exception e)
-                {
-                    throw e;
-                }
+                AppendResult(e.Message);
             }
         }
     }

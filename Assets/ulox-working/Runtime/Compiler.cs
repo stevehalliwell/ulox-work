@@ -41,24 +41,37 @@ namespace ULox
             public int depth;
         }
 
-        private Local[] locals = new Local[byte.MaxValue + 1];
-        private int localCount;
-        private int scopeDepth;
+        private class CompilerState
+        {
+            public Local[] locals = new Local[byte.MaxValue + 1];
+            public int localCount;
+            public int scopeDepth;
+            public Chunk chunk;
+        }
 
+        private Stack<CompilerState> compilerStates = new Stack<CompilerState>();
 
         private Token currentToken, previousToken;
         private List<Token> tokens;
         private int tokenIndex;
-        private Chunk currentChunk;
+        //todo if we have more than 1 compiler we want this to be static
         private ParseRule[] rules;
+
+        private int CurrentChunkInstructinCount => CurrentChunk.instructions.Count;
+        private Chunk CurrentChunk => compilerStates.Peek().chunk;
 
         public Compiler()
         {
             GenerateRules();
+            compilerStates.Push(new CompilerState()
+            {
+                chunk = new Chunk(string.Empty),
+            });
         }
 
         private void GenerateRules()
         {
+
             rules = new ParseRule[System.Enum.GetNames(typeof(TokenType)).Length];
 
             for (int i = 0; i < rules.Length; i++)
@@ -112,10 +125,9 @@ namespace ULox
             PatchJump(endJump);
         }
 
-        public bool Compile(Chunk chunk, List<Token> inTokens)
+        public Chunk Compile(List<Token> inTokens)
         {
             tokens = inTokens;
-            currentChunk = chunk;
             Advance();
 
             while (currentToken.TokenType != TokenType.EOF)
@@ -123,19 +135,48 @@ namespace ULox
                 Declaration();
             }
 
-            EndCompile();
-            return true;
+            return EndCompile();
         }
 
         private void Declaration()
         {
+            if (Match(TokenType.FUNCTION))
+                FunctionDeclaration();
             if (Match(TokenType.VAR))
-                VarStatement();
+                VarDeclaration();
             else
                 Statement();
         }
 
-        private void VarStatement()
+        private void FunctionDeclaration()
+        {
+            var global = ParseVariable("Expect function name.");
+            MarkInitialised();
+            Function();
+            DefineVariable(global);
+        }
+
+        private void Function()
+        {
+            //Compiler compiler;
+            //initCompiler(&compiler, type);
+            //nest the compiler
+            BeginScope();
+
+            // Compile the parameter list.
+            Consume(TokenType.OPEN_PAREN, "Expect '(' after function name.");
+            Consume(TokenType.CLOSE_PAREN, "Expect ')' after parameters.");
+
+            // The body.
+            Consume(TokenType.OPEN_BRACE, "Expect '{' before function body.");
+            Block();
+
+            // Create the function object.
+            var function = EndCompile();
+            WriteConstantFunction(function);
+        }
+
+        private void VarDeclaration()
         {
             var global = ParseVariable("Expect variable name");
 
@@ -154,20 +195,20 @@ namespace ULox
             Consume(TokenType.IDENTIFIER, errMsg);
 
             DeclareVariable();
-            if (scopeDepth > 0) return 0;
+            if (compilerStates.Peek().scopeDepth > 0) return 0;
             return IdentifierString();
         }
 
         private void DeclareVariable()
         {
-            if (scopeDepth == 0) return;
+            if (compilerStates.Peek().scopeDepth == 0) return;
 
             var declName = (string)previousToken.Literal;
 
-            for (int i = localCount - 1; i >= 0; i--)
+            for (int i = compilerStates.Peek().localCount - 1; i >= 0; i--)
             {
-                var local = locals[i];
-                if (local.depth != -1 && local.depth < scopeDepth)
+                var local = compilerStates.Peek().locals[i];
+                if (local.depth != -1 && local.depth < compilerStates.Peek().scopeDepth)
                     break;
 
                 if (declName == local.name)
@@ -179,10 +220,10 @@ namespace ULox
 
         private void AddLocal(string name)
         {
-            if (localCount == byte.MaxValue)
+            if (compilerStates.Peek().localCount == byte.MaxValue)
                 throw new CompilerException("Too many local variables.");
 
-            locals[localCount++] = new Local()
+            compilerStates.Peek().locals[compilerStates.Peek().localCount++] = new Local()
             {
                 name = name,
                 depth = -1
@@ -191,7 +232,7 @@ namespace ULox
 
         private void DefineVariable(byte global)
         {
-            if (scopeDepth > 0)
+            if (compilerStates.Peek().scopeDepth > 0)
             {
                 MarkInitialised();
                 return;
@@ -202,7 +243,41 @@ namespace ULox
 
         private void MarkInitialised()
         {
-            locals[localCount - 1].depth = scopeDepth;
+            if (compilerStates.Peek().scopeDepth == 0) return;
+            compilerStates.Peek().locals[compilerStates.Peek().localCount - 1].depth = compilerStates.Peek().scopeDepth;
+        }
+
+        private void BeginScope()
+        {
+            compilerStates.Peek().scopeDepth++;
+        }
+
+        private void EndScope()
+        {
+            compilerStates.Peek().scopeDepth--;
+
+            while (compilerStates.Peek().localCount > 0 &&
+                compilerStates.Peek().locals[compilerStates.Peek().localCount - 1].depth > compilerStates.Peek().scopeDepth)
+            {
+                EmitOpCode(OpCode.POP);
+                compilerStates.Peek().localCount--;
+            }
+        }
+
+        private int ResolveLocal(string name)
+        {
+            for (int i = compilerStates.Peek().localCount - 1; i >= 0; i--)
+            {
+                var local = compilerStates.Peek().locals[i];
+                if (name == local.name)
+                {
+                    if (local.depth == -1)
+                        throw new CompilerException("Cannot referenece a variable in it's own initialiser.");
+                    return i;
+                }
+            }
+
+            return -1;
         }
 
         private void Statement()
@@ -219,6 +294,10 @@ namespace ULox
             {
                 WhileStatement();
             }
+            else if (Match(TokenType.FOR))
+            {
+                ForStatement();
+            }
             else if (Match(TokenType.OPEN_BRACE))
             {
                 BeginScope();
@@ -233,7 +312,7 @@ namespace ULox
 
         private void WhileStatement()
         {
-            int loopStart = currentChunk.instructions.Count;
+            int loopStart = CurrentChunkInstructinCount;
 
             Consume(TokenType.OPEN_PAREN, "Expect '(' after if.");
             Expression();
@@ -248,6 +327,64 @@ namespace ULox
 
             PatchJump(exitJump);
             EmitOpCode(OpCode.POP);
+        }
+
+        private void ForStatement()
+        {
+            BeginScope();
+
+            Consume(TokenType.OPEN_PAREN, "Expect '(' after 'for'.");
+            if (Match(TokenType.END_STATEMENT))
+            {
+                // No initializer.
+            }
+            else if (Match(TokenType.VAR))
+            {
+                VarDeclaration();
+            }
+            else
+            {
+                ExpressionStatement();
+            }
+
+            int loopStart = CurrentChunkInstructinCount;
+            
+            int exitJump = -1;
+            if (!Match(TokenType.END_STATEMENT))
+            {
+                Expression();
+                Consume(TokenType.END_STATEMENT, "Expect ';' after loop condition.");
+
+                // Jump out of the loop if the condition is false.
+                exitJump = EmitJump(OpCode.JUMP_IF_FALSE);
+                EmitOpCode(OpCode.POP); // Condition.
+            }
+
+            if (!Match(TokenType.CLOSE_PAREN))
+            {
+                int bodyJump = EmitJump(OpCode.JUMP);
+
+                int incrementStart = CurrentChunkInstructinCount;
+                Expression();
+                EmitOpCode(OpCode.POP);
+                Consume(TokenType.CLOSE_PAREN, "Expect ')' after for clauses.");
+
+                EmitLoop(loopStart);
+                loopStart = incrementStart;
+                PatchJump(bodyJump);
+            }
+
+            Statement();
+
+            EmitLoop(loopStart);
+
+            if (exitJump != -1)
+            {
+                PatchJump(exitJump);
+                EmitOpCode(OpCode.POP); // Condition.
+            }
+
+            EndScope();
         }
 
         private void IfStatement()
@@ -273,30 +410,12 @@ namespace ULox
 
         private void PatchJump(int thenjump)
         {
-            int jump = currentChunk.instructions.Count - thenjump - 2;
+            int jump = CurrentChunkInstructinCount - thenjump - 2;
 
             if (jump > ushort.MaxValue)
                 throw new CompilerException($"Cannot jump '{jump}'. Max jump is '{ushort.MaxValue}'");
 
-            currentChunk.instructions[thenjump] = (byte)((jump >> 8) & 0xff);
-            currentChunk.instructions[thenjump + 1] = (byte)(jump & 0xff);
-        }
-
-        private void BeginScope()
-        {
-            scopeDepth++;
-        }
-
-        private void EndScope()
-        {
-            scopeDepth--;
-
-            while(localCount > 0 &&
-                locals[localCount -1].depth > scopeDepth)
-            {
-                EmitOpCode(OpCode.POP);
-                localCount--;
-            }
+            WriteBytesAt(thenjump, (byte)((jump >> 8) & 0xff), (byte)(jump & 0xff));
         }
 
         private void Block()
@@ -364,22 +483,6 @@ namespace ULox
             }
         }
 
-        private int ResolveLocal(string name)
-        {
-            for (int i = localCount - 1; i >= 0; i--)
-            {
-                var local = locals[i];
-                if (name == local.name)
-                {
-                    if (local.depth == -1)
-                        throw new CompilerException("Cannot referenece a variable in it's own initialiser.");
-                    return i;
-                }
-            }
-
-            return -1;
-        }
-
         void Unary(bool canAssign)
         {
             var op = previousToken.TokenType;
@@ -439,25 +542,34 @@ namespace ULox
 
         private void Number(bool canAssign)
         {
-            currentChunk.WriteConstant(Value.New((double)previousToken.Literal), previousToken.Line);
+            CurrentChunk.WriteConstant(Value.New((double)previousToken.Literal), previousToken.Line);
         }
 
         private void String(bool canAssign)
         {
-            currentChunk.WriteConstant(Value.New((string)previousToken.Literal), previousToken.Line);
+            CurrentChunk.WriteConstant(Value.New((string)previousToken.Literal), previousToken.Line);
         }
 
         private byte IdentifierString()
         {
-            return currentChunk.WriteConstant(Value.New((string)previousToken.Literal), previousToken.Line);
+            return CurrentChunk.WriteConstant(Value.New((string)previousToken.Literal), previousToken.Line);
         }
 
         private byte AddStringConstant()
         {
-            return currentChunk.AddConstant(Value.New((string)previousToken.Literal));
+            return CurrentChunk.AddConstant(Value.New((string)previousToken.Literal));
         }
 
-        private void EndCompile() => EmitReturn();
+        private void WriteConstantFunction(Chunk function)
+        {
+            CurrentChunk.AddConstant(Value.New(function));
+        }
+
+        private Chunk EndCompile()
+        {
+            EmitReturn();
+            return compilerStates.Pop().chunk;
+        }
 
         private void EmitReturn() => EmitOpCode(OpCode.RETURN);
 
@@ -484,14 +596,14 @@ namespace ULox
 
         void EmitOpCode(OpCode op)
         {
-            currentChunk.WriteSimple(op, previousToken.Line);
+            CurrentChunk.WriteSimple(op, previousToken.Line);
         }
 
         void EmitOpCodes(params OpCode[] op)
         {
             foreach (var item in op)
             {
-                currentChunk.WriteSimple(item, previousToken.Line);
+                CurrentChunk.WriteSimple(item, previousToken.Line);
             }
         }
 
@@ -499,20 +611,28 @@ namespace ULox
         {
             for (int i = 0; i < b.Length; i++)
             {
-                currentChunk.WriteByte(b[i], previousToken.Line);
+                CurrentChunk.WriteByte(b[i], previousToken.Line);
+            }
+        }
+
+        void WriteBytesAt(int at, params byte[] b)
+        {
+            for (int i = 0; i < b.Length; i++)
+            {
+                CurrentChunk.instructions[at+i] = b[i];
             }
         }
 
         private int EmitJump(OpCode op)
         {
             EmitBytes((byte)op, 0xff, 0xff);
-            return currentChunk.instructions.Count - 2;
+            return CurrentChunk.instructions.Count - 2;
         }
 
         private void EmitLoop(int loopStart)
         {
             EmitOpCode(OpCode.LOOP);
-            int offset = currentChunk.instructions.Count - loopStart + 2;
+            int offset = CurrentChunk.instructions.Count - loopStart + 2;
 
             if (offset > ushort.MaxValue)
                 throw new CompilerException($"Cannot loop '{offset}'. Max loop is '{ushort.MaxValue}'");

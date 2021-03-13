@@ -10,6 +10,7 @@ namespace ULox
             Double,
             Bool,
             String,
+            Function,
         }
 
         [StructLayout(LayoutKind.Explicit)]
@@ -21,6 +22,8 @@ namespace ULox
             public bool asBool;
             [FieldOffset(0)]
             public string asString;
+            [FieldOffset(0)]
+            public Chunk asChunk;
         }
 
         public Type type;
@@ -37,17 +40,14 @@ namespace ULox
 
         public override string ToString() 
         {
-            switch(type)
+            return type switch
             {
-            case Type.Double:
-                return val.asDouble.ToString();
-            case Type.Bool:
-                return val.asBool.ToString();
-            case Type.String:
-                return val.asString?.ToString() ?? "null";
-            default:
-                return "null";
-            }
+                Type.Double => val.asDouble.ToString(),
+                Type.Bool => val.asBool.ToString(),
+                Type.String => val.asString?.ToString() ?? "null",
+                Type.Function => $"<fn {val.asChunk.Name}_{val.asChunk.Arity}>",
+                _ => "null",
+            };
         }
 
         public static Value New(double val) 
@@ -58,6 +58,9 @@ namespace ULox
 
         public static Value New(string val)
             => new Value() { type = Type.String, val = new DataUnion() { asString = val } };
+
+        public static Value New(Chunk val)
+            => new Value() { type = Type.Function, val = new DataUnion() { asChunk = val } };
 
         public static Value Null()
             => new Value() { type = Type.Null };

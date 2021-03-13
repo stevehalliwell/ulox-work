@@ -8,6 +8,7 @@ namespace ULox
         public List<Value> constants = new List<Value>();
         public List<int> lines = new List<int>();
         public string Name { get; set; }
+        public int Arity { get; set; }
 
         public Chunk(string name)
         {
