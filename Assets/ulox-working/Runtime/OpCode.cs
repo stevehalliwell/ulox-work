@@ -26,6 +26,7 @@
         GREATER,
         LESS,
 
+        CALL,
         RETURN,
 
         NEGATE,

@@ -63,9 +63,14 @@ namespace ULox
         public Compiler()
         {
             GenerateRules();
+            PushCompilerState(string.Empty);
+        }
+
+        private void PushCompilerState(string name)
+        {
             compilerStates.Push(new CompilerState()
             {
-                chunk = new Chunk(string.Empty),
+                chunk = new Chunk(name),
             });
         }
 
@@ -79,7 +84,7 @@ namespace ULox
                 rules[i] = new ParseRule(null, null, Precedence.None);
             }
 
-            rules[(int)TokenType.OPEN_BRACE] = new ParseRule(Grouping, null, Precedence.None);
+            rules[(int)TokenType.OPEN_BRACE] = new ParseRule(Grouping, Call, Precedence.None);
             rules[(int)TokenType.MINUS] = new ParseRule(Unary, Binary, Precedence.Term);
             rules[(int)TokenType.PLUS] = new ParseRule(null, Binary, Precedence.Term);
             rules[(int)TokenType.SLASH] = new ParseRule(null, Binary, Precedence.Factor);
@@ -100,6 +105,32 @@ namespace ULox
             rules[(int)TokenType.IDENTIFIER] = new ParseRule(Variable, null, Precedence.None);
             rules[(int)TokenType.AND] = new ParseRule(null, And, Precedence.And);
             rules[(int)TokenType.OR] = new ParseRule(null, Or, Precedence.Or);
+            rules[(int)TokenType.OPEN_PAREN] = new ParseRule(Grouping, Call, Precedence.Call);
+        }
+
+        private void Call(bool canAssign)
+        {
+            var argCount = ArgumentList();
+            EmitBytes((byte)OpCode.CALL, argCount);
+        }
+
+        private byte ArgumentList()
+        {
+            byte argCount = 0;
+            if (!Check(TokenType.CLOSE_PAREN))
+            {
+                do
+                {
+                    Expression();
+                    if (argCount == 255)
+                        throw new CompilerException("Can't have more than 255 arguments.");
+                    
+                    argCount++;
+                } while (Match(TokenType.COMMA));
+            }
+
+            Consume(TokenType.CLOSE_PAREN, "Expect ')' after arguments.");
+            return argCount;
         }
 
         private void And(bool canAssign)
@@ -142,7 +173,7 @@ namespace ULox
         {
             if (Match(TokenType.FUNCTION))
                 FunctionDeclaration();
-            if (Match(TokenType.VAR))
+            else if (Match(TokenType.VAR))
                 VarDeclaration();
             else
                 Statement();
@@ -152,19 +183,33 @@ namespace ULox
         {
             var global = ParseVariable("Expect function name.");
             MarkInitialised();
-            Function();
+            Function(CurrentChunk.constants[global].val.asString);
             DefineVariable(global);
         }
 
-        private void Function()
+        private void Function(string name)
         {
-            //Compiler compiler;
-            //initCompiler(&compiler, type);
-            //nest the compiler
+            PushCompilerState(name);
+
             BeginScope();
+            var line = previousToken.Line;
 
             // Compile the parameter list.
             Consume(TokenType.OPEN_PAREN, "Expect '(' after function name.");
+            if (!Check(TokenType.CLOSE_PAREN))
+            {
+                do
+                {
+                    CurrentChunk.Arity++;
+                    if (CurrentChunk.Arity > 255)
+                    {
+                        throw new CompilerException("Can't have more than 255 parameters.");
+                    }
+
+                    var paramConstant = ParseVariable("Expect parameter name.");
+                    DefineVariable(paramConstant);
+                } while (Match(TokenType.COMMA));
+            }
             Consume(TokenType.CLOSE_PAREN, "Expect ')' after parameters.");
 
             // The body.
@@ -173,7 +218,7 @@ namespace ULox
 
             // Create the function object.
             var function = EndCompile();
-            WriteConstantFunction(function);
+            WriteConstantFunction(function, line);
         }
 
         private void VarDeclaration()
@@ -290,6 +335,10 @@ namespace ULox
             {
                 IfStatement();
             }
+            else if (Match(TokenType.RETURN))
+            {
+                ReturnStatement();
+            }
             else if(Match(TokenType.WHILE))
             {
                 WhileStatement();
@@ -307,6 +356,23 @@ namespace ULox
             else
             {
                 ExpressionStatement();
+            }
+        }
+
+        private void ReturnStatement()
+        {
+            if (compilerStates.Count <= 1)
+                throw new CompilerException("Cannot return from a top-level statement.");
+
+            if (Match(TokenType.END_STATEMENT))
+            {
+                EmitReturn();
+            }
+            else
+            {
+                Expression();
+                Consume(TokenType.END_STATEMENT, "Expect ';' after return value.");
+                EmitOpCode(OpCode.RETURN);
             }
         }
 
@@ -560,9 +626,9 @@ namespace ULox
             return CurrentChunk.AddConstant(Value.New((string)previousToken.Literal));
         }
 
-        private void WriteConstantFunction(Chunk function)
+        private void WriteConstantFunction(Chunk function, int line)
         {
-            CurrentChunk.AddConstant(Value.New(function));
+            CurrentChunk.WriteConstant(Value.New(function), line);
         }
 
         private Chunk EndCompile()
@@ -571,7 +637,11 @@ namespace ULox
             return compilerStates.Pop().chunk;
         }
 
-        private void EmitReturn() => EmitOpCode(OpCode.RETURN);
+        private void EmitReturn()
+        {
+            EmitOpCode(OpCode.NULL);
+            EmitOpCode(OpCode.RETURN);
+        }
 
         void Consume(TokenType tokenType, string msg)
         {

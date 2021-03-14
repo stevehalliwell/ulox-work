@@ -228,7 +228,41 @@ print ""hurray"";");
 
             Assert.AreEqual(engine.InterpreterResult, "hip, hip, hurray");
         }
+
+        [Test]
+        public void Engine_Compile_Func_Do_Nothing()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+fun T()
+{
+    var a = 2;
+}
+
+print T;");
+
+            Assert.AreEqual(engine.InterpreterResult, "<fn T>");
+        }
+
+        [Test]
+        public void Engine_Compile_Func_Call()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+fun MyFunc()
+{
+    print 2;
+}
+
+MyFunc();");
+
+            Assert.AreEqual(engine.InterpreterResult, "2");
+        }
     }
+
+    //todo functions aren't getting assigned to the globals the way we expect
 
     public class ByteCodeLoxEngine
     {
@@ -262,6 +296,11 @@ print ""hurray"";");
             catch (LoxException e)
             {
                 AppendResult(e.Message);
+            }
+            finally
+            {
+                Debug.Log(Disassembly);
+                Debug.Log(_vm.GenerateGlobalsDump());
             }
         }
     }

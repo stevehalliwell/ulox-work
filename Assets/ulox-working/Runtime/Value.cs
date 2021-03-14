@@ -45,7 +45,7 @@ namespace ULox
                 Type.Double => val.asDouble.ToString(),
                 Type.Bool => val.asBool.ToString(),
                 Type.String => val.asString?.ToString() ?? "null",
-                Type.Function => $"<fn {val.asChunk.Name}_{val.asChunk.Arity}>",
+                Type.Function => $"<fn {val.asChunk.Name}>",
                 _ => "null",
             };
         }

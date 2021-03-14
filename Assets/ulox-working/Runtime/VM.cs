@@ -35,12 +35,6 @@ namespace ULox
         public VM(System.Action<string> printer)
         {
             _printer = printer; 
-            callFrames.Add(new CallFrame()
-            {
-                chunk = null,
-                ip = 0,
-                stackStart = 0
-            });
         }
 
         public string GenerateStackDump()
@@ -48,17 +42,24 @@ namespace ULox
             return new DumpStack().Generate(valueStack);
         }
 
+        public string GenerateGlobalsDump()
+        {
+            return new DumpGlobals().Generate(globals);
+        }
+
         public InterpreterResult Interpret(Chunk chunk)
         {
-            callFrames.Add(new CallFrame() 
-            {
-                chunk = chunk,
-                ip = CurrentIP,
-                stackStart = valueStack.Count
-            });
+            Call(chunk, 0);
 
+            return Run();
+        }
+
+        private InterpreterResult Run()
+        {
             while (true)
             {
+                var chunk = callFrames[CurrentCallFrame].chunk;
+
                 OpCode opCode = ReadOpCode(chunk);
 
                 switch (opCode)
@@ -68,7 +69,22 @@ namespace ULox
                     valueStack.Push(chunk.ReadConstant(constantIndex));
                     break;
                 case OpCode.RETURN:
-                    return InterpreterResult.OK;
+                    {
+                        Value result = valueStack.Pop();
+
+                        var prev = callFrames.Pop();
+                        if (callFrames.Count == 0)
+                        {
+                            //valueStack.Pop(); Expects a self func ref on stack that we aren't doing yet
+                            return InterpreterResult.OK;
+                        }
+
+                        while (valueStack.Count > prev.stackStart)
+                            valueStack.Pop();
+
+                        valueStack.Push(result);
+                    }
+                    break;
                 case OpCode.NEGATE:
                     valueStack.Push(Value.New(-valueStack.Pop().val.asDouble));
                     break;
@@ -163,6 +179,15 @@ namespace ULox
                         globals[actualName] = valueStack.Peek();
                     }
                     break;
+                case OpCode.CALL:
+                    {
+                        int argCount = ReadByte(chunk);
+                        if (!CallValue(valueStack.Peek(argCount), argCount))
+                        {
+                            return InterpreterResult.RUNTIME_ERROR;
+                        }
+                    }
+                    break;
                 case OpCode.NONE:
                     break;
                 default:
@@ -171,6 +196,30 @@ namespace ULox
             }
 
             return InterpreterResult.OK;
+        }
+
+        private bool CallValue(Value callee, int argCount)
+        {
+            if (callee.type == Value.Type.Function)
+            {
+                return Call(callee.val.asChunk, argCount);
+            }
+
+            throw new VMException("Can only call functions and classes.");
+        }
+
+        private bool Call(Chunk asChunk, int argCount)
+        {
+            if (argCount != asChunk.Arity)
+                throw new VMException($"Wrong number of params given to '{asChunk.Name}'" +
+                    $", got '{argCount}' but expected '{asChunk.Arity}'");
+
+            callFrames.Push(new CallFrame()
+            {
+                chunk = asChunk,
+                stackStart = valueStack.Count - argCount
+            });
+            return true;
         }
 
         private void AssignLocalStack(byte slot, Value val)

@@ -50,10 +50,11 @@ namespace ULox
                 case OpCode.ASSIGN_GLOBAL:
                 case OpCode.FETCH_LOCAL:
                 case OpCode.ASSIGN_LOCAL:
+                case OpCode.CALL:
                     stringBuilder.Append(" ");
                     i++;
                     var ind = chunk.instructions[i];
-                    stringBuilder.Append(chunk.ReadConstant(ind).ToString());
+                    stringBuilder.Append($"({ind})" + chunk.ReadConstant(ind).ToString());
                     break;
                 case OpCode.RETURN:
                 case OpCode.NEGATE:
