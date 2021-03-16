@@ -84,7 +84,6 @@ namespace ULox
                 rules[i] = new ParseRule(null, null, Precedence.None);
             }
 
-            rules[(int)TokenType.OPEN_BRACE] = new ParseRule(Grouping, Call, Precedence.None);
             rules[(int)TokenType.MINUS] = new ParseRule(Unary, Binary, Precedence.Term);
             rules[(int)TokenType.PLUS] = new ParseRule(null, Binary, Precedence.Term);
             rules[(int)TokenType.SLASH] = new ParseRule(null, Binary, Precedence.Factor);

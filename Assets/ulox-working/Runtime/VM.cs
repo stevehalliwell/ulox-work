@@ -47,8 +47,14 @@ namespace ULox
             return new DumpGlobals().Generate(globals);
         }
 
+        public void DefineNativeFunction(string name, System.Func<VM, int, Value> func)
+        {
+            globals[name] = Value.New(func);
+        }
+
         public InterpreterResult Interpret(Chunk chunk)
         {
+            valueStack.Push(Value.New(chunk));
             Call(chunk, 0);
 
             return Run();
@@ -79,7 +85,7 @@ namespace ULox
                             return InterpreterResult.OK;
                         }
 
-                        while (valueStack.Count > prev.stackStart)
+                        while (valueStack.Count >= prev.stackStart)
                             valueStack.Pop();
 
                         valueStack.Push(result);
@@ -200,9 +206,10 @@ namespace ULox
 
         private bool CallValue(Value callee, int argCount)
         {
-            if (callee.type == Value.Type.Function)
+            switch (callee.type)
             {
-                return Call(callee.val.asChunk, argCount);
+            case Value.Type.Chunk: return Call(callee.val.asChunk, argCount);
+            case Value.Type.NativeFunction: return CallNative(callee.val.asNativeFunc, argCount);
             }
 
             throw new VMException("Can only call functions and classes.");
@@ -219,6 +226,19 @@ namespace ULox
                 chunk = asChunk,
                 stackStart = valueStack.Count - argCount
             });
+            return true;
+        }
+
+        private bool CallNative(System.Func<VM, int, Value> asNativeFunc, int argCount)
+        {
+            var stackPos = valueStack.Count - argCount;
+            var res = asNativeFunc.Invoke(this, stackPos);
+
+            while (valueStack.Count > stackPos)
+                valueStack.Pop();
+
+            valueStack.Push(res);
+
             return true;
         }
 
@@ -267,7 +287,9 @@ namespace ULox
             }
 
             if (lhs.type != Value.Type.Double && lhs.type != rhs.type)
+            {
                 throw new VMException($"Cannot perform math op on non math types '{lhs.type}' and '{rhs.type}'.");
+            }
 
             var res = Value.New(0);
             switch (opCode)
@@ -323,12 +345,12 @@ namespace ULox
                 }
                 break;
             case OpCode.LESS:
-                if (lhs.type != Value.Type.Double || lhs.type != rhs.type)
+                if (lhs.type != Value.Type.Double || rhs.type != Value.Type.Double)
                     throw new VMException($"Cannot less compare on different types '{lhs.type}' and '{rhs.type}'.");
                 valueStack.Push(Value.New(lhs.val.asDouble < rhs.val.asDouble));
                 break;
             case OpCode.GREATER:
-                if (lhs.type != Value.Type.Double || lhs.type != rhs.type)
+                if (lhs.type != Value.Type.Double || rhs.type != Value.Type.Double)
                     throw new VMException($"Cannot greater across on different types '{lhs.type}' and '{rhs.type}'.");
                 valueStack.Push(Value.New(lhs.val.asDouble > rhs.val.asDouble));
                 break;

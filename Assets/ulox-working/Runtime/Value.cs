@@ -10,7 +10,8 @@ namespace ULox
             Double,
             Bool,
             String,
-            Function,
+            Chunk,
+            NativeFunction,
         }
 
         [StructLayout(LayoutKind.Explicit)]
@@ -24,6 +25,8 @@ namespace ULox
             public string asString;
             [FieldOffset(0)]
             public Chunk asChunk;
+            [FieldOffset(0)]
+            public System.Func<VM, int, Value> asNativeFunc;
         }
 
         public Type type;
@@ -45,7 +48,8 @@ namespace ULox
                 Type.Double => val.asDouble.ToString(),
                 Type.Bool => val.asBool.ToString(),
                 Type.String => val.asString?.ToString() ?? "null",
-                Type.Function => $"<fn {val.asChunk.Name}>",
+                Type.Chunk => $"<fn {val.asChunk.Name}>",
+                Type.NativeFunction => "<NativeFunc>",
                 _ => "null",
             };
         }
@@ -60,7 +64,10 @@ namespace ULox
             => new Value() { type = Type.String, val = new DataUnion() { asString = val } };
 
         public static Value New(Chunk val)
-            => new Value() { type = Type.Function, val = new DataUnion() { asChunk = val } };
+            => new Value() { type = Type.Chunk, val = new DataUnion() { asChunk = val } };
+
+        public static Value New(System.Func<VM, int, Value> val)
+            => new Value() { type = Type.NativeFunction, val = new DataUnion() { asNativeFunc = val } };
 
         public static Value Null()
             => new Value() { type = Type.Null };

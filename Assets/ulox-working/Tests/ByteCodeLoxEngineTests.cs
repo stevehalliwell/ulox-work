@@ -260,6 +260,130 @@ MyFunc();");
 
             Assert.AreEqual(engine.InterpreterResult, "2");
         }
+
+        [Test]
+        public void Engine_Compile_NativeFunc_Call()
+        {
+            var engine = new ByteCodeLoxEngine();
+            engine.VM.DefineNativeFunction("CallEmptyNative", (vm, stack) => Value.New("Native"));
+
+            engine.Run(@"print CallEmptyNative();");
+
+            Assert.AreEqual(engine.InterpreterResult, "Native");
+        }
+
+        [Test]
+        public void Engine_Compile_Call_Mixed_Ops()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+fun A(){return 2;}
+fun B(){return 3;}
+fun C(){return 10;}
+
+print A()+B()*C();");
+
+            Assert.AreEqual(engine.InterpreterResult, "32");
+        }
+
+        [Test]
+        public void Engine_Compile_Func_Inner_Logic()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+fun A(v)
+{
+    if(v > 5)
+        return 2;
+    return -1;
+}
+fun B(){return 3;}
+fun C(){return 10;}
+
+print A(1)+B()*C();
+
+print A(10)+B()*C();");
+
+            Assert.AreEqual(engine.InterpreterResult, "2932");
+        }
+
+        [Test]
+        public void Engine_Compile_Var_Mixed_Ops()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+var a = 2;
+var b = 3;
+var c = 10;
+
+print a+b*c;");
+
+            Assert.AreEqual(engine.InterpreterResult, "32");
+        }
+
+        //[Test]
+        //public void Engine_Compile_NativeFunc_Args_Call()
+        //{
+        //    var engine = new ByteCodeLoxEngine();
+        //    engine.VM.DefineNativeFunction("CallNative", (vm, stack) =>
+        //    {
+        //        var lhs = vm.
+        //        return Value.New("Native");
+        //    });
+
+        //    engine.Run(@"print CalEmptylNative();");
+
+        //    Assert.AreEqual(engine.InterpreterResult, "Native");
+        //}
+
+        [Test]
+        [Ignore("long running manual test only")]
+        public void Engine_Compile_Clocked_Fib()
+        {
+            var engine = new ByteCodeLoxEngine();
+            engine.VM.DefineNativeFunction("clock", (vm, stack) =>
+            {
+                return Value.New(System.DateTime.Now.Ticks);
+            });
+
+            engine.Run(@"
+fun fib(n)
+{
+    if (n < 2) return n;
+    return fib(n - 2) + fib(n - 1);
+}
+
+var start = clock();
+print fib(35);
+print clock() - start;");
+
+            //Assert.AreEqual(engine.InterpreterResult, "Native");
+        }
+
+        [Test]
+        public void Engine_Compile_Recursive()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"fun Recur(a)
+{
+    if(a > 0) 
+    {
+        print a;
+        Recur(a-1);
+    }
+}
+
+Recur(5);");
+
+            Assert.AreEqual(engine.InterpreterResult, "54321");
+        }
+
+
+
     }
 
     //todo functions aren't getting assigned to the globals the way we expect
@@ -282,6 +406,7 @@ MyFunc();");
         public string InterpreterResult { get; private set; } = string.Empty;
         public string StackDump => _vm.GenerateStackDump();
         public string Disassembly => _disasembler.GetString();
+        public VM VM => _vm;
 
         protected void AppendResult(string str) => InterpreterResult += str;
         public virtual void Run(string testString)
@@ -299,6 +424,7 @@ MyFunc();");
             }
             finally
             {
+                Debug.Log(InterpreterResult);
                 Debug.Log(Disassembly);
                 Debug.Log(_vm.GenerateGlobalsDump());
             }
