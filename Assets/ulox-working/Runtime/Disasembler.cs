@@ -51,6 +51,7 @@ namespace ULox
                 case OpCode.FETCH_LOCAL:
                 case OpCode.ASSIGN_LOCAL:
                 case OpCode.CALL:
+                case OpCode.CLOSURE:
                     stringBuilder.Append(" ");
                     i++;
                     var ind = chunk.instructions[i];

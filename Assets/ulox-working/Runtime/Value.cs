@@ -2,6 +2,11 @@
 
 namespace ULox
 {
+    public class ClosureInternal
+    {
+        public Chunk chunk;
+    }
+
     public struct Value
     {
         public enum Type
@@ -12,6 +17,7 @@ namespace ULox
             String,
             Chunk,
             NativeFunction,
+            Closure,
         }
 
         [StructLayout(LayoutKind.Explicit)]
@@ -27,6 +33,8 @@ namespace ULox
             public Chunk asChunk;
             [FieldOffset(0)]
             public System.Func<VM, int, Value> asNativeFunc;
+            [FieldOffset(0)]
+            public ClosureInternal asClosure;
         }
 
         public Type type;
@@ -50,6 +58,7 @@ namespace ULox
                 Type.String => val.asString?.ToString() ?? "null",
                 Type.Chunk => $"<fn {val.asChunk.Name}>",
                 Type.NativeFunction => "<NativeFunc>",
+                Type.Closure => $"<closure {val.asClosure.chunk.Name}>",
                 _ => "null",
             };
         }
@@ -68,6 +77,9 @@ namespace ULox
 
         public static Value New(System.Func<VM, int, Value> val)
             => new Value() { type = Type.NativeFunction, val = new DataUnion() { asNativeFunc = val } };
+
+        public static Value New(ClosureInternal val)
+            => new Value() { type = Type.Closure, val = new DataUnion() { asClosure = val } };
 
         public static Value Null()
             => new Value() { type = Type.Null };

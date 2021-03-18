@@ -242,7 +242,7 @@ fun T()
 
 print T;");
 
-            Assert.AreEqual(engine.InterpreterResult, "<fn T>");
+            Assert.AreEqual(engine.InterpreterResult, "<closure T>");
         }
 
         [Test]
@@ -357,7 +357,8 @@ fun fib(n)
 }
 
 var start = clock();
-print fib(35);
+print fib(20);
+print "" in "";
 print clock() - start;");
 
             //Assert.AreEqual(engine.InterpreterResult, "Native");
@@ -380,6 +381,26 @@ print clock() - start;");
 Recur(5);");
 
             Assert.AreEqual(engine.InterpreterResult, "54321");
+        }
+
+        [Test]
+        public void Engine_Closure_Inner_Outer()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+var x = ""global"";
+fun outer() {
+    var x = ""outer"";
+    fun inner()
+    {
+        print x;
+    }
+    inner();
+}
+outer(); ");
+
+            Assert.AreEqual(engine.InterpreterResult, "outer");
         }
 
 

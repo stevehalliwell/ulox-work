@@ -11,9 +11,9 @@ namespace ULox
 
     public class CallFrame
     {
-        public Chunk chunk;
         public int ip;
         public int stackStart;
+        public ClosureInternal closure;
     }
 
 
@@ -54,8 +54,8 @@ namespace ULox
 
         public InterpreterResult Interpret(Chunk chunk)
         {
-            valueStack.Push(Value.New(chunk));
-            Call(chunk, 0);
+            valueStack.Push(Value.New(new ClosureInternal() { chunk = chunk }));
+            CallValue(valueStack.Peek(), 0);
 
             return Run();
         }
@@ -64,15 +64,17 @@ namespace ULox
         {
             while (true)
             {
-                var chunk = callFrames[CurrentCallFrame].chunk;
+                var chunk = callFrames[CurrentCallFrame].closure.chunk;
 
                 OpCode opCode = ReadOpCode(chunk);
 
                 switch (opCode)
                 {
                 case OpCode.CONSTANT:
-                    var constantIndex = ReadByte(chunk);
-                    valueStack.Push(chunk.ReadConstant(constantIndex));
+                    {
+                        var constantIndex = ReadByte(chunk);
+                        valueStack.Push(chunk.ReadConstant(constantIndex));
+                    }
                     break;
                 case OpCode.RETURN:
                     {
@@ -194,6 +196,14 @@ namespace ULox
                         }
                     }
                     break;
+                case OpCode.CLOSURE:
+                    {
+                        var constantIndex = ReadByte(chunk);
+                        var func = chunk.ReadConstant(constantIndex);
+                        var closure = Value.New(new ClosureInternal() { chunk = func.val.asChunk });
+                        valueStack.Push(closure);
+                    }
+                    break;
                 case OpCode.NONE:
                     break;
                 default:
@@ -208,23 +218,23 @@ namespace ULox
         {
             switch (callee.type)
             {
-            case Value.Type.Chunk: return Call(callee.val.asChunk, argCount);
             case Value.Type.NativeFunction: return CallNative(callee.val.asNativeFunc, argCount);
+            case Value.Type.Closure: return Call(callee.val.asClosure, argCount);
             }
 
             throw new VMException("Can only call functions and classes.");
         }
 
-        private bool Call(Chunk asChunk, int argCount)
+        private bool Call(ClosureInternal closureInternal, int argCount)
         {
-            if (argCount != asChunk.Arity)
-                throw new VMException($"Wrong number of params given to '{asChunk.Name}'" +
-                    $", got '{argCount}' but expected '{asChunk.Arity}'");
+            if (argCount != closureInternal.chunk.Arity)
+                throw new VMException($"Wrong number of params given to '{closureInternal.chunk.Name}'" +
+                    $", got '{argCount}' but expected '{closureInternal.chunk.Arity}'");
 
             callFrames.Push(new CallFrame()
             {
-                chunk = asChunk,
-                stackStart = valueStack.Count - argCount
+                stackStart = valueStack.Count - argCount,
+                closure = closureInternal
             });
             return true;
         }

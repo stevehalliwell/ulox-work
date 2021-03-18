@@ -217,7 +217,7 @@ namespace ULox
 
             // Create the function object.
             var function = EndCompile();
-            WriteConstantFunction(function, line);
+            EmitBytes((byte)OpCode.CLOSURE, CurrentChunk.AddConstant(Value.New( function )));
         }
 
         private void VarDeclaration()
@@ -623,11 +623,6 @@ namespace ULox
         private byte AddStringConstant()
         {
             return CurrentChunk.AddConstant(Value.New((string)previousToken.Literal));
-        }
-
-        private void WriteConstantFunction(Chunk function, int line)
-        {
-            CurrentChunk.WriteConstant(Value.New(function), line);
         }
 
         private Chunk EndCompile()

@@ -28,6 +28,7 @@
 
         CALL,
         RETURN,
+        CLOSURE,
 
         NEGATE,
         ADD,
