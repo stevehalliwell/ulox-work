@@ -144,13 +144,13 @@ namespace ULox
                         CurrentIP -= jump;
                     }
                     break;
-                case OpCode.FETCH_LOCAL:
+                case OpCode.GET_LOCAL:
                     {
                         var slot = ReadByte(chunk);
                         valueStack.Push(FetchLocalStack(slot));
                     }
                     break;
-                case OpCode.ASSIGN_LOCAL:
+                case OpCode.SET_LOCAL:
                     {
                         var slot = ReadByte(chunk);
                         AssignLocalStack(slot, valueStack.Peek());

@@ -529,8 +529,8 @@ namespace ULox
             var argID = ResolveLocal((string)previousToken.Literal);
             if (argID != -1)
             {
-                getOp = OpCode.FETCH_LOCAL;
-                setOp = OpCode.ASSIGN_LOCAL;
+                getOp = OpCode.GET_LOCAL;
+                setOp = OpCode.SET_LOCAL;
             }
             else
             {

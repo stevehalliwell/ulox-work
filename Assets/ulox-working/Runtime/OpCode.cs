@@ -14,8 +14,10 @@
         DEFINE_GLOBAL,
         FETCH_GLOBAL,
         ASSIGN_GLOBAL,
-        FETCH_LOCAL,
-        ASSIGN_LOCAL,
+        GET_LOCAL,
+        SET_LOCAL,
+        GET_UPVALUE,
+        SET_UPVALUE,
 
         JUMP_IF_FALSE,
         JUMP,

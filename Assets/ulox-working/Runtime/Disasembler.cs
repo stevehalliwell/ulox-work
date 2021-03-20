@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Collections.Generic;
+using System.Text;
 
 namespace ULox
 {
@@ -48,14 +49,42 @@ namespace ULox
                 case OpCode.DEFINE_GLOBAL:
                 case OpCode.FETCH_GLOBAL:
                 case OpCode.ASSIGN_GLOBAL:
-                case OpCode.FETCH_LOCAL:
-                case OpCode.ASSIGN_LOCAL:
+                case OpCode.GET_LOCAL:
+                case OpCode.SET_LOCAL:
                 case OpCode.CALL:
+                    {
+                        stringBuilder.Append(" ");
+                        i++;
+                        var ind = chunk.instructions[i];
+                        stringBuilder.Append($"({ind})" + chunk.ReadConstant(ind).ToString());
+                    }
+                    break;
+                case OpCode.GET_UPVALUE:
+                case OpCode.SET_UPVALUE:
+                    {
+                        stringBuilder.Append(" ");
+                        i++;
+                        var ind = chunk.instructions[i];
+                        stringBuilder.Append($"({ind})");
+                    }
+                    break;
                 case OpCode.CLOSURE:
-                    stringBuilder.Append(" ");
-                    i++;
-                    var ind = chunk.instructions[i];
-                    stringBuilder.Append($"({ind})" + chunk.ReadConstant(ind).ToString());
+                    {
+                        stringBuilder.Append(" ");
+                        i++;
+                        var ind = chunk.instructions[i];
+                        var func = chunk.ReadConstant(ind);
+                        stringBuilder.Append($"({ind})" + func.ToString());
+
+                        //for (int upVal = 0; upVal < func.val.asChunk.UpValueCount; upVal++)
+                        //{
+                        //    i++;
+                        //    var isLocal = chunk.instructions[i];
+                        //    i++;
+                        //    var upvalIndex = chunk.instructions[i];
+                        //    //todo actually print these
+                        //}
+                    }
                     break;
                 case OpCode.RETURN:
                 case OpCode.NEGATE:
@@ -77,6 +106,33 @@ namespace ULox
                     break;
                 }
                 stringBuilder.AppendLine();
+            }
+
+            stringBuilder.AppendLine();
+            stringBuilder.AppendLine("--constants--");
+
+            var subChunks = new List<Chunk>();
+
+            for (int i = 0; i < chunk.constants.Count; i++)
+            {
+                var v = chunk.constants[i];
+
+                stringBuilder.Append(i.ToString("000"));
+                stringBuilder.Append("  ");
+                stringBuilder.Append(v.ToString());
+                stringBuilder.AppendLine();
+
+                if(v.type == Value.Type.Chunk)
+                {
+                    subChunks.Add(v.val.asChunk);
+                }
+            }
+
+            stringBuilder.AppendLine("####");
+            stringBuilder.AppendLine();
+            foreach (var c in subChunks)
+            {
+                DoChunk(c);
             }
         }
     }

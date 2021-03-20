@@ -403,10 +403,76 @@ outer(); ");
             Assert.AreEqual(engine.InterpreterResult, "outer");
         }
 
+        [Test]
+        public void Engine_Closure_Tripup()
+        {
+            var engine = new ByteCodeLoxEngine();
 
-
+            engine.Run(@"
+fun outer() {
+  var x = ""value"";
+  fun middle() {
+    fun inner() {
+      print x;
     }
 
+    print ""create inner closure"";
+    return inner;
+  }
+
+  print ""return from outer"";
+  return middle;
+}
+
+var mid = outer();
+var in = mid();
+in();");
+
+            Assert.AreEqual(engine.InterpreterResult, @"return from outer
+create inner closure
+value");
+        }
+
+        [Test]
+        public void Engine_Closure_StillOnStack()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+fun outer() {
+  var x = ""outside"";
+  fun inner() {
+        print x;
+    }
+    inner();
+}
+outer();");
+
+            Assert.AreEqual(engine.InterpreterResult, @"return from outer
+create inner closure
+value");
+        }
+
+        [Test]
+        public void Engine_Closure_ExampleDissasembly()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+fun outer() {
+  var a = 1;
+  var b = 2;
+  fun middle() {
+    var c = 3;
+    var d = 4;
+    fun inner() {
+      print a + c + b + d;
+    }
+  }
+}");
+        }
+
+    }
     //todo functions aren't getting assigned to the globals the way we expect
 
     public class ByteCodeLoxEngine
