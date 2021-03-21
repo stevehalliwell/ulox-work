@@ -115,6 +115,22 @@ namespace ULox
             rules[(int)TokenType.AND] = new ParseRule(null, And, Precedence.And);
             rules[(int)TokenType.OR] = new ParseRule(null, Or, Precedence.Or);
             rules[(int)TokenType.OPEN_PAREN] = new ParseRule(Grouping, Call, Precedence.Call);
+            rules[(int)TokenType.DOT] = new ParseRule(null, Dot, Precedence.Call);
+        }
+        void Dot(bool canAssign)
+        {
+            Consume(TokenType.IDENTIFIER, "Expect property name after '.'.");
+            byte name = AddStringConstant();
+
+            if (canAssign && Match(TokenType.ASSIGN))
+            {
+                Expression();
+                EmitBytes((byte)OpCode.SET_PROPERTY, name);
+            }
+            else
+            {
+                EmitBytes((byte)OpCode.GET_PROPERTY, name);
+            }
         }
 
         private void Call(bool canAssign)

@@ -255,6 +255,43 @@ namespace ULox
                         valueStack.Push(Value.New( new ClassInternal() { name = name.val.asString }));
                     }
                     break;
+                case OpCode.GET_PROPERTY:
+                    {
+                        var targetVal = valueStack.Peek();
+                        if (targetVal.type != Value.Type.Instance)
+                            throw new VMException($"Only instances have properties. Got {targetVal}.");
+                        var instance = targetVal.val.asInstance;
+                        var constantIndex = ReadByte(chunk);
+                        var name = chunk.ReadConstant(constantIndex).val.asString;
+
+                        if (instance.fields.TryGetValue(name, out var val))
+                        {
+                            valueStack.Pop();
+                            valueStack.Push(val);
+                            break;
+                        }
+
+                        throw new VMException($"No field of name {name} was found");
+                    }
+                    break;
+                case OpCode.SET_PROPERTY:
+                    {
+                        var targetVal = valueStack.Peek(1);
+                        if (targetVal.type != Value.Type.Instance)
+                            throw new VMException($"Only instances have properties. Got {targetVal}.");
+                        var instance = targetVal.val.asInstance;
+
+                        var constantIndex = ReadByte(chunk);
+                        var name = chunk.ReadConstant(constantIndex).val.asString;
+                        
+                        instance.fields[name] = valueStack.Peek();
+
+                        var value = valueStack.Pop();
+                        valueStack.Pop();
+                        valueStack.Push(value);
+                        break;
+                    }
+                    break;
                 case OpCode.NONE:
                     break;
                 default:

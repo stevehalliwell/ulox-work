@@ -522,6 +522,47 @@ print Brioche();");
             Assert.AreEqual(engine.InterpreterResult, "<inst Brioche>");
         }
 
+        [Test]
+        public void Engine_Class_Instance_Simple0()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class Toast {}
+Toast().a = 3;");
+
+            Assert.AreEqual(engine.InterpreterResult, "");
+        }
+
+        [Test]
+        public void Engine_Class_Instance_Simple1()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class Toast {}
+var toast = Toast();
+print toast.jam = ""grape"";");
+
+            Assert.AreEqual(engine.InterpreterResult, "grape");
+        }
+
+        [Test]
+        public void Engine_Class_Instance_Simple2()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class Pair {}
+
+var pair = Pair();
+pair.first = 1;
+pair.second = 2;
+print pair.first + pair.second;");
+
+            Assert.AreEqual(engine.InterpreterResult, "3");
+        }
+
     }
     //todo functions aren't getting assigned to the globals the way we expect
 
