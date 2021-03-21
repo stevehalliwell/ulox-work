@@ -51,6 +51,7 @@ namespace ULox
                 case OpCode.ASSIGN_GLOBAL:
                 case OpCode.GET_LOCAL:
                 case OpCode.SET_LOCAL:
+                case OpCode.CLASS:
                 case OpCode.CALL:
                     {
                         stringBuilder.Append(" ");

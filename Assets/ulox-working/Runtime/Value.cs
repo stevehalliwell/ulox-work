@@ -13,6 +13,10 @@ namespace ULox
         public bool isClosed = false;
         public Value value = Value.Null();
     }
+    public class ClassInternal
+    {
+        public string name;
+    }
 
     public struct Value
     {
@@ -26,6 +30,7 @@ namespace ULox
             NativeFunction,
             Closure,
             Upvalue,
+            Class,
         }
 
         [StructLayout(LayoutKind.Explicit)]
@@ -45,6 +50,8 @@ namespace ULox
             public ClosureInternal asClosure;
             [FieldOffset(0)]
             public UpvalueInternal asUpvalue;
+            [FieldOffset(0)]
+            public ClassInternal asClass;
         }
 
         public Type type;
@@ -76,13 +83,16 @@ namespace ULox
                 if (chunk == null)
                     throw new System.Exception("Null Chunk in Value.ToString. Illegal.");
                 var name = chunk.Name;
-                return "<fn " + name +"> ";
+                return "<fn " + name + "> ";
             case Type.NativeFunction:
                 return "<NativeFunc>";
             case Type.Closure:
-                return $"<closure {val.asClosure.chunk.Name}>";
+                return $"<closure {val.asClosure.chunk.Name} upvals:{val.asClosure.upvalues.Length}>";
             case Type.Upvalue:
                 return $"<upvalue {val.asUpvalue.index}>";
+            case Type.Class:
+                return $"<class {val.asClass.name}>";
+                break;
             default:
                 throw new System.NotImplementedException();
             }
@@ -112,6 +122,9 @@ namespace ULox
 
         public static Value New(UpvalueInternal val)
             => new Value() { type = Type.Upvalue, val = new DataUnion() { asUpvalue = val } };
+
+        public static Value New(ClassInternal val)
+            => new Value() { type = Type.Class, val = new DataUnion() { asClass = val } };
 
         public static Value Null()
             => new Value() { type = Type.Null };

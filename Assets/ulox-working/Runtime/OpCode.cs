@@ -32,6 +32,7 @@
         CALL,
         RETURN,
         CLOSURE,
+        CLASS,
 
         NEGATE,
         ADD,

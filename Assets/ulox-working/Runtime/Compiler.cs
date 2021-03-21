@@ -180,12 +180,27 @@ namespace ULox
 
         private void Declaration()
         {
-            if (Match(TokenType.FUNCTION))
+            if (Match(TokenType.CLASS))
+                ClassDeclaration();
+            else if (Match(TokenType.FUNCTION))
                 FunctionDeclaration();
             else if (Match(TokenType.VAR))
                 VarDeclaration();
             else
                 Statement();
+        }
+
+        private void ClassDeclaration()
+        {
+            Consume(TokenType.IDENTIFIER, "Expect class name.");
+            byte nameConstant = IdentifierString();
+            DeclareVariable();
+
+            EmitBytes((byte)OpCode.CLASS, nameConstant);
+            DefineVariable(nameConstant);
+
+            Consume(TokenType.OPEN_BRACE, "Expect '{' before class body.");
+            Consume(TokenType.CLOSE_BRACE, "Expect '}' after class body.");
         }
 
         private void FunctionDeclaration()

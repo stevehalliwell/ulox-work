@@ -247,6 +247,13 @@ namespace ULox
                     CloseUpvalues(valueStack.Count-1);
                     valueStack.Pop();
                     break;
+                case OpCode.CLASS:
+                    {
+                        var constantIndex = ReadByte(chunk);
+                        var name = chunk.ReadConstant(constantIndex);
+                        valueStack.Push(Value.New( new ClassInternal() { name = name.val.asString }));
+                    }
+                    break;
                 case OpCode.NONE:
                     break;
                 default:
