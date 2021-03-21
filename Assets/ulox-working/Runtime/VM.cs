@@ -22,6 +22,7 @@ namespace ULox
         private IndexableStack<Value> valueStack = new IndexableStack<Value>();
         private Dictionary<string, Value> globals = new Dictionary<string, Value>();
         private IndexableStack<CallFrame> callFrames = new IndexableStack<CallFrame>();
+        private LinkedList<Value> openUpvalues = new LinkedList<Value>();
         private int CurrentCallFrame => callFrames.Count-1;
 
         private int CurrentIP
@@ -79,6 +80,8 @@ namespace ULox
                 case OpCode.RETURN:
                     {
                         Value result = valueStack.Pop();
+
+                        CloseUpvalues(callFrames.Peek().stackStart);
 
                         var prev = callFrames.Pop();
                         if (callFrames.Count == 0)
@@ -159,15 +162,21 @@ namespace ULox
                 case OpCode.GET_UPVALUE:
                     {
                         var slot = ReadByte(chunk);
-                        var local = callFrames.Peek().closure.upvalues[slot].val.asUpvalue.index;
-                        valueStack.Push(valueStack[local]);
+                        var upval = callFrames.Peek().closure.upvalues[slot].val.asUpvalue;
+                        if (!upval.isClosed)
+                            valueStack.Push(valueStack[upval.index]);
+                        else
+                            valueStack.Push(upval.value);
                     }
                     break;
                 case OpCode.SET_UPVALUE:
                     {
                         var slot = ReadByte(chunk);
-                        var local = callFrames.Peek().closure.upvalues[slot].val.asUpvalue.index;
-                        valueStack[local] = valueStack.Peek();
+                        var upval = callFrames.Peek().closure.upvalues[slot].val.asUpvalue;
+                        if (!upval.isClosed)
+                            valueStack[upval.index] = valueStack.Peek();
+                        else
+                            upval.value = valueStack.Peek();
                     }
                     break;
                 case OpCode.DEFINE_GLOBAL:
@@ -234,6 +243,10 @@ namespace ULox
                         }
                     }
                     break;
+                case OpCode.CLOSE_UPVALUE:
+                    CloseUpvalues(valueStack.Count-1);
+                    valueStack.Pop();
+                    break;
                 case OpCode.NONE:
                     break;
                 default:
@@ -244,10 +257,42 @@ namespace ULox
             return InterpreterResult.OK;
         }
 
+        private void CloseUpvalues(int last)
+        {
+            while (openUpvalues.Count > 0 &&
+                openUpvalues.First.Value.val.asUpvalue.index >= last)
+            {
+                var upvalue = openUpvalues.First.Value.val.asUpvalue;
+                upvalue.value = valueStack[upvalue.index];
+                upvalue.index = -1;
+                upvalue.isClosed = true;
+                openUpvalues.RemoveFirst();
+            }
+        }
+
         private Value CaptureUpvalue(int index)
         {
-            var upval = new UpvalueInternal() {index = index };
-            return Value.New(upval);
+            var node = openUpvalues.First;
+
+            while (node != null && node.Value.val.asUpvalue.index > index)
+            {
+                node = node.Next;
+            }
+
+            if (node != null && node.Value.val.asUpvalue.index == index)
+            {
+                return node.Value;
+            }
+
+            var upvalIn = new UpvalueInternal() {index = index };
+            var upval = Value.New(upvalIn);
+
+            if (node != null)
+                openUpvalues.AddBefore(node, upval);
+            else
+                openUpvalues.AddLast(upval);
+
+            return upval;
         }
 
         private bool CallValue(Value callee, int argCount)

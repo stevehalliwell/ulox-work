@@ -18,6 +18,7 @@
         SET_LOCAL,
         GET_UPVALUE,
         SET_UPVALUE,
+        CLOSE_UPVALUE,
 
         JUMP_IF_FALSE,
         JUMP,

@@ -39,6 +39,7 @@ namespace ULox
         {
             public string name;
             public int depth;
+            public bool isCaptured;
         }
 
         public class Upvalue
@@ -314,12 +315,18 @@ namespace ULox
 
         private void EndScope()
         {
-            compilerStates.Peek().scopeDepth--;
+            var comp = compilerStates.Peek();
 
-            while (compilerStates.Peek().localCount > 0 &&
-                compilerStates.Peek().locals[compilerStates.Peek().localCount - 1].depth > compilerStates.Peek().scopeDepth)
+            comp.scopeDepth--;
+
+            while (comp.localCount > 0 &&
+                comp.locals[comp.localCount - 1].depth > comp.scopeDepth)
             {
-                EmitOpCode(OpCode.POP);
+                if(comp.locals[comp.localCount - 1].isCaptured)
+                    EmitOpCode(OpCode.CLOSE_UPVALUE);
+                else
+                    EmitOpCode(OpCode.POP);
+
                 compilerStates.Peek().localCount--;
             }
         }
@@ -331,6 +338,7 @@ namespace ULox
             int local = ResolveLocal(compilerState.enclosing, name);
             if (local != -1)
             {
+                compilerState.enclosing.locals[local].isCaptured = true;
                 return AddUpvalue(compilerState, (byte)local, true);
             }
 

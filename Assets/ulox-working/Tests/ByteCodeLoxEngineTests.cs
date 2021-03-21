@@ -470,6 +470,34 @@ fun outer() {
 }");
         }
 
+        [Test]
+        public void Engine_Closure_Counter()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+fun makeCounter() {
+  var i = 0;
+  fun count() {
+    i = i + 1;
+    print i;
+  }
+
+  return count;
+}
+
+var c1 = makeCounter();
+
+c1();
+c1();
+
+var c2 = makeCounter();
+c2();
+c2();");
+
+            Assert.AreEqual(engine.InterpreterResult, "1212");
+        }
+
     }
     //todo functions aren't getting assigned to the globals the way we expect
 
