@@ -74,16 +74,17 @@ namespace ULox
                         i++;
                         var ind = chunk.instructions[i];
                         var func = chunk.ReadConstant(ind);
-                        stringBuilder.Append($"({ind})" + func.ToString());
+                        stringBuilder.AppendLine($"({ind})" + func.ToString());
 
-                        //for (int upVal = 0; upVal < func.val.asChunk.UpValueCount; upVal++)
-                        //{
-                        //    i++;
-                        //    var isLocal = chunk.instructions[i];
-                        //    i++;
-                        //    var upvalIndex = chunk.instructions[i];
-                        //    //todo actually print these
-                        //}
+                        for (int upVal = 0; upVal < func.val.asChunk.UpvalueCount; upVal++)
+                        {
+                            i++;
+                            var isLocal = chunk.instructions[i];
+                            i++;
+                            var upvalIndex = chunk.instructions[i];
+
+                            stringBuilder.AppendLine($"     {(isLocal == 1 ? "local" : "upvalue" )} {upvalIndex}");
+                        }
                     }
                     break;
                 case OpCode.RETURN:

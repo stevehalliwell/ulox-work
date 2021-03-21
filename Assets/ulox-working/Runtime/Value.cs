@@ -5,6 +5,12 @@ namespace ULox
     public class ClosureInternal
     {
         public Chunk chunk;
+        public Value[] upvalues;
+    }
+    public class UpvalueInternal
+    {
+        public int index = -1;
+        public Value value = Value.Null();
     }
 
     public struct Value
@@ -18,6 +24,7 @@ namespace ULox
             Chunk,
             NativeFunction,
             Closure,
+            Upvalue,
         }
 
         [StructLayout(LayoutKind.Explicit)]
@@ -35,6 +42,8 @@ namespace ULox
             public System.Func<VM, int, Value> asNativeFunc;
             [FieldOffset(0)]
             public ClosureInternal asClosure;
+            [FieldOffset(0)]
+            public UpvalueInternal asUpvalue;
         }
 
         public Type type;
@@ -51,16 +60,31 @@ namespace ULox
 
         public override string ToString() 
         {
-            return type switch
+            switch (type)
             {
-                Type.Double => val.asDouble.ToString(),
-                Type.Bool => val.asBool.ToString(),
-                Type.String => val.asString?.ToString() ?? "null",
-                Type.Chunk => $"<fn {val.asChunk.Name}>",
-                Type.NativeFunction => "<NativeFunc>",
-                Type.Closure => $"<closure {val.asClosure.chunk.Name}>",
-                _ => "null",
-            };
+            case Type.Null:
+                return "null";
+            case Type.Double:
+                return val.asDouble.ToString();
+            case Type.Bool:
+                return val.asBool.ToString();
+            case Type.String:
+                return val.asString?.ToString() ?? "null";
+            case Type.Chunk:
+                var chunk = val.asChunk;
+                if (chunk == null)
+                    throw new System.Exception("Null Chunk in Value.ToString. Illegal.");
+                var name = chunk.Name;
+                return "<fn " + name +"> ";
+            case Type.NativeFunction:
+                return "<NativeFunc>";
+            case Type.Closure:
+                return $"<closure {val.asClosure.chunk.Name}>";
+            case Type.Upvalue:
+                return $"<upvalue {val.asUpvalue.index}>";
+            default:
+                throw new System.NotImplementedException();
+            }
         }
 
         public static Value New(double val) 
@@ -79,7 +103,14 @@ namespace ULox
             => new Value() { type = Type.NativeFunction, val = new DataUnion() { asNativeFunc = val } };
 
         public static Value New(ClosureInternal val)
-            => new Value() { type = Type.Closure, val = new DataUnion() { asClosure = val } };
+        { 
+            var res = new Value() { type = Type.Closure, val = new DataUnion() { asClosure = val } };
+            val.upvalues = new Value[val.chunk.UpvalueCount];
+            return res;
+        }
+
+        public static Value New(UpvalueInternal val)
+            => new Value() { type = Type.Upvalue, val = new DataUnion() { asUpvalue = val } };
 
         public static Value Null()
             => new Value() { type = Type.Null };

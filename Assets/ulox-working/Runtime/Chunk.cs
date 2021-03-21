@@ -9,6 +9,7 @@ namespace ULox
         public List<int> lines = new List<int>();
         public string Name { get; set; }
         public int Arity { get; set; }
+        public int UpvalueCount { get; internal set; }
 
         public Chunk(string name)
         {

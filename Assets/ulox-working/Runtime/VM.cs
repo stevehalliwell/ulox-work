@@ -156,6 +156,20 @@ namespace ULox
                         AssignLocalStack(slot, valueStack.Peek());
                     }
                     break;
+                case OpCode.GET_UPVALUE:
+                    {
+                        var slot = ReadByte(chunk);
+                        var local = callFrames.Peek().closure.upvalues[slot].val.asUpvalue.index;
+                        valueStack.Push(valueStack[local]);
+                    }
+                    break;
+                case OpCode.SET_UPVALUE:
+                    {
+                        var slot = ReadByte(chunk);
+                        var local = callFrames.Peek().closure.upvalues[slot].val.asUpvalue.index;
+                        valueStack[local] = valueStack.Peek();
+                    }
+                    break;
                 case OpCode.DEFINE_GLOBAL:
                     {
                         var global = ReadByte(chunk);
@@ -200,8 +214,24 @@ namespace ULox
                     {
                         var constantIndex = ReadByte(chunk);
                         var func = chunk.ReadConstant(constantIndex);
-                        var closure = Value.New(new ClosureInternal() { chunk = func.val.asChunk });
-                        valueStack.Push(closure);
+                        var closureVal = Value.New(new ClosureInternal() { chunk = func.val.asChunk });
+                        valueStack.Push(closureVal);
+
+                        var closure = closureVal.val.asClosure;
+
+                        for (int i = 0; i < closure.upvalues.Length; i++)
+                        {
+                            var isLocal = ReadByte(chunk);
+                            var index = ReadByte(chunk);
+                            if(isLocal == 1)
+                            {
+                                closure.upvalues[i] = CaptureUpvalue(callFrames.Peek().stackStart + index);
+                            }
+                            else
+                            {
+                                closure.upvalues[i] = callFrames.Peek().closure.upvalues[index];
+                            }
+                        }
                     }
                     break;
                 case OpCode.NONE:
@@ -212,6 +242,12 @@ namespace ULox
             }
 
             return InterpreterResult.OK;
+        }
+
+        private Value CaptureUpvalue(int index)
+        {
+            var upval = new UpvalueInternal() {index = index };
+            return Value.New(upval);
         }
 
         private bool CallValue(Value callee, int argCount)

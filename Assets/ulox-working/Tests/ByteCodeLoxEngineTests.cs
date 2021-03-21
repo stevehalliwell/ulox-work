@@ -448,9 +448,7 @@ fun outer() {
 }
 outer();");
 
-            Assert.AreEqual(engine.InterpreterResult, @"return from outer
-create inner closure
-value");
+            Assert.AreEqual(engine.InterpreterResult, "outside");
         }
 
         [Test]

@@ -41,15 +41,24 @@ namespace ULox
             public int depth;
         }
 
+        public class Upvalue
+        {
+            public byte index;
+            public bool isLocal;
+        }
+
         private class CompilerState
         {
             public Local[] locals = new Local[byte.MaxValue + 1];
+            public Upvalue[] upvalues = new Upvalue[byte.MaxValue + 1];
             public int localCount;
             public int scopeDepth;
             public Chunk chunk;
+            public CompilerState enclosing;
+            public CompilerState(CompilerState enclosingState) { enclosing = enclosingState; }
         }
 
-        private Stack<CompilerState> compilerStates = new Stack<CompilerState>();
+        private IndexableStack<CompilerState> compilerStates = new IndexableStack<CompilerState>();
 
         private Token currentToken, previousToken;
         private List<Token> tokens;
@@ -68,7 +77,7 @@ namespace ULox
 
         private void PushCompilerState(string name)
         {
-            compilerStates.Push(new CompilerState()
+            compilerStates.Push(new CompilerState(compilerStates.Peek())
             {
                 chunk = new Chunk(name),
             });
@@ -216,8 +225,15 @@ namespace ULox
             Block();
 
             // Create the function object.
+            var comp = compilerStates.Peek();   //we need this to mark upvalues
             var function = EndCompile();
             EmitBytes((byte)OpCode.CLOSURE, CurrentChunk.AddConstant(Value.New( function )));
+
+            for (int i = 0; i < function.UpvalueCount; i++)
+            {
+                EmitBytes(comp.upvalues[i].isLocal ?  (byte)1 : (byte)0);
+                EmitBytes(comp.upvalues[i].index);
+            }
         }
 
         private void VarDeclaration()
@@ -308,11 +324,55 @@ namespace ULox
             }
         }
 
-        private int ResolveLocal(string name)
+        private int ResolveUpvalue (CompilerState compilerState, string name)
         {
-            for (int i = compilerStates.Peek().localCount - 1; i >= 0; i--)
+            if (compilerState.enclosing == null) return -1;
+
+            int local = ResolveLocal(compilerState.enclosing, name);
+            if (local != -1)
             {
-                var local = compilerStates.Peek().locals[i];
+                return AddUpvalue(compilerState, (byte)local, true);
+            }
+
+            int upvalue = ResolveUpvalue(compilerState.enclosing, name);
+            if (upvalue != -1)
+            {
+                return AddUpvalue(compilerState, (byte)upvalue, false);
+            }
+
+            return -1;
+        }
+
+
+        private int AddUpvalue(CompilerState compilerState, byte index, bool isLocal)
+        {
+            int upvalueCount = compilerState.chunk.UpvalueCount;
+
+            Upvalue upvalue = default;
+
+            for (int i = 0; i < upvalueCount; i++)
+            {
+                upvalue = compilerState.upvalues[i];
+                if (upvalue.index == index && upvalue.isLocal == isLocal)
+                {
+                    return i;
+                }
+            }
+
+            if (upvalueCount == byte.MaxValue)
+            {
+                throw new CompilerException("Too many closure variables in function.");
+            }
+
+            compilerState.upvalues[upvalueCount] = new Upvalue() { index = index, isLocal = isLocal };
+            return compilerState.chunk.UpvalueCount++;
+        }
+
+        private int ResolveLocal(CompilerState compilerState, string name)
+        {
+            for (int i = compilerState.localCount - 1; i >= 0; i--)
+            {
+                var local = compilerState.locals[i];
                 if (name == local.name)
                 {
                     if (local.depth == -1)
@@ -526,11 +586,17 @@ namespace ULox
             //TODO if we already have the name don't store a dup
 
             OpCode getOp = OpCode.FETCH_GLOBAL, setOp = OpCode.ASSIGN_GLOBAL;
-            var argID = ResolveLocal((string)previousToken.Literal);
+            var name = (string)previousToken.Literal;
+            var argID = ResolveLocal(compilerStates.Peek(), name);
             if (argID != -1)
             {
                 getOp = OpCode.GET_LOCAL;
                 setOp = OpCode.SET_LOCAL;
+            }
+            else if ((argID = ResolveUpvalue(compilerStates.Peek(), name)) != -1)
+            {
+                getOp = OpCode.GET_UPVALUE;
+                setOp = OpCode.SET_UPVALUE;
             }
             else
             {
