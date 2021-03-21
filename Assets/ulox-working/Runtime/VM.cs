@@ -292,6 +292,13 @@ namespace ULox
                         break;
                     }
                     break;
+                case OpCode.METHOD:
+                    {
+                        var constantIndex = ReadByte(chunk);
+                        var name = chunk.ReadConstant(constantIndex).val.asString;
+                        DefineMethod(name);
+                    }
+                    break;
                 case OpCode.NONE:
                     break;
                 default:
@@ -300,6 +307,14 @@ namespace ULox
             }
 
             return InterpreterResult.OK;
+        }
+
+        private void DefineMethod(string name)
+        {
+            Value method = valueStack.Peek();
+            var klass = valueStack.Peek(1).val.asClass;
+            klass.methods[name] = method;
+            valueStack.Pop();
         }
 
         private void CloseUpvalues(int last)

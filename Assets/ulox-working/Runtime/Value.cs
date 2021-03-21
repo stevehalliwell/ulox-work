@@ -16,6 +16,7 @@ namespace ULox
     public class ClassInternal
     {
         public string name;
+        public Table methods = new Table();
     }
     public class InstanceInternal
     {

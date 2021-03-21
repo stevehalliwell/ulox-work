@@ -209,14 +209,29 @@ namespace ULox
         private void ClassDeclaration()
         {
             Consume(TokenType.IDENTIFIER, "Expect class name.");
+            var className = (string)previousToken.Literal;
             byte nameConstant = IdentifierString();
             DeclareVariable();
 
             EmitBytes((byte)OpCode.CLASS, nameConstant);
             DefineVariable(nameConstant);
 
+            NamedVariable(className, false);
             Consume(TokenType.OPEN_BRACE, "Expect '{' before class body.");
+            while (!Check(TokenType.CLOSE_BRACE) && !Check(TokenType.EOF))
+            {
+                Method();
+            }
             Consume(TokenType.CLOSE_BRACE, "Expect '}' after class body.");
+            EmitOpCode(OpCode.POP);
+        }
+
+        private void Method()
+        {
+            Consume(TokenType.IDENTIFIER, "Expect method name.");
+            byte constant = AddStringConstant();
+            Function(CurrentChunk.constants[constant].val.asString);
+            EmitBytes((byte)OpCode.METHOD, constant);
         }
 
         private void FunctionDeclaration()
@@ -617,15 +632,14 @@ namespace ULox
 
         private void Variable(bool canAssign)
         {
-            NamedVariable(canAssign);
+            NamedVariable((string)previousToken.Literal, canAssign);
         }
 
-        private void NamedVariable(bool canAssign)
+        private void NamedVariable(string name, bool canAssign)
         {
             //TODO if we already have the name don't store a dup
 
             OpCode getOp = OpCode.FETCH_GLOBAL, setOp = OpCode.ASSIGN_GLOBAL;
-            var name = (string)previousToken.Literal;
             var argID = ResolveLocal(compilerStates.Peek(), name);
             if (argID != -1)
             {

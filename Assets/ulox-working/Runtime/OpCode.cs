@@ -35,7 +35,9 @@
         CALL,
         RETURN,
         CLOSURE,
+
         CLASS,
+        METHOD,
 
         NEGATE,
         ADD,

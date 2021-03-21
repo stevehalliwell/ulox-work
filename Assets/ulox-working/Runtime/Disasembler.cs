@@ -55,6 +55,7 @@ namespace ULox
                 case OpCode.SET_PROPERTY:
                 case OpCode.CLASS:
                 case OpCode.CALL:
+                case OpCode.METHOD:
                     {
                         stringBuilder.Append(" ");
                         i++;

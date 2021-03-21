@@ -563,6 +563,23 @@ print pair.first + pair.second;");
             Assert.AreEqual(engine.InterpreterResult, "3");
         }
 
+        [Test]
+        public void Engine_Class_Method_Simple1()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class T 
+{
+    Say(){print 7;}
+}
+
+var t = T();
+t.Say();");
+
+            Assert.AreEqual(engine.InterpreterResult, "7");
+        }
+
     }
     //todo functions aren't getting assigned to the globals the way we expect
 
