@@ -17,6 +17,11 @@ namespace ULox
     {
         public string name;
     }
+    public class InstanceInternal
+    {
+        public ClassInternal fromClass;
+        public Table fields = new Table();
+    }
 
     public struct Value
     {
@@ -31,6 +36,7 @@ namespace ULox
             Closure,
             Upvalue,
             Class,
+            Instance,
         }
 
         [StructLayout(LayoutKind.Explicit)]
@@ -52,6 +58,8 @@ namespace ULox
             public UpvalueInternal asUpvalue;
             [FieldOffset(0)]
             public ClassInternal asClass;
+            [FieldOffset(0)]
+            public InstanceInternal asInstance;
         }
 
         public Type type;
@@ -92,7 +100,8 @@ namespace ULox
                 return $"<upvalue {val.asUpvalue.index}>";
             case Type.Class:
                 return $"<class {val.asClass.name}>";
-                break;
+            case Type.Instance:
+                return $"<inst {val.asInstance.fromClass.name}>";
             default:
                 throw new System.NotImplementedException();
             }
@@ -125,6 +134,9 @@ namespace ULox
 
         public static Value New(ClassInternal val)
             => new Value() { type = Type.Class, val = new DataUnion() { asClass = val } };
+
+        public static Value New(InstanceInternal val)
+            => new Value() { type = Type.Instance, val = new DataUnion() { asInstance = val } };
 
         public static Value Null()
             => new Value() { type = Type.Null };

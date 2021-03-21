@@ -16,13 +16,14 @@ namespace ULox
         public ClosureInternal closure;
     }
 
+    public class Table : Dictionary<string, Value> { }
 
     public class VM
     {
         private IndexableStack<Value> valueStack = new IndexableStack<Value>();
-        private Dictionary<string, Value> globals = new Dictionary<string, Value>();
         private IndexableStack<CallFrame> callFrames = new IndexableStack<CallFrame>();
         private LinkedList<Value> openUpvalues = new LinkedList<Value>();
+        private Table globals = new Table();
         private int CurrentCallFrame => callFrames.Count-1;
 
         private int CurrentIP
@@ -308,9 +309,16 @@ namespace ULox
             {
             case Value.Type.NativeFunction: return CallNative(callee.val.asNativeFunc, argCount);
             case Value.Type.Closure: return Call(callee.val.asClosure, argCount);
+            case Value.Type.Class: return CreateInstance(callee.val.asClass, argCount);
             }
 
             throw new VMException("Can only call functions and classes.");
+        }
+
+        private bool CreateInstance(ClassInternal asClass, int argCount)
+        {
+            valueStack.Push(Value.New(new InstanceInternal() { fromClass = asClass }));
+            return true;
         }
 
         private bool Call(ClosureInternal closureInternal, int argCount)

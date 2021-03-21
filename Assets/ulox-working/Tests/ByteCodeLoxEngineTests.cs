@@ -510,6 +510,18 @@ print Brioche;");
             Assert.AreEqual(engine.InterpreterResult, "<class Brioche>");
         }
 
+        [Test]
+        public void Engine_Class_Instance_Empty()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class Brioche {}
+print Brioche();");
+
+            Assert.AreEqual(engine.InterpreterResult, "<inst Brioche>");
+        }
+
     }
     //todo functions aren't getting assigned to the globals the way we expect
 
