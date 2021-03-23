@@ -19,6 +19,13 @@ namespace ULox
             Primary,
         }
 
+        public enum FunctionType
+        {
+            Script,
+            Function,
+            Method,
+        }
+
         public class ParseRule
         {
             public System.Action<bool> prefix, infix;
@@ -73,15 +80,33 @@ namespace ULox
         public Compiler()
         {
             GenerateRules();
-            PushCompilerState(string.Empty);
+            PushCompilerState(string.Empty, FunctionType.Script);
         }
 
-        private void PushCompilerState(string name)
+        public Chunk Compile(List<Token> inTokens)
+        {
+            tokens = inTokens;
+            Advance();
+
+            while (currentToken.TokenType != TokenType.EOF)
+            {
+                Declaration();
+            }
+
+            return EndCompile();
+        }
+
+        private void PushCompilerState(string name, FunctionType functionType)
         {
             compilerStates.Push(new CompilerState(compilerStates.Peek())
             {
                 chunk = new Chunk(name),
             });
+
+            if (functionType == FunctionType.Method)
+                AddLocal("this",0);
+            else
+                AddLocal("", 0);
         }
 
         private void GenerateRules()
@@ -116,7 +141,14 @@ namespace ULox
             rules[(int)TokenType.OR] = new ParseRule(null, Or, Precedence.Or);
             rules[(int)TokenType.OPEN_PAREN] = new ParseRule(Grouping, Call, Precedence.Call);
             rules[(int)TokenType.DOT] = new ParseRule(null, Dot, Precedence.Call);
+            rules[(int)TokenType.THIS] = new ParseRule(This, null, Precedence.None);
         }
+
+        private void This(bool obj)
+        {
+            Variable(false);
+        }
+
         void Dot(bool canAssign)
         {
             Consume(TokenType.IDENTIFIER, "Expect property name after '.'.");
@@ -181,19 +213,6 @@ namespace ULox
             PatchJump(endJump);
         }
 
-        public Chunk Compile(List<Token> inTokens)
-        {
-            tokens = inTokens;
-            Advance();
-
-            while (currentToken.TokenType != TokenType.EOF)
-            {
-                Declaration();
-            }
-
-            return EndCompile();
-        }
-
         private void Declaration()
         {
             if (Match(TokenType.CLASS))
@@ -230,7 +249,7 @@ namespace ULox
         {
             Consume(TokenType.IDENTIFIER, "Expect method name.");
             byte constant = AddStringConstant();
-            Function(CurrentChunk.constants[constant].val.asString);
+            Function(CurrentChunk.constants[constant].val.asString, FunctionType.Method);
             EmitBytes((byte)OpCode.METHOD, constant);
         }
 
@@ -238,13 +257,13 @@ namespace ULox
         {
             var global = ParseVariable("Expect function name.");
             MarkInitialised();
-            Function(CurrentChunk.constants[global].val.asString);
+            Function(CurrentChunk.constants[global].val.asString, FunctionType.Function);
             DefineVariable(global);
         }
 
-        private void Function(string name)
+        private void Function(string name, FunctionType functionType)
         {
-            PushCompilerState(name);
+            PushCompilerState(name, functionType);
 
             BeginScope();
             var line = previousToken.Line;
@@ -325,7 +344,7 @@ namespace ULox
             AddLocal(declName);
         }
 
-        private void AddLocal(string name)
+        private void AddLocal(string name, int depth = -1)
         {
             if (compilerStates.Peek().localCount == byte.MaxValue)
                 throw new CompilerException("Too many local variables.");
@@ -333,7 +352,7 @@ namespace ULox
             compilerStates.Peek().locals[compilerStates.Peek().localCount++] = new Local()
             {
                 name = name,
-                depth = -1
+                depth = depth
             };
         }
 

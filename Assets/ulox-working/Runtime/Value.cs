@@ -23,6 +23,11 @@ namespace ULox
         public ClassInternal fromClass;
         public Table fields = new Table();
     }
+    public class BoundMethod
+    {
+        public Value receiver;
+        public ClosureInternal method;
+    }
 
     public struct Value
     {
@@ -38,6 +43,7 @@ namespace ULox
             Upvalue,
             Class,
             Instance,
+            BoundMethod,
         }
 
         [StructLayout(LayoutKind.Explicit)]
@@ -61,6 +67,8 @@ namespace ULox
             public ClassInternal asClass;
             [FieldOffset(0)]
             public InstanceInternal asInstance;
+            [FieldOffset(0)]
+            public BoundMethod asBoundMethod;
         }
 
         public Type type;
@@ -103,6 +111,8 @@ namespace ULox
                 return $"<class {val.asClass.name}>";
             case Type.Instance:
                 return $"<inst {val.asInstance.fromClass.name}>";
+            case Type.BoundMethod:
+                return $"<boundMeth {val.asBoundMethod.method.chunk.Name}>";
             default:
                 throw new System.NotImplementedException();
             }
@@ -138,6 +148,9 @@ namespace ULox
 
         public static Value New(InstanceInternal val)
             => new Value() { type = Type.Instance, val = new DataUnion() { asInstance = val } };
+
+        public static Value New(BoundMethod val)
+            => new Value() { type = Type.BoundMethod, val = new DataUnion() { asBoundMethod = val } };
 
         public static Value Null()
             => new Value() { type = Type.Null };

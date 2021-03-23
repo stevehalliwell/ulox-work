@@ -20,7 +20,11 @@ namespace ULox
 
     public class VM
     {
-        private IndexableStack<Value> valueStack = new IndexableStack<Value>();
+        private IndexableStack<Value> _valueStack = new IndexableStack<Value>();
+
+        private void Push(Value val) => _valueStack.Push(val);
+        private Value Pop() => _valueStack.Pop();
+        private Value Peek(int ind = 0) => _valueStack.Peek(ind);
         private IndexableStack<CallFrame> callFrames = new IndexableStack<CallFrame>();
         private LinkedList<Value> openUpvalues = new LinkedList<Value>();
         private Table globals = new Table();
@@ -41,7 +45,7 @@ namespace ULox
 
         public string GenerateStackDump()
         {
-            return new DumpStack().Generate(valueStack);
+            return new DumpStack().Generate(_valueStack);
         }
 
         public string GenerateGlobalsDump()
@@ -56,8 +60,9 @@ namespace ULox
 
         public InterpreterResult Interpret(Chunk chunk)
         {
-            valueStack.Push(Value.New(new ClosureInternal() { chunk = chunk }));
-            CallValue(valueStack.Peek(), 0);
+            Push(Value.New(""));
+            Push(Value.New(new ClosureInternal() { chunk = chunk }));
+            CallValue(Peek(), 0);
 
             return Run();
         }
@@ -75,30 +80,30 @@ namespace ULox
                 case OpCode.CONSTANT:
                     {
                         var constantIndex = ReadByte(chunk);
-                        valueStack.Push(chunk.ReadConstant(constantIndex));
+                        Push(chunk.ReadConstant(constantIndex));
                     }
                     break;
                 case OpCode.RETURN:
                     {
-                        Value result = valueStack.Pop();
+                        Value result = Pop();
 
                         CloseUpvalues(callFrames.Peek().stackStart);
 
                         var prev = callFrames.Pop();
                         if (callFrames.Count == 0)
                         {
-                            //valueStack.Pop(); Expects a self func ref on stack that we aren't doing yet
+                            Pop();
                             return InterpreterResult.OK;
                         }
 
-                        while (valueStack.Count >= prev.stackStart)
-                            valueStack.Pop();
+                        while (_valueStack.Count > prev.stackStart)
+                            Pop();
 
-                        valueStack.Push(result);
+                        Push(result);
                     }
                     break;
                 case OpCode.NEGATE:
-                    valueStack.Push(Value.New(-valueStack.Pop().val.asDouble));
+                    Push(Value.New(-Pop().val.asDouble));
                     break;
                 case OpCode.ADD:
                 case OpCode.SUBTRACT:
@@ -112,27 +117,27 @@ namespace ULox
                     DoComparisonOp(opCode);
                     break;
                 case OpCode.NOT:
-                    valueStack.Push(Value.New(valueStack.Pop().IsFalsey));
+                    Push(Value.New(Pop().IsFalsey));
                     break;
                 case OpCode.TRUE:
-                    valueStack.Push(Value.New(true));
+                    Push(Value.New(true));
                     break;
                 case OpCode.FALSE:
-                    valueStack.Push(Value.New(false));
+                    Push(Value.New(false));
                     break;
                 case OpCode.NULL:
-                    valueStack.Push(Value.Null());
+                    Push(Value.Null());
                     break;
                 case OpCode.PRINT:
-                    _printer(valueStack.Pop().ToString());
+                    _printer(Pop().ToString());
                     break;
                 case OpCode.POP:
-                    _ = valueStack.Pop();
+                    _ = Pop();
                     break;
                 case OpCode.JUMP_IF_FALSE:
                     {
                         ushort jump = ReadUShort(chunk);
-                        if (valueStack.Peek().IsFalsey)
+                        if (Peek().IsFalsey)
                             CurrentIP += jump;
                     }
                     break;
@@ -151,13 +156,13 @@ namespace ULox
                 case OpCode.GET_LOCAL:
                     {
                         var slot = ReadByte(chunk);
-                        valueStack.Push(FetchLocalStack(slot));
+                         Push(FetchLocalStack(slot));
                     }
                     break;
                 case OpCode.SET_LOCAL:
                     {
                         var slot = ReadByte(chunk);
-                        AssignLocalStack(slot, valueStack.Peek());
+                        AssignLocalStack(slot,  Peek());
                     }
                     break;
                 case OpCode.GET_UPVALUE:
@@ -165,9 +170,9 @@ namespace ULox
                         var slot = ReadByte(chunk);
                         var upval = callFrames.Peek().closure.upvalues[slot].val.asUpvalue;
                         if (!upval.isClosed)
-                            valueStack.Push(valueStack[upval.index]);
+                             Push(_valueStack[upval.index]);
                         else
-                            valueStack.Push(upval.value);
+                            Push(upval.value);
                     }
                     break;
                 case OpCode.SET_UPVALUE:
@@ -175,16 +180,16 @@ namespace ULox
                         var slot = ReadByte(chunk);
                         var upval = callFrames.Peek().closure.upvalues[slot].val.asUpvalue;
                         if (!upval.isClosed)
-                            valueStack[upval.index] = valueStack.Peek();
+                            _valueStack[upval.index] = Peek();
                         else
-                            upval.value = valueStack.Peek();
+                            upval.value = Peek();
                     }
                     break;
                 case OpCode.DEFINE_GLOBAL:
                     {
                         var global = ReadByte(chunk);
                         var globalName = chunk.ReadConstant(global);
-                        globals[globalName.val.asString] = valueStack.Pop();
+                        globals[globalName.val.asString] = Pop();
                     }
                     break;
                 case OpCode.FETCH_GLOBAL:
@@ -196,7 +201,7 @@ namespace ULox
                         {
                             throw new VMException($"Global var of name '{actualName}' was not found.");
                         }
-                        valueStack.Push(globalValue);
+                        Push(globalValue);
                     }
                     break;
                 case OpCode.ASSIGN_GLOBAL:
@@ -208,13 +213,14 @@ namespace ULox
                         {
                             throw new VMException($"Global var of name '{actualName}' was not found.");
                         }
-                        globals[actualName] = valueStack.Peek();
+                        globals[actualName] = Peek();
                     }
                     break;
                 case OpCode.CALL:
                     {
                         int argCount = ReadByte(chunk);
-                        if (!CallValue(valueStack.Peek(argCount), argCount))
+                        //Push(Value.Null());
+                        if (!CallValue(Peek(argCount), argCount))
                         {
                             return InterpreterResult.RUNTIME_ERROR;
                         }
@@ -225,7 +231,7 @@ namespace ULox
                         var constantIndex = ReadByte(chunk);
                         var func = chunk.ReadConstant(constantIndex);
                         var closureVal = Value.New(new ClosureInternal() { chunk = func.val.asChunk });
-                        valueStack.Push(closureVal);
+                        Push(closureVal);
 
                         var closure = closureVal.val.asClosure;
 
@@ -245,19 +251,19 @@ namespace ULox
                     }
                     break;
                 case OpCode.CLOSE_UPVALUE:
-                    CloseUpvalues(valueStack.Count-1);
-                    valueStack.Pop();
+                    CloseUpvalues(_valueStack.Count-1);
+                    Pop();
                     break;
                 case OpCode.CLASS:
                     {
                         var constantIndex = ReadByte(chunk);
                         var name = chunk.ReadConstant(constantIndex);
-                        valueStack.Push(Value.New( new ClassInternal() { name = name.val.asString }));
+                        Push(Value.New( new ClassInternal() { name = name.val.asString }));
                     }
                     break;
                 case OpCode.GET_PROPERTY:
                     {
-                        var targetVal = valueStack.Peek();
+                        var targetVal = Peek();
                         if (targetVal.type != Value.Type.Instance)
                             throw new VMException($"Only instances have properties. Got {targetVal}.");
                         var instance = targetVal.val.asInstance;
@@ -266,17 +272,20 @@ namespace ULox
 
                         if (instance.fields.TryGetValue(name, out var val))
                         {
-                            valueStack.Pop();
-                            valueStack.Push(val);
+                            Pop();
+                            Push(val);
                             break;
                         }
 
-                        throw new VMException($"No field of name {name} was found");
+                        if(!BindMethod(instance.fromClass, name))
+                        {
+                            return InterpreterResult.RUNTIME_ERROR;
+                        }
                     }
                     break;
                 case OpCode.SET_PROPERTY:
                     {
-                        var targetVal = valueStack.Peek(1);
+                        var targetVal = Peek(1);
                         if (targetVal.type != Value.Type.Instance)
                             throw new VMException($"Only instances have properties. Got {targetVal}.");
                         var instance = targetVal.val.asInstance;
@@ -284,11 +293,11 @@ namespace ULox
                         var constantIndex = ReadByte(chunk);
                         var name = chunk.ReadConstant(constantIndex).val.asString;
                         
-                        instance.fields[name] = valueStack.Peek();
+                        instance.fields[name] = Peek();
 
-                        var value = valueStack.Pop();
-                        valueStack.Pop();
-                        valueStack.Push(value);
+                        var value = Pop();
+                        Pop();
+                        Push(value);
                         break;
                     }
                     break;
@@ -309,12 +318,26 @@ namespace ULox
             return InterpreterResult.OK;
         }
 
+        private bool BindMethod(ClassInternal fromClass, string name)
+        {
+            if(!fromClass.methods.TryGetValue(name, out Value value))
+            {
+                throw new VMException($"Undefined property {name}");
+            }
+
+            var bound = Value.New(new BoundMethod() { receiver = Peek(), method = value.val.asClosure });
+
+            Pop();
+            Push(bound);
+            return true;
+        }
+
         private void DefineMethod(string name)
         {
-            Value method = valueStack.Peek();
-            var klass = valueStack.Peek(1).val.asClass;
+            Value method = Peek();
+            var klass = Peek(1).val.asClass;
             klass.methods[name] = method;
-            valueStack.Pop();
+            Pop();
         }
 
         private void CloseUpvalues(int last)
@@ -323,7 +346,7 @@ namespace ULox
                 openUpvalues.First.Value.val.asUpvalue.index >= last)
             {
                 var upvalue = openUpvalues.First.Value.val.asUpvalue;
-                upvalue.value = valueStack[upvalue.index];
+                upvalue.value = _valueStack[upvalue.index];
                 upvalue.index = -1;
                 upvalue.isClosed = true;
                 openUpvalues.RemoveFirst();
@@ -362,14 +385,21 @@ namespace ULox
             case Value.Type.NativeFunction: return CallNative(callee.val.asNativeFunc, argCount);
             case Value.Type.Closure: return Call(callee.val.asClosure, argCount);
             case Value.Type.Class: return CreateInstance(callee.val.asClass, argCount);
+            case Value.Type.BoundMethod: return CallMethod(callee.val.asBoundMethod, argCount);
             }
 
             throw new VMException("Can only call functions and classes.");
         }
 
+        private bool CallMethod(BoundMethod asBoundMethod, int argCount)
+        {
+            _valueStack[_valueStack.Count - 1 - argCount] = asBoundMethod.receiver;
+            return Call(asBoundMethod.method, argCount);
+        }
+
         private bool CreateInstance(ClassInternal asClass, int argCount)
         {
-            valueStack.Push(Value.New(new InstanceInternal() { fromClass = asClass }));
+            Push(Value.New(new InstanceInternal() { fromClass = asClass }));
             return true;
         }
 
@@ -381,7 +411,7 @@ namespace ULox
 
             callFrames.Push(new CallFrame()
             {
-                stackStart = valueStack.Count - argCount,
+                stackStart = _valueStack.Count - argCount-1,
                 closure = closureInternal
             });
             return true;
@@ -389,25 +419,25 @@ namespace ULox
 
         private bool CallNative(System.Func<VM, int, Value> asNativeFunc, int argCount)
         {
-            var stackPos = valueStack.Count - argCount;
+            var stackPos = _valueStack.Count - argCount;
             var res = asNativeFunc.Invoke(this, stackPos);
 
-            while (valueStack.Count > stackPos)
-                valueStack.Pop();
+            while (_valueStack.Count > stackPos)
+                Pop();
 
-            valueStack.Push(res);
+            Push(res);
 
             return true;
         }
 
         private void AssignLocalStack(byte slot, Value val)
         {
-            valueStack[slot + callFrames[CurrentCallFrame].stackStart] = val;
+            _valueStack[slot + callFrames[CurrentCallFrame].stackStart] = val;
         }
 
         private Value FetchLocalStack(byte slot)
         {
-            return valueStack[slot + callFrames[CurrentCallFrame].stackStart];
+            return _valueStack[slot + callFrames[CurrentCallFrame].stackStart];
         }
 
         private OpCode ReadOpCode(Chunk chunk)
@@ -435,12 +465,12 @@ namespace ULox
 
         private void DoMathOp(OpCode opCode)
         {
-            var rhs = valueStack.Pop();
-            var lhs = valueStack.Pop();
+            var rhs = Pop();
+            var lhs = Pop();
 
             if(opCode == OpCode.ADD && lhs.type == Value.Type.String && rhs.type == lhs.type)
             {
-                valueStack.Push(Value.New(lhs.val.asString + rhs.val.asString));
+                Push(Value.New(lhs.val.asString + rhs.val.asString));
                 return;
             }
 
@@ -465,20 +495,20 @@ namespace ULox
                 res.val.asDouble = lhs.val.asDouble / rhs.val.asDouble;
                 break;
             }
-            valueStack.Push(res);
+            Push(res);
         }
 
         private void DoComparisonOp(OpCode opCode)
         {
-            var rhs = valueStack.Pop();
-            var lhs = valueStack.Pop();
+            var rhs = Pop();
+            var lhs = Pop();
             //todo fix handling of NaNs on either side
             switch (opCode)
             {
             case OpCode.EQUAL:
                 if (lhs.type != rhs.type)
                 {
-                    valueStack.Push(Value.New(false));
+                    Push(Value.New(false));
                     return;
                 }
                 else
@@ -486,16 +516,16 @@ namespace ULox
                     switch (lhs.type)
                     {
                     case Value.Type.Null:
-                        valueStack.Push(Value.New(true));
+                        Push(Value.New(true));
                         break;
                     case Value.Type.Double:
-                        valueStack.Push(Value.New(lhs.val.asDouble == rhs.val.asDouble));
+                        Push(Value.New(lhs.val.asDouble == rhs.val.asDouble));
                         break;
                     case Value.Type.Bool:
-                        valueStack.Push(Value.New(lhs.val.asBool == rhs.val.asBool));
+                        Push(Value.New(lhs.val.asBool == rhs.val.asBool));
                         break;
                     case Value.Type.String:
-                        valueStack.Push(Value.New(lhs.val.asString == rhs.val.asString));
+                        Push(Value.New(lhs.val.asString == rhs.val.asString));
                         break;
                     default:
                         break;
@@ -505,12 +535,12 @@ namespace ULox
             case OpCode.LESS:
                 if (lhs.type != Value.Type.Double || rhs.type != Value.Type.Double)
                     throw new VMException($"Cannot less compare on different types '{lhs.type}' and '{rhs.type}'.");
-                valueStack.Push(Value.New(lhs.val.asDouble < rhs.val.asDouble));
+                Push(Value.New(lhs.val.asDouble < rhs.val.asDouble));
                 break;
             case OpCode.GREATER:
                 if (lhs.type != Value.Type.Double || rhs.type != Value.Type.Double)
                     throw new VMException($"Cannot greater across on different types '{lhs.type}' and '{rhs.type}'.");
-                valueStack.Push(Value.New(lhs.val.asDouble > rhs.val.asDouble));
+                Push(Value.New(lhs.val.asDouble > rhs.val.asDouble));
                 break;
             }
         }

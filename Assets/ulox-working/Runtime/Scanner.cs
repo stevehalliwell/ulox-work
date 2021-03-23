@@ -34,6 +34,7 @@ namespace ULox
             { Interpreter.NullIdentifier,   TokenType.NULL},
             { "fun",    TokenType.FUNCTION},
             { "class",  TokenType.CLASS},
+            { "this",  TokenType.THIS},
             { ".",      TokenType.DOT},
             { "throw",  TokenType.THROW},
             { "test",  TokenType.TEST},

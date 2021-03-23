@@ -242,7 +242,7 @@ fun T()
 
 print T;");
 
-            Assert.AreEqual(engine.InterpreterResult, "<closure T>");
+            Assert.AreEqual(engine.InterpreterResult, "<closure T upvals:0>");
         }
 
         [Test]
@@ -320,6 +320,25 @@ var b = 3;
 var c = 10;
 
 print a+b*c;");
+
+            Assert.AreEqual(engine.InterpreterResult, "32");
+        }
+
+        [Test]
+        public void Engine_Compile_Var_Mixed_Ops_InFunc()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+fun Func(){
+var a = 2;
+var b = 3;
+var c = 10;
+
+print a+b*c;
+}
+
+Func();");
 
             Assert.AreEqual(engine.InterpreterResult, "32");
         }
@@ -518,6 +537,37 @@ print Brioche;");
             engine.Run(@"
 class Brioche {}
 print Brioche();");
+
+            Assert.AreEqual(engine.InterpreterResult, "<inst Brioche>");
+        }
+
+        [Test]
+        public void Engine_Class_Instance_Method()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class Brioche 
+{
+    Meth(){print ""Method Called"";}
+}
+Brioche().Meth();");
+
+            Assert.AreEqual(engine.InterpreterResult, "Method Called");
+        }
+
+        [Test]
+        public void Engine_Class_Instance_Method_This()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class Brioche 
+{
+    Meth(){return this;}
+}
+
+print Brioche().Meth();");
 
             Assert.AreEqual(engine.InterpreterResult, "<inst Brioche>");
         }

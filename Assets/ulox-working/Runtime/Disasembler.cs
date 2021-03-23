@@ -49,8 +49,6 @@ namespace ULox
                 case OpCode.DEFINE_GLOBAL:
                 case OpCode.FETCH_GLOBAL:
                 case OpCode.ASSIGN_GLOBAL:
-                case OpCode.GET_LOCAL:
-                case OpCode.SET_LOCAL:
                 case OpCode.GET_PROPERTY:
                 case OpCode.SET_PROPERTY:
                 case OpCode.CLASS:
@@ -65,6 +63,8 @@ namespace ULox
                     break;
                 case OpCode.GET_UPVALUE:
                 case OpCode.SET_UPVALUE:
+                case OpCode.GET_LOCAL:
+                case OpCode.SET_LOCAL:
                     {
                         stringBuilder.Append(" ");
                         i++;

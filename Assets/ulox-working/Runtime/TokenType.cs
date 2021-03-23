@@ -44,6 +44,7 @@
 
         FUNCTION,
         CLASS,
+        THIS,
 
         AND,
         OR,
