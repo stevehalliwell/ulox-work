@@ -24,6 +24,7 @@ namespace ULox
             Script,
             Function,
             Method,
+            Init,
         }
 
         public class ParseRule
@@ -63,7 +64,27 @@ namespace ULox
             public int scopeDepth;
             public Chunk chunk;
             public CompilerState enclosing;
-            public CompilerState(CompilerState enclosingState) { enclosing = enclosingState; }
+            public string currentClassName;
+            public FunctionType functionType;
+            public CompilerState(CompilerState enclosingState, FunctionType funcType) 
+            { 
+                enclosing = enclosingState;
+                functionType = funcType;
+            }
+        }
+
+        private string GetEnclosingClass()
+        {
+            for (int i = compilerStates.Count - 1; i >= 0; i--)
+            {
+                var cur = compilerStates[i].currentClassName;
+                if (string.IsNullOrEmpty(cur))
+                    continue;
+
+                return cur;
+            }
+
+            return null;
         }
 
         private IndexableStack<CompilerState> compilerStates = new IndexableStack<CompilerState>();
@@ -98,12 +119,12 @@ namespace ULox
 
         private void PushCompilerState(string name, FunctionType functionType)
         {
-            compilerStates.Push(new CompilerState(compilerStates.Peek())
+            compilerStates.Push(new CompilerState(compilerStates.Peek(), functionType)
             {
                 chunk = new Chunk(name),
             });
 
-            if (functionType == FunctionType.Method)
+            if (functionType == FunctionType.Method || functionType == FunctionType.Init)
                 AddLocal("this",0);
             else
                 AddLocal("", 0);
@@ -146,6 +167,9 @@ namespace ULox
 
         private void This(bool obj)
         {
+            if (GetEnclosingClass() == null)
+                throw new CompilerException("Cannot use this outside of a class declaration.");
+
             Variable(false);
         }
 
@@ -229,6 +253,7 @@ namespace ULox
         {
             Consume(TokenType.IDENTIFIER, "Expect class name.");
             var className = (string)previousToken.Literal;
+            compilerStates.Peek().currentClassName = className;
             byte nameConstant = IdentifierString();
             DeclareVariable();
 
@@ -249,7 +274,13 @@ namespace ULox
         {
             Consume(TokenType.IDENTIFIER, "Expect method name.");
             byte constant = AddStringConstant();
-            Function(CurrentChunk.constants[constant].val.asString, FunctionType.Method);
+
+            var name = CurrentChunk.constants[constant].val.asString;
+            var funcType = FunctionType.Method;
+            if (name == "init")
+                funcType = FunctionType.Init;
+
+            Function(name, funcType);
             EmitBytes((byte)OpCode.METHOD, constant);
         }
 
@@ -257,6 +288,7 @@ namespace ULox
         {
             var global = ParseVariable("Expect function name.");
             MarkInitialised();
+
             Function(CurrentChunk.constants[global].val.asString, FunctionType.Function);
             DefineVariable(global);
         }
@@ -499,6 +531,10 @@ namespace ULox
             if (Match(TokenType.END_STATEMENT))
             {
                 EmitReturn();
+            }
+            else if(compilerStates.Peek().functionType == FunctionType.Init)
+            {
+                throw new CompilerException("Cannot return an expression from an 'init'.");
             }
             else
             {
@@ -771,10 +807,14 @@ namespace ULox
 
         private void EmitReturn()
         {
-            EmitOpCode(OpCode.NULL);
+            if (compilerStates.Peek().functionType == FunctionType.Init)
+                EmitBytes((byte)OpCode.GET_LOCAL, 0);
+            else
+                EmitOpCode(OpCode.NULL);
+            
             EmitOpCode(OpCode.RETURN);
         }
-
+        
         void Consume(TokenType tokenType, string msg)
         {
             if (currentToken.TokenType == tokenType)

@@ -630,6 +630,189 @@ t.Say();");
             Assert.AreEqual(engine.InterpreterResult, "7");
         }
 
+        [Test]
+        public void Engine_Class_Method_Simple2()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class T 
+{
+    Say(){print this.name;}
+}
+
+var t = T();
+t.name = ""name"";
+t.Say();");
+
+            Assert.AreEqual(engine.InterpreterResult, "name");
+        }
+
+        [Test]
+        public void Engine_Class_Set_Existing_From_Const()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class T
+{
+    Set()
+{
+this.a = 7;
+}
+}
+
+var t = T();
+t.a = 1;
+t.Set();
+print t.a;");
+
+            Assert.AreEqual(engine.InterpreterResult, "7");
+        }
+
+        [Test]
+        public void Engine_Class_Set_Existing_From_Arg()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class T
+{
+    Set(v)
+{
+this.a = v;
+}
+}
+
+var t = T();
+t.a = 1;
+t.Set(7);
+print t.a;");
+
+            Assert.AreEqual(engine.InterpreterResult, "7");
+        }
+
+        [Test]
+        public void Engine_Class_Set_New_From_Const()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class T
+{
+    Set()
+{
+this.name = 7;
+}
+    Say(){print this.name;}
+}
+
+var t = T();
+t.Set();
+t.Say();");
+
+            Assert.AreEqual(engine.InterpreterResult, "7");
+        }
+
+        [Test]
+        public void Engine_Class_Set_New_From_Arg()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class T
+{
+    Set(v)
+{
+this.a = v;
+}
+}
+
+var t = T();
+t.Set(7);
+print t.a;");
+
+            Assert.AreEqual(engine.InterpreterResult, "7");
+        }
+
+        [Test]
+        public void Engine_Class_Manual_Init_Simple1()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class CoffeeMaker {
+    Set(_coffee) {
+        this.coffee = _coffee;
+        return this;
+    }
+
+    brew() {
+        print ""Enjoy your cup of "" + this.coffee;
+
+        // No reusing the grounds!
+        this.coffee = null;
+    }
+}
+
+var maker = CoffeeMaker();
+maker.Set(""coffee and chicory"");
+maker.brew();");
+
+            Assert.AreEqual(engine.InterpreterResult, "Enjoy your cup of coffee and chicory");
+        }
+
+        [Test]
+        public void Engine_Class_Init_Simple1()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class CoffeeMaker {
+    init(_coffee) {
+        this.coffee = _coffee;
+    }
+
+    brew() {
+        print ""Enjoy your cup of "" + this.coffee;
+
+        // No reusing the grounds!
+        this.coffee = null;
+    }
+}
+
+var maker = CoffeeMaker(""coffee and chicory"");
+maker.brew();");
+
+            Assert.AreEqual(engine.InterpreterResult, "Enjoy your cup of coffee and chicory");
+        }
+
+        [Test]
+        public void Engine_Class_BoundMethod()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class CoffeeMaker {
+    init(_coffee) {
+        this.coffee = _coffee;
+    }
+
+    brew() {
+        print ""Enjoy your cup of "" + this.coffee;
+
+        // No reusing the grounds!
+        this.coffee = null;
+    }
+}
+
+var maker = CoffeeMaker(""coffee and chicory"");
+var delegate = maker.brew;
+delegate();");
+
+            Assert.AreEqual(engine.InterpreterResult, "Enjoy your cup of coffee and chicory");
+        }
+
     }
     //todo functions aren't getting assigned to the globals the way we expect
 

@@ -399,7 +399,20 @@ namespace ULox
 
         private bool CreateInstance(ClassInternal asClass, int argCount)
         {
-            Push(Value.New(new InstanceInternal() { fromClass = asClass }));
+            UnityEngine.Debug.Log(GenerateStackDump());
+            var inst = Value.New(new InstanceInternal() { fromClass = asClass });
+            _valueStack[_valueStack.Count - 1 - argCount] = inst;
+
+            UnityEngine.Debug.Log(GenerateStackDump());
+            if (asClass.methods.TryGetValue("init", out var initMeth))
+            {
+                return Call(initMeth.val.asClosure, argCount);
+            }
+            else if (argCount != 0)
+            {
+                throw new VMException("Args given for a class that does not have an 'init' method");
+            }
+            
             return true;
         }
 
