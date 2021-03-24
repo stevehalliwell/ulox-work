@@ -219,8 +219,18 @@ namespace ULox
                 case OpCode.CALL:
                     {
                         int argCount = ReadByte(chunk);
-                        //Push(Value.Null());
                         if (!CallValue(Peek(argCount), argCount))
+                        {
+                            return InterpreterResult.RUNTIME_ERROR;
+                        }
+                    }
+                    break;
+                case OpCode.INVOKE:
+                    {
+                        var constantIndex = ReadByte(chunk);
+                        var methName = chunk.ReadConstant(constantIndex).val.asString;
+                        var argCount = ReadByte(chunk);
+                        if (!Invoke(methName, argCount))
                         {
                             return InterpreterResult.RUNTIME_ERROR;
                         }
@@ -397,13 +407,37 @@ namespace ULox
             return Call(asBoundMethod.method, argCount);
         }
 
+        private bool Invoke(string methodName, int argCount)
+        {
+            var receiver = Peek(argCount);
+            if (receiver.type != Value.Type.Instance)
+                throw new VMException("Cannot invoke on non instance receiver.");
+
+            var inst = receiver.val.asInstance;
+
+            if(inst.fields.TryGetValue(methodName, out var fieldFunc))
+            {
+                _valueStack[_valueStack.Count - 1 - argCount] = fieldFunc;
+                return CallValue(fieldFunc, argCount);
+            }
+
+            return InvokeFromClass(inst.fromClass, methodName, argCount);
+        }
+
+        private bool InvokeFromClass(ClassInternal fromClass, string methodName, int argCount)
+        {
+            if(!fromClass.methods.TryGetValue(methodName, out var method))
+            {
+                throw new VMException($"No method of name '{methodName}' found on '{fromClass}'.");
+            }
+            return Call(method.val.asClosure, argCount);
+        }
+
         private bool CreateInstance(ClassInternal asClass, int argCount)
         {
-            UnityEngine.Debug.Log(GenerateStackDump());
             var inst = Value.New(new InstanceInternal() { fromClass = asClass });
             _valueStack[_valueStack.Count - 1 - argCount] = inst;
 
-            UnityEngine.Debug.Log(GenerateStackDump());
             if (asClass.methods.TryGetValue("init", out var initMeth))
             {
                 return Call(initMeth.val.asClosure, argCount);

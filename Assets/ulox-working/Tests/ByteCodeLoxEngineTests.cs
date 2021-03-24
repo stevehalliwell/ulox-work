@@ -813,6 +813,30 @@ delegate();");
             Assert.AreEqual(engine.InterpreterResult, "Enjoy your cup of coffee and chicory");
         }
 
+        [Test]
+        public void Engine_Class_Field_As_Method()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class CoffeeMaker {
+    init(_coffee) {
+        this.coffee = _coffee;
+    }
+}
+
+var maker = CoffeeMaker(""coffee and chicory"");
+
+    fun b() {
+        print ""Enjoy your cup of coffee"";
+    }
+
+maker.brew = b;
+maker.brew();");
+
+            Assert.AreEqual(engine.InterpreterResult, "Enjoy your cup of coffee");
+        }
+
     }
     //todo functions aren't getting assigned to the globals the way we expect
 

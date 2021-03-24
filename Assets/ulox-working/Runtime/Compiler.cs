@@ -183,6 +183,12 @@ namespace ULox
                 Expression();
                 EmitBytes((byte)OpCode.SET_PROPERTY, name);
             }
+            else if(Match(TokenType.OPEN_PAREN))
+            {
+                var argCount = ArgumentList();
+                EmitBytes((byte)OpCode.INVOKE, name);
+                EmitBytes(argCount);
+            }
             else
             {
                 EmitBytes((byte)OpCode.GET_PROPERTY, name);

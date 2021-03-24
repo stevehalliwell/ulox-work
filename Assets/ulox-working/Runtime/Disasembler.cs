@@ -61,6 +61,20 @@ namespace ULox
                         stringBuilder.Append($"({ind})" + chunk.ReadConstant(ind).ToString());
                     }
                     break;
+                case OpCode.INVOKE:
+                    {
+                        stringBuilder.Append(" ");
+                        i++;
+                        var constant = chunk.instructions[i];
+                        stringBuilder.Append($"({constant})" + chunk.ReadConstant(constant).ToString());
+
+
+                        stringBuilder.Append(" ");
+                        i++;
+                        var argCount = chunk.instructions[i];
+                        stringBuilder.Append(argCount);
+                    }
+                    break;
                 case OpCode.GET_UPVALUE:
                 case OpCode.SET_UPVALUE:
                 case OpCode.GET_LOCAL:

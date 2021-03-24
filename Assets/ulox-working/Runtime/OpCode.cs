@@ -35,6 +35,7 @@
         CALL,
         RETURN,
         CLOSURE,
+        INVOKE,
 
         CLASS,
         METHOD,
