@@ -41,6 +41,7 @@
         INVOKE,
         INHERIT,
         GET_SUPER,
+        SUPER_INVOKE,
 
         NEGATE,
         ADD,

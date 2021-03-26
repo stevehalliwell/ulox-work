@@ -348,6 +348,19 @@ namespace ULox
                             return InterpreterResult.RUNTIME_ERROR;
                     }
                     break;
+                case OpCode.SUPER_INVOKE:
+                    {
+                        UnityEngine.Debug.Log(GenerateStackDump());
+                        var constantIndex = ReadByte(chunk);
+                        var methName = chunk.ReadConstant(constantIndex).val.asString;
+                        var argCount = ReadByte(chunk);
+                        var superClass = Pop().val.asClass;
+                        if (!InvokeFromClass(superClass, methName, argCount))
+                        {
+                            return InterpreterResult.RUNTIME_ERROR;
+                        }
+                    }
+                    break;
                 case OpCode.NONE:
                     break;
                 default:

@@ -174,11 +174,21 @@ namespace ULox
 
             Consume(TokenType.DOT, "Expect '.' after a super.");
             Consume(TokenType.IDENTIFIER, "Expect superclass method name.");
-            var nameID = IdentifierString();
+            var nameID = AddStringConstant();
 
             NamedVariable("this", false);
-            NamedVariable("super", false);
-            EmitBytes((byte)OpCode.GET_SUPER, nameID);
+            if (Match(TokenType.OPEN_PAREN))
+            {
+                byte argCount = ArgumentList();
+                NamedVariable("super", false);
+                EmitBytes((byte)OpCode.SUPER_INVOKE, nameID);
+                EmitBytes(argCount);
+            }
+            else
+            {
+                NamedVariable("super", false);
+                EmitBytes((byte)OpCode.GET_SUPER, nameID);
+            }
         }
 
         private void This(bool obj)

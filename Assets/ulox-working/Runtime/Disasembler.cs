@@ -62,6 +62,7 @@ namespace ULox
                         stringBuilder.Append($"({ind})" + chunk.ReadConstant(ind).ToString());
                     }
                     break;
+                case OpCode.SUPER_INVOKE:
                 case OpCode.INVOKE:
                     {
                         stringBuilder.Append(" ");

@@ -916,6 +916,27 @@ b.MethA();");
             Assert.AreEqual(engine.InterpreterResult, "12");
         }
 
+        [Test]
+        public void Engine_Class_Inher_Super_BoundReturn()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class A{MethA(){print 1;}}
+class B < A { MethA()
+{
+var bound = super.MethA; 
+print 2;
+bound();
+}
+}
+
+var b = B();
+b.MethA();");
+
+            Assert.AreEqual(engine.InterpreterResult, "21");
+        }
+
     }
     //todo functions aren't getting assigned to the globals the way we expect
 
