@@ -125,9 +125,9 @@ namespace ULox
             });
 
             if (functionType == FunctionType.Method || functionType == FunctionType.Init)
-                AddLocal("this",0);
+                AddLocal(compilerStates.Peek(), "this",0);
             else
-                AddLocal("", 0);
+                AddLocal(compilerStates.Peek(), "", 0);
         }
 
         private void GenerateRules()
@@ -163,6 +163,22 @@ namespace ULox
             rules[(int)TokenType.OPEN_PAREN] = new ParseRule(Grouping, Call, Precedence.Call);
             rules[(int)TokenType.DOT] = new ParseRule(null, Dot, Precedence.Call);
             rules[(int)TokenType.THIS] = new ParseRule(This, null, Precedence.None);
+            rules[(int)TokenType.SUPER] = new ParseRule(Super, null, Precedence.None);
+        }
+
+        private void Super(bool obj)
+        {
+            if (GetEnclosingClass() == null)
+                throw new CompilerException("Cannot use super outside a class.");
+            //todo cannot use outisde a class without a super
+
+            Consume(TokenType.DOT, "Expect '.' after a super.");
+            Consume(TokenType.IDENTIFIER, "Expect superclass method name.");
+            var nameID = IdentifierString();
+
+            NamedVariable("this", false);
+            NamedVariable("super", false);
+            EmitBytes((byte)OpCode.GET_SUPER, nameID);
         }
 
         private void This(bool obj)
@@ -260,11 +276,29 @@ namespace ULox
             Consume(TokenType.IDENTIFIER, "Expect class name.");
             var className = (string)previousToken.Literal;
             compilerStates.Peek().currentClassName = className;
-            byte nameConstant = IdentifierString();
+            byte nameConstant = AddStringConstant();
             DeclareVariable();
 
             EmitBytes((byte)OpCode.CLASS, nameConstant);
             DefineVariable(nameConstant);
+
+            bool hasSuper = false;
+
+            if(Match(TokenType.LESS))
+            {
+                Consume(TokenType.IDENTIFIER, "Expect superclass name.");
+                Variable(false);
+                if (className == (string)previousToken.Literal)
+                    throw new CompilerException("A class cannot inhert from itself.");
+
+                BeginScope();
+                AddLocal(compilerStates.Peek(), "super");
+                DefineVariable(0);
+
+                NamedVariable(className, false);
+                EmitOpCode(OpCode.INHERIT);
+                hasSuper = true;
+            }
 
             NamedVariable(className, false);
             Consume(TokenType.OPEN_BRACE, "Expect '{' before class body.");
@@ -274,6 +308,11 @@ namespace ULox
             }
             Consume(TokenType.CLOSE_BRACE, "Expect '}' after class body.");
             EmitOpCode(OpCode.POP);
+
+            if(hasSuper)
+            {
+                EndScope();
+            }
         }
 
         private void Method()
@@ -365,29 +404,31 @@ namespace ULox
 
         private void DeclareVariable()
         {
-            if (compilerStates.Peek().scopeDepth == 0) return;
+            var comp = compilerStates.Peek();
 
-            var declName = (string)previousToken.Literal;
+            if (comp.scopeDepth == 0) return;
 
-            for (int i = compilerStates.Peek().localCount - 1; i >= 0; i--)
+            var declName = comp.chunk.constants[AddStringConstant()].val.asString;
+
+            for (int i = comp.localCount - 1; i >= 0; i--)
             {
-                var local = compilerStates.Peek().locals[i];
-                if (local.depth != -1 && local.depth < compilerStates.Peek().scopeDepth)
+                var local = comp.locals[i];
+                if (local.depth != -1 && local.depth < comp.scopeDepth)
                     break;
 
                 if (declName == local.name)
                     throw new CompilerException($"Already a variable with name '{declName}' in this scope.");
             }
 
-            AddLocal(declName);
+            AddLocal(comp, declName);
         }
 
-        private void AddLocal(string name, int depth = -1)
+        private static void AddLocal(CompilerState comp, string name, int depth = -1)
         {
-            if (compilerStates.Peek().localCount == byte.MaxValue)
+            if (comp.localCount == byte.MaxValue)
                 throw new CompilerException("Too many local variables.");
 
-            compilerStates.Peek().locals[compilerStates.Peek().localCount++] = new Local()
+            comp.locals[comp.localCount++] = new Local()
             {
                 name = name,
                 depth = depth
@@ -407,8 +448,10 @@ namespace ULox
 
         private void MarkInitialised()
         {
-            if (compilerStates.Peek().scopeDepth == 0) return;
-            compilerStates.Peek().locals[compilerStates.Peek().localCount - 1].depth = compilerStates.Peek().scopeDepth;
+            var comp = compilerStates.Peek();
+
+            if (comp.scopeDepth == 0) return;
+            comp.locals[comp.localCount - 1].depth = comp.scopeDepth;
         }
 
         private void BeginScope()
@@ -707,14 +750,18 @@ namespace ULox
                 getOp = OpCode.GET_LOCAL;
                 setOp = OpCode.SET_LOCAL;
             }
-            else if ((argID = ResolveUpvalue(compilerStates.Peek(), name)) != -1)
-            {
-                getOp = OpCode.GET_UPVALUE;
-                setOp = OpCode.SET_UPVALUE;
-            }
             else
             {
-                argID = AddStringConstant();
+                argID = ResolveUpvalue(compilerStates.Peek(), name);
+                if (argID != -1)
+                {
+                    getOp = OpCode.GET_UPVALUE;
+                    setOp = OpCode.SET_UPVALUE;
+                }
+                else
+                {
+                    argID = CurrentChunk.AddConstant(Value.New(name));
+                }
             }
 
             if (canAssign && Match(TokenType.ASSIGN))

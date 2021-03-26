@@ -35,6 +35,7 @@ namespace ULox
             { "fun",    TokenType.FUNCTION},
             { "class",  TokenType.CLASS},
             { "this",  TokenType.THIS},
+            { "super",  TokenType.SUPER},
             { ".",      TokenType.DOT},
             { "throw",  TokenType.THROW},
             { "test",  TokenType.TEST},

@@ -35,10 +35,12 @@
         CALL,
         RETURN,
         CLOSURE,
-        INVOKE,
 
         CLASS,
         METHOD,
+        INVOKE,
+        INHERIT,
+        GET_SUPER,
 
         NEGATE,
         ADD,

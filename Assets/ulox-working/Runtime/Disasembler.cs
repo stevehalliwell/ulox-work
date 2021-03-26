@@ -51,6 +51,7 @@ namespace ULox
                 case OpCode.ASSIGN_GLOBAL:
                 case OpCode.GET_PROPERTY:
                 case OpCode.SET_PROPERTY:
+                case OpCode.GET_SUPER:
                 case OpCode.CLASS:
                 case OpCode.CALL:
                 case OpCode.METHOD:
@@ -128,6 +129,7 @@ namespace ULox
                 case OpCode.PRINT:
                 case OpCode.POP:
                 case OpCode.CLOSE_UPVALUE:
+                case OpCode.INHERIT:
                 default:
                     break;
                 }

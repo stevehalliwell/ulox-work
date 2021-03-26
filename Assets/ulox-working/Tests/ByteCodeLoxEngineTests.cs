@@ -409,8 +409,11 @@ Recur(5);");
 
             engine.Run(@"
 var x = ""global"";
+var A = ""ERROR"";
 fun outer() {
+    var y = ""ERROR"";
     var x = ""outer"";
+    var z = ""ERROR"";
     fun inner()
     {
         print x;
@@ -447,9 +450,7 @@ var mid = outer();
 var in = mid();
 in();");
 
-            Assert.AreEqual(engine.InterpreterResult, @"return from outer
-create inner closure
-value");
+            Assert.AreEqual(engine.InterpreterResult, @"return from outercreate inner closurevalue");
         }
 
         [Test]
@@ -468,6 +469,20 @@ fun outer() {
 outer();");
 
             Assert.AreEqual(engine.InterpreterResult, "outside");
+        }
+
+        [Test]
+        public void Engine_NestedFunc_ExampleDissasembly()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+fun outer() {
+  fun middle() {
+    fun inner() {
+    }
+  }
+}");
         }
 
         [Test]
@@ -496,7 +511,10 @@ fun outer() {
 
             engine.Run(@"
 fun makeCounter() {
+    var a = ""A"";
+    print a;
   var i = 0;
+    print i;
   fun count() {
     i = i + 1;
     print i;
@@ -514,7 +532,7 @@ var c2 = makeCounter();
 c2();
 c2();");
 
-            Assert.AreEqual(engine.InterpreterResult, "1212");
+            Assert.AreEqual(engine.InterpreterResult, "A012A012");
         }
 
         [Test]
@@ -835,6 +853,67 @@ maker.brew = b;
 maker.brew();");
 
             Assert.AreEqual(engine.InterpreterResult, "Enjoy your cup of coffee");
+        }
+
+        [Test]
+        public void Engine_Class_Inher_Simple1()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class A{MethA(){print 1;}}
+class B < A {MethB(){print 2;}}
+
+var b = B();
+b.MethA();
+b.MethB();");
+
+            Assert.AreEqual(engine.InterpreterResult, "12");
+        }
+
+        [Test]
+        public void Engine_Class_Inher_Simple2()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class A{MethA(){print 1;}}
+class B < A {MethB(){this.MethA();print 2;}}
+
+var b = B();
+b.MethB();");
+
+            Assert.AreEqual(engine.InterpreterResult, "12");
+        }
+
+        [Test]
+        public void Engine_Class_Inher_Poly()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class A{MethA(){print 1;}}
+class B < A {MethA(){print 2;}}
+
+var b = B();
+b.MethA();");
+
+            Assert.AreEqual(engine.InterpreterResult, "2");
+        }
+
+        [Test]
+        public void Engine_Class_Inher_Super()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+class A{MethA(){print 1;}}
+class B < A {MethA(){super.MethA(); print 2;}}
+
+var b = B();
+b.MethA();");
+
+            Assert.AreEqual(engine.InterpreterResult, "12");
         }
 
     }

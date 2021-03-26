@@ -251,7 +251,8 @@ namespace ULox
                             var index = ReadByte(chunk);
                             if(isLocal == 1)
                             {
-                                closure.upvalues[i] = CaptureUpvalue(callFrames.Peek().stackStart + index);
+                                var local = callFrames.Peek().stackStart + index;
+                                closure.upvalues[i] = CaptureUpvalue(local);
                             }
                             else
                             {
@@ -318,6 +319,35 @@ namespace ULox
                         DefineMethod(name);
                     }
                     break;
+                case OpCode.INHERIT:
+                    {
+                        var superClass = Peek(1);
+                        if (superClass.type != Value.Type.Class)
+                            throw new VMException("Superclass must be a class.");
+
+                        var subClass = Peek();
+                        var subMethods = subClass.val.asClass.methods;
+                        var superMethods = superClass.val.asClass.methods;
+                        foreach (var item in superMethods)
+                        {
+                            var k = item.Key;
+                            var v = item.Value;
+                            subMethods.Add(item.Key, item.Value);
+                        }
+
+                        Pop();
+                    }
+                    break;
+                case OpCode.GET_SUPER:
+                    {
+                        var constantIndex = ReadByte(chunk);
+                        var name = chunk.ReadConstant(constantIndex).val.asString;
+                        var superClassVal = Pop();
+                        var superClass = superClassVal.val.asClass;
+                        if (!BindMethod(superClass, name))
+                            return InterpreterResult.RUNTIME_ERROR;
+                    }
+                    break;
                 case OpCode.NONE:
                     break;
                 default:
@@ -352,6 +382,7 @@ namespace ULox
 
         private void CloseUpvalues(int last)
         {
+            //todo this seems to be the cause of the issue, the class A is there but the upval is missing it
             while (openUpvalues.Count > 0 &&
                 openUpvalues.First.Value.val.asUpvalue.index >= last)
             {
