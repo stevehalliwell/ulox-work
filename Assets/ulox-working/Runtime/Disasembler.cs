@@ -13,6 +13,7 @@ namespace ULox
         {
             stringBuilder.AppendLine(chunk.Name);
             var instructionCount = 0;
+            var prevLine = -1;
 
             for (int i = 0; i < chunk.instructions.Count; i++, instructionCount++)
             {
@@ -21,10 +22,12 @@ namespace ULox
 
                 var opCode = (OpCode)chunk.instructions[i];
 
-                if (instructionCount == 0 ||
-                    chunk.lines[instructionCount] != chunk.lines[instructionCount - 1])
+                var lineForInst = chunk.GetLineForInstruction(instructionCount);
+
+                if (lineForInst != prevLine)
                 {
-                    stringBuilder.Append($" {chunk.lines[instructionCount]} ");
+                    stringBuilder.Append($" {lineForInst} ");
+                    prevLine = lineForInst;
                 }
                 else
                 {
