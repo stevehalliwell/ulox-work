@@ -21,6 +21,7 @@ namespace ULox
 
     public class VM
     {
+        private const string InitMethodName = "init";
         private IndexableStack<Value> _valueStack = new IndexableStack<Value>();
 
         private void Push(Value val) => _valueStack.Push(val);
@@ -391,6 +392,10 @@ namespace ULox
             Value method = Peek();
             var klass = Peek(1).val.asClass;
             klass.methods[name] = method;
+            if(name == InitMethodName)
+            {
+                klass.initialiser = method;
+            }
             Pop();
         }
 
@@ -482,9 +487,9 @@ namespace ULox
             var inst = Value.New(new InstanceInternal() { fromClass = asClass });
             _valueStack[_valueStack.Count - 1 - argCount] = inst;
 
-            if (asClass.methods.TryGetValue("init", out var initMeth))
+            if (!asClass.initialiser.IsNull)
             {
-                return Call(initMeth.val.asClosure, argCount);
+                return Call(asClass.initialiser.val.asClosure, argCount);
             }
             else if (argCount != 0)
             {

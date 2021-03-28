@@ -95,7 +95,8 @@ namespace ULox
         private Token currentToken, previousToken;
         private List<Token> tokens;
         private int tokenIndex;
-        //todo if we have more than 1 compiler we want this to be static
+        
+        // if we have more than 1 compiler we want this to be static
         private ParseRule[] rules;
 
         private int CurrentChunkInstructinCount => CurrentChunk.instructions.Count;
@@ -754,8 +755,6 @@ namespace ULox
 
         private void NamedVariable(string name, bool canAssign)
         {
-            //TODO if we already have the name don't store a dup
-
             OpCode getOp = OpCode.FETCH_GLOBAL, setOp = OpCode.ASSIGN_GLOBAL;
             var argID = ResolveLocal(compilerStates.Peek(), name);
             if (argID != -1)

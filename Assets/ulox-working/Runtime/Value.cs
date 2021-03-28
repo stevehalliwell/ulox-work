@@ -14,11 +14,11 @@ namespace ULox
         public bool isClosed = false;
         public Value value = Value.Null();
     }
-    //todo find and cache init at creation
     public class ClassInternal
     {
         public string name;
         public Table methods = new Table();
+        public Value initialiser = Value.Null();
     }
     //todo ability to ask if field or method exists at runtime
     //todo ability to add remove fields and methods at runtime
@@ -79,14 +79,11 @@ namespace ULox
         public DataUnion val;
 
         public bool IsFalsey 
-        {
-            get 
-            {
-                return type == Type.Null || 
-                    (type == Type.Bool && val.asBool == false);
-            }
-        }
+            => type == Type.Null || (type == Type.Bool && val.asBool == false);
 
+        public bool IsNull 
+            => type == Type.Null;
+        
         public override string ToString() 
         {
             switch (type)

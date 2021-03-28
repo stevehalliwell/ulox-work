@@ -938,7 +938,6 @@ b.MethA();");
         }
 
     }
-    //todo functions aren't getting assigned to the globals the way we expect
 
     public class ByteCodeLoxEngine
     {
