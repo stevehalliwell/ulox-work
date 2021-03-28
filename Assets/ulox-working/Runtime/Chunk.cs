@@ -1,11 +1,13 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 
 namespace ULox
 {
     public class Chunk
     {
         public List<byte> instructions = new List<byte>();
-        public List<Value> constants = new List<Value>();
+        private List<Value> constants = new List<Value>();
+        public IReadOnlyList<Value> Constants => constants.AsReadOnly();
         public List<RunLengthLineNumber> runLengthLineNumbers = new List<RunLengthLineNumber>();
         public int instructionCount = -1;
         public string Name { get; set; }
@@ -62,6 +64,7 @@ namespace ULox
 
         public byte WriteConstant(Value val, int line)
         {
+            //todo add support for long constant, when we overflow 255 constants in 1 chunk
             instructions.Add((byte)OpCode.CONSTANT);
             var at = AddConstant(val);
             instructions.Add(at);
@@ -77,6 +80,9 @@ namespace ULox
 
         public byte AddConstant(Value val)
         {
+            var existingLox = constants.FindIndex(x => val.Equals(x));
+            if (existingLox != -1) return (byte)existingLox;
+
             if (constants.Count >= byte.MaxValue)
                 throw new CompilerException($"Cannot have more than '{byte.MaxValue}' constants per chunk.");
 

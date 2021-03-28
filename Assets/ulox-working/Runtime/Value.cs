@@ -1,4 +1,5 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace ULox
 {
@@ -13,11 +14,14 @@ namespace ULox
         public bool isClosed = false;
         public Value value = Value.Null();
     }
+    //todo find and cache init at creation
     public class ClassInternal
     {
         public string name;
         public Table methods = new Table();
     }
+    //todo ability to ask if field or method exists at runtime
+    //todo ability to add remove fields and methods at runtime
     public class InstanceInternal
     {
         public ClassInternal fromClass;
@@ -38,7 +42,7 @@ namespace ULox
             Bool,
             String,
             Chunk,
-            NativeFunction,
+            NativeFunction, //todo native functions need helpers at some point
             Closure,
             Upvalue,
             Class,
@@ -154,5 +158,13 @@ namespace ULox
 
         public static Value Null()
             => new Value() { type = Type.Null };
+
+        //todo swap this out, or replace it's usage in AddConstant, as this isn't doing the job.
+        public override bool Equals(object obj)
+        {
+            return obj is Value value &&
+                   type == value.type &&
+                   EqualityComparer<DataUnion>.Default.Equals(val, value.val);
+        }
     }
 }

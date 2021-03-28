@@ -1,5 +1,6 @@
 ﻿namespace ULox
 {
+    //todo determine if we can use common constant ops like inc, *-1 etc.
     public enum OpCode : byte
     {
         NONE,

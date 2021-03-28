@@ -2,6 +2,9 @@
 
 namespace ULox
 {
+    //todo better string parsing token support
+    //todo add continue and break
+    //todo emit functions when no upvals are required https://github.com/munificent/craftinginterpreters/blob/master/note/answers/chapter25_closures/1.md
     public class Compiler
     {
         public enum Precedence
@@ -330,7 +333,7 @@ namespace ULox
             Consume(TokenType.IDENTIFIER, "Expect method name.");
             byte constant = AddStringConstant();
 
-            var name = CurrentChunk.constants[constant].val.asString;
+            var name = CurrentChunk.ReadConstant(constant).val.asString;
             var funcType = FunctionType.Method;
             if (name == "init")
                 funcType = FunctionType.Init;
@@ -344,7 +347,7 @@ namespace ULox
             var global = ParseVariable("Expect function name.");
             MarkInitialised();
 
-            Function(CurrentChunk.constants[global].val.asString, FunctionType.Function);
+            Function(CurrentChunk.ReadConstant(global).val.asString, FunctionType.Function);
             DefineVariable(global);
         }
 
@@ -418,7 +421,7 @@ namespace ULox
 
             if (comp.scopeDepth == 0) return;
 
-            var declName = comp.chunk.constants[AddStringConstant()].val.asString;
+            var declName = comp.chunk.ReadConstant(AddStringConstant()).val.asString;
 
             for (int i = comp.localCount - 1; i >= 0; i--)
             {

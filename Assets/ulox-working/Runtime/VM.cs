@@ -2,6 +2,7 @@
 
 namespace ULox
 {
+    //todo better, standardisead errors, including from native
     public enum InterpreterResult
     {
         OK,

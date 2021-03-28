@@ -145,9 +145,11 @@ namespace ULox
 
             var subChunks = new List<Chunk>();
 
-            for (int i = 0; i < chunk.constants.Count; i++)
+            var constants = chunk.Constants;
+
+            for (int i = 0; i < constants.Count; i++)
             {
-                var v = chunk.constants[i];
+                var v = constants[i];
 
                 stringBuilder.Append(i.ToString("000"));
                 stringBuilder.Append("  ");
