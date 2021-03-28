@@ -80,7 +80,7 @@ namespace ULox
 
         public byte AddConstant(Value val)
         {
-            var existingLox = constants.FindIndex(x => val.Equals(x));
+            var existingLox = ExistingSimpleConstant(val);
             if (existingLox != -1) return (byte)existingLox;
 
             if (constants.Count >= byte.MaxValue)
@@ -88,6 +88,32 @@ namespace ULox
 
             constants.Add(val);
             return (byte) (constants.Count - 1);
+        }
+
+        private int ExistingSimpleConstant(Value val)
+        {
+            int ret = -1;
+            switch (val.type)
+            {
+            case Value.Type.Null:
+                throw new CompilerException("Attempted to add a null constant");
+            case Value.Type.Double:
+                return constants.FindIndex(x => x.type == val.type && val.val.asDouble == x.val.asDouble);
+            case Value.Type.Bool:
+                return constants.FindIndex(x => x.type == val.type && val.val.asBool == x.val.asBool);
+            case Value.Type.String:
+                return constants.FindIndex(x => x.type == val.type && val.val.asString == x.val.asString);
+            // none of those are going to be duplicated by the compiler anyway
+            case Value.Type.Chunk:
+            case Value.Type.NativeFunction:
+            case Value.Type.Closure:
+            case Value.Type.Upvalue:
+            case Value.Type.Class:
+            case Value.Type.Instance:
+            case Value.Type.BoundMethod:
+            default:
+                return -1;
+            }
         }
 
         public Value ReadConstant(byte index) => constants[index];

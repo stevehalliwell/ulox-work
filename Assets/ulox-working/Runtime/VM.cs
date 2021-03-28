@@ -396,7 +396,6 @@ namespace ULox
 
         private void CloseUpvalues(int last)
         {
-            //todo this seems to be the cause of the issue, the class A is there but the upval is missing it
             while (openUpvalues.Count > 0 &&
                 openUpvalues.First.Value.val.asUpvalue.index >= last)
             {

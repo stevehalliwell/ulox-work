@@ -158,13 +158,5 @@ namespace ULox
 
         public static Value Null()
             => new Value() { type = Type.Null };
-
-        //todo swap this out, or replace it's usage in AddConstant, as this isn't doing the job.
-        public override bool Equals(object obj)
-        {
-            return obj is Value value &&
-                   type == value.type &&
-                   EqualityComparer<DataUnion>.Default.Equals(val, value.val);
-        }
     }
 }
