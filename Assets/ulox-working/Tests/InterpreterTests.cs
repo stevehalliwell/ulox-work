@@ -3,9 +3,9 @@ using System.Collections.Generic;
 
 namespace ULox.Tests
 {
-    // TODO: ENGINE calling a non callable
-    // TODO: ENGINE get a value that doesn't exist
-    // TODO: TEST skipping tests
+    // missing: ENGINE calling a non callable
+    // missing: ENGINE get a value that doesn't exist
+    // missing: TEST skipping tests
 
     public class InterpreterTests
     {

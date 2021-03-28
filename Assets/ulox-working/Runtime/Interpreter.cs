@@ -161,8 +161,8 @@ namespace ULox
                 return Evaluate(expr.expressions[0]);
             else
             {
-                //todo would be nice not to need to alloc and array conver all of these
-                var argList = new List<object>();   //todo cache alloc?
+                // would be nice not to need to alloc and array conver all of these
+                var argList = new List<object>();   //could cache alloc?
                 foreach (var item in expr.expressions)
                 {
                     var res = Evaluate(item);
@@ -282,7 +282,7 @@ namespace ULox
         {
             var callee = Evaluate(expr.callee);
 
-            //todo this gets hit constantly, but cannot be cached easily as you can call in a call
+            // this gets hit constantly, but cannot be cached easily as you can call in a call
             var argList = new List<object>();
             foreach (var item in expr.arguments.expressions)
             {
@@ -299,7 +299,7 @@ namespace ULox
                     throw new RuntimeCallException(expr.paren,
                         $"Expected { calleeCallable.Arity} args but got { argList.Count }");
 
-                //todo we can remove function argument class perhaps
+                // we can remove function argument class perhaps
                 return calleeCallable.Call(this, FunctionArguments.New(argList));
             }
 
@@ -447,7 +447,7 @@ namespace ULox
                 }
                 else if (rawFunctionReturn is object retVal)
                 {
-                    resultsFromFunc = new object[] { retVal }; //todo cache alloc?
+                    resultsFromFunc = new object[] { retVal }; //could cache alloc?
                 }
 
                 for (int i = 0; i < grouping.expressions.Count && i < resultsFromFunc.Length; i++)

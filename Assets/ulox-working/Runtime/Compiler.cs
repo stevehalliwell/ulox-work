@@ -3,7 +3,6 @@
 namespace ULox
 {
     //todo better string parsing token support
-    //todo add continue and break
     //todo emit functions when no upvals are required https://github.com/munificent/craftinginterpreters/blob/master/note/answers/chapter25_closures/1.md
     public class Compiler
     {
@@ -421,7 +420,7 @@ namespace ULox
 
             DeclareVariable();
             if (compilerStates.Peek().scopeDepth > 0) return 0;
-            return IdentifierString();
+            return AddStringConstant();
         }
 
         private void DeclareVariable()
@@ -695,8 +694,12 @@ namespace ULox
                 ExpressionStatement();
             }
 
+            var comp = compilerStates.Peek();
             int loopStart = CurrentChunkInstructinCount;
-            
+            var loopState = new CompilerState.LoopState();
+            comp.loopStates.Push(loopState);
+            loopState.loopStart = loopStart;
+
             int exitJump = -1;
             if (!Match(TokenType.END_STATEMENT))
             {
@@ -705,6 +708,7 @@ namespace ULox
 
                 // Jump out of the loop if the condition is false.
                 exitJump = EmitJump(OpCode.JUMP_IF_FALSE);
+                loopState.loopExitPatchLocations.Add(exitJump);
                 EmitOpCode(OpCode.POP); // Condition.
             }
 
@@ -726,9 +730,13 @@ namespace ULox
 
             EmitLoop(loopStart);
 
+            for (int i = 0; i < loopState.loopExitPatchLocations.Count; i++)
+            {
+                PatchJump(loopState.loopExitPatchLocations[i]);
+            }
+
             if (exitJump != -1)
             {
-                PatchJump(exitJump);
                 EmitOpCode(OpCode.POP); // Condition.
             }
 
@@ -903,11 +911,6 @@ namespace ULox
         private void String(bool canAssign)
         {
             CurrentChunk.WriteConstant(Value.New((string)previousToken.Literal), previousToken.Line);
-        }
-
-        private byte IdentifierString()
-        {
-            return CurrentChunk.WriteConstant(Value.New((string)previousToken.Literal), previousToken.Line);
         }
 
         private byte AddStringConstant()

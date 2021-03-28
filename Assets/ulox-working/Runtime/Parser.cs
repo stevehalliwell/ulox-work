@@ -112,7 +112,7 @@ namespace ULox
                     var func = Function(funcType);
                     if (!isClassMeta && func.name.Lexeme == Class.InitalizerFunctionName)
                     {
-                        //todo force ordering if super also has an init, so if super has init(self, a,b), child must start with that
+                        //should force ordering if super also has an init, so if super has init(self, a,b), child must start with that
 
                         if (init != null)
                             throw new ClassException(func.name, $"Classes cannot have more than 1 init function. '{className.Lexeme}' has multiple.");
@@ -514,7 +514,7 @@ namespace ULox
                 }
                 else
                 {
-                    // TODO: nohit
+                    // nohit
                     throw new ParseException(equals, "Invalid assignment target.");
                 }
             }
