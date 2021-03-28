@@ -34,8 +34,9 @@
         LESS,
 
         CALL,
-        RETURN,
         CLOSURE,
+
+        RETURN,
 
         CLASS,
         METHOD,

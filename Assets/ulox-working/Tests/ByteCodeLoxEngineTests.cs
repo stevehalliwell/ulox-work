@@ -154,6 +154,42 @@ var b = 1;
         }
 
         [Test]
+        public void Engine_Cycle_Blocks_PopCheck()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+{
+    var a = 2; 
+    var b = 1;
+    print a+b;
+}");
+
+            Assert.AreEqual(engine.InterpreterResult, "3");
+        }
+
+        [Test]
+        public void Engine_Cycle_Blocks_Locals_Sets()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+{
+    var a = 2; 
+    var b = 1;
+    var ans = a+b;
+    print ans;
+    {
+        var c = 3;
+        ans = a+b+c;
+        print ans;
+    }
+}");
+
+            Assert.AreEqual(engine.InterpreterResult, "36");
+        }
+
+        [Test]
         public void Engine_Cycle_If_Jump_Constants()
         {
             var engine = new ByteCodeLoxEngine();
@@ -210,6 +246,151 @@ print ""hurray"";");
 
 
             Assert.AreEqual(engine.InterpreterResult, "hip, hip, hurray");
+        }
+
+        [Test]
+        public void Engine_Cycle_While_Break()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+var i = 0;
+while(i < 5)
+{
+    print ""success?"";
+    break;
+    print ""FAIL"";
+    print ""FAIL"";
+    print ""FAIL"";
+    print ""FAIL"";
+    i = i + 1;
+}
+
+print ""hurray"";");
+
+
+            Assert.AreEqual(engine.InterpreterResult, "success?hurray");
+        }
+
+        [Test]
+        public void Engine_Cycle_While_Continue()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+var i = 0;
+while(i < 3)
+{
+    i = i + 1;
+    print i;
+    continue;
+    print ""FAIL"";
+}");
+
+
+            Assert.AreEqual(engine.InterpreterResult, "123");
+        }
+
+        [Test]
+        public void Engine_Cycle_While_Nested()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+var i = 0;
+var j = 0;
+while(i < 5)
+{
+    j= 0;
+    while(j < 5)
+    {
+        j = j + 1;
+        print j;
+        print i;
+    }    
+    i = i + 1;
+    print i;
+}");
+
+            Assert.AreEqual(engine.InterpreterResult, "1020304050111213141512122232425231323334353414243444545");
+        }
+
+        [Test]
+        public void Engine_Cycle_While_Nested_LocalInner()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+var i = 0;
+while(i < 5)
+{
+    var j = 0;
+    while(j < 5)
+    {
+        j = j + 1;
+        print j;
+        print i;
+    }    
+    i = i + 1;
+    print i;
+}");
+
+            Assert.AreEqual(engine.InterpreterResult, "1020304050111213141512122232425231323334353414243444545");
+        }
+
+        [Test]
+        public void Engine_Cycle_While_Nested_LocalsAndGlobals()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+var i = 0;
+fun DoIt(){
+while(i < 5)
+{
+    var j = 0;
+    while(j < 5)
+    {
+        j = j + 1;
+        print j;
+        print i;
+    }    
+    i = i + 1;
+    print i;
+}}
+
+DoIt();");
+
+
+            Assert.AreEqual(engine.InterpreterResult, "1020304050111213141512122232425231323334353414243444545");
+        }
+
+        [Test]
+        public void Engine_Cycle_While_Nested_Locals()
+        {
+            var engine = new ByteCodeLoxEngine();
+
+            engine.Run(@"
+fun DoIt(){
+var i = 0;
+var j = 0;
+while(i < 5)
+{
+    j= 0;
+    while(j < 5)
+    {
+        j = j + 1;
+        print j;
+        print i;
+    }    
+    i = i + 1;
+    print i;
+}}
+
+DoIt();");
+
+
+            Assert.AreEqual(engine.InterpreterResult, "1020304050111213141512122232425231323334353414243444545");
         }
 
         [Test]

@@ -158,7 +158,7 @@ namespace ULox
                 case OpCode.GET_LOCAL:
                     {
                         var slot = ReadByte(chunk);
-                         Push(FetchLocalStack(slot));
+                        Push(FetchLocalStack(slot));
                     }
                     break;
                 case OpCode.SET_LOCAL:
@@ -596,6 +596,8 @@ namespace ULox
 
         private void DoComparisonOp(OpCode opCode)
         {
+            UnityEngine.Debug.Log(GenerateStackDump());
+
             var rhs = Pop();
             var lhs = Pop();
             //todo fix handling of NaNs on either side

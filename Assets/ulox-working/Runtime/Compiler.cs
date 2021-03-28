@@ -74,6 +74,14 @@ namespace ULox
                 enclosing = enclosingState;
                 functionType = funcType;
             }
+
+            public class LoopState
+            {
+                public int loopStart = -1;
+                public List<int> loopExitPatchLocations = new List<int>();
+            }
+
+            public Stack<LoopState> loopStates = new Stack<LoopState>();
         }
 
         private string GetEnclosingClass()
@@ -566,6 +574,14 @@ namespace ULox
             {
                 ReturnStatement();
             }
+            else if (Match(TokenType.BREAK))
+            {
+                BreakStatement();
+            }
+            else if (Match(TokenType.CONTINUE))
+            {
+                ContinueStatement();
+            }
             else if(Match(TokenType.WHILE))
             {
                 WhileStatement();
@@ -607,23 +623,58 @@ namespace ULox
             }
         }
 
+        private void BreakStatement()
+        {
+            var comp = compilerStates.Peek();
+            if (comp.loopStates.Count == 0)
+                throw new CompilerException("Cannot break when not inside a loop.");
+
+            int exitJump = EmitJump(OpCode.JUMP);
+
+            Consume(TokenType.END_STATEMENT, "Expect ';' after break.");
+
+            comp.loopStates.Peek().loopExitPatchLocations.Add(exitJump);
+        }
+
+        private void ContinueStatement()
+        {
+            var comp = compilerStates.Peek();
+            if (comp.loopStates.Count == 0)
+                throw new CompilerException("Cannot continue when not inside a loop.");
+
+            EmitLoop(comp.loopStates.Peek().loopStart);
+
+            Consume(TokenType.END_STATEMENT, "Expect ';' after break.");
+        }
+
         private void WhileStatement()
         {
-            int loopStart = CurrentChunkInstructinCount;
+            var comp = compilerStates.Peek();
+            var loopState = new CompilerState.LoopState();
+            comp.loopStates.Push(loopState);
+            loopState.loopStart = CurrentChunkInstructinCount;
 
             Consume(TokenType.OPEN_PAREN, "Expect '(' after if.");
             Expression();
             Consume(TokenType.CLOSE_PAREN, "Expect ')' after if.");
             
             int exitJump = EmitJump(OpCode.JUMP_IF_FALSE);
+            loopState.loopExitPatchLocations.Add(exitJump);
             
             EmitOpCode(OpCode.POP);
             Statement();
 
-            EmitLoop(loopStart);
+            //if we encounter a break here we need to know where to go, exitJump, perhaps save list of all break locations
+            //if we encournter a continue we need to know to go tothe loop start
 
-            PatchJump(exitJump);
+            EmitLoop(loopState.loopStart);
+
+            for (int i = 0; i < loopState.loopExitPatchLocations.Count; i++)
+            {
+                PatchJump(loopState.loopExitPatchLocations[i]);
+            }
             EmitOpCode(OpCode.POP);
+            comp.loopStates.Pop();
         }
 
         private void ForStatement()
