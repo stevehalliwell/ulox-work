@@ -14,6 +14,10 @@ ulox is no longer a superset of lox. The last point where that was the case is a
 
 ![current code coverage](badge_linecoverage.png)
 
+- [Closureless Variant](../../tree/closureless)
+  - This adds the explicit concept of an environment stack to the interpreter.
+  - Removes explicit closures being made around everything. The only test that fails is MakeCounter.  
+
 - [Methodless Variant](../../tree/methodless)
 
   - This removes methods from classes in their entirety. No more `this`, not more `super`, all functions declared inside classes belong to the class not the instance.
@@ -99,7 +103,6 @@ ulox is no longer a superset of lox. The last point where that was the case is a
 - Add Unity specific hooks and functions.
 - Add Performance tests.
 - Add/port tests from [craftinginterpreters](https://github.com/munificent/craftinginterpreters/tree/master/test)
-- Closureless variant.
 
 ## Differences
 
