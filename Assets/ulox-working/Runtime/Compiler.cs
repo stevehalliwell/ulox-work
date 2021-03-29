@@ -809,7 +809,18 @@ namespace ULox
 
         private void Variable(bool canAssign)
         {
-            NamedVariable((string)previousToken.Literal, canAssign);
+            var name = (string)previousToken.Literal;
+            NamedVariable(name, canAssign);
+        }
+
+        void Literal(bool canAssign)
+        {
+            switch (previousToken.TokenType)
+            {
+            case TokenType.TRUE: EmitOpCode(OpCode.TRUE); break;
+            case TokenType.FALSE: EmitOpCode(OpCode.FALSE); break;
+            case TokenType.NULL: EmitOpCode(OpCode.NULL); break;
+            }
         }
 
         private void NamedVariable(string name, bool canAssign)
@@ -888,16 +899,6 @@ namespace ULox
 
         }
 
-        void Literal(bool canAssign)
-        {
-            switch(previousToken.TokenType)
-            {
-            case TokenType.TRUE:  EmitOpCode(OpCode.TRUE);  break;
-            case TokenType.FALSE: EmitOpCode(OpCode.FALSE); break;
-            case TokenType.NULL:  EmitOpCode(OpCode.NULL);  break;
-            }
-        }
-
         private ParseRule GetRule(TokenType operatorType)
         {
             return rules[(int)operatorType];
@@ -905,12 +906,29 @@ namespace ULox
 
         private void Number(bool canAssign)
         {
-            CurrentChunk.WriteConstant(Value.New((double)previousToken.Literal), previousToken.Line);
+            var number = (double)previousToken.Literal;
+
+            switch (number)
+            {
+            case -1:
+                EmitOpCode(OpCode.NEG_ONE);
+                break;
+            case 0 :
+                EmitOpCode(OpCode.ZERO);
+                break;
+            case 1:
+                EmitOpCode(OpCode.ONE);
+                break;
+            default:
+                CurrentChunk.WriteConstant(Value.New(number), previousToken.Line);
+                break;
+            }
         }
 
         private void String(bool canAssign)
         {
-            CurrentChunk.WriteConstant(Value.New((string)previousToken.Literal), previousToken.Line);
+            var str = (string)previousToken.Literal;
+            CurrentChunk.WriteConstant(Value.New(str), previousToken.Line);
         }
 
         private byte AddStringConstant()

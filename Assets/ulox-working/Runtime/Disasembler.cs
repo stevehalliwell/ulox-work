@@ -134,6 +134,9 @@ namespace ULox
                 case OpCode.POP:
                 case OpCode.CLOSE_UPVALUE:
                 case OpCode.INHERIT:
+                case OpCode.NEG_ONE:
+                case OpCode.ZERO:
+                case OpCode.ONE:
                 default:
                     break;
                 }

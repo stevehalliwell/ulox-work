@@ -130,6 +130,15 @@ namespace ULox
                 case OpCode.NULL:
                     Push(Value.Null());
                     break;
+                case OpCode.NEG_ONE:
+                    Push(Value.New(-1));
+                    break;
+                case OpCode.ZERO:
+                    Push(Value.New(0));
+                    break;
+                case OpCode.ONE:
+                    Push(Value.New(1));
+                    break;
                 case OpCode.PRINT:
                     _printer(Pop().ToString());
                     break;
