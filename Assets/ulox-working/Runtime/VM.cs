@@ -30,19 +30,34 @@ namespace ULox
         private IndexableStack<CallFrame> callFrames = new IndexableStack<CallFrame>();
         private LinkedList<Value> openUpvalues = new LinkedList<Value>();
         private Table globals = new Table();
+
+        public void SetGlobal(string name, Value val)
+        {
+            globals[name] = val;
+        }
+
+        public Value GetGlobal(string name)
+        {
+            return globals[name];
+        }
+
+        public Value GetArg(int index)
+        {
+            return _valueStack[callFrames.Peek().stackStart+index];
+        }
+
+        public InterpreterResult CallFunction(Value func, int args)
+        {
+            CallValue(func, args);
+            return Run();
+        }
+
         private int CurrentCallFrame => callFrames.Count-1;
 
         private int CurrentIP
         {
             get { return callFrames[CurrentCallFrame].ip; }
             set { callFrames[CurrentCallFrame].ip = value; }
-        }
-
-        private System.Action<string> _printer;
-
-        public VM(System.Action<string> printer)
-        {
-            _printer = printer; 
         }
 
         public string GenerateStackDump()
@@ -53,11 +68,6 @@ namespace ULox
         public string GenerateGlobalsDump()
         {
             return new DumpGlobals().Generate(globals);
-        }
-
-        public void DefineNativeFunction(string name, System.Func<VM, int, Value> func)
-        {
-            globals[name] = Value.New(func);
         }
 
         public InterpreterResult Interpret(Chunk chunk)
@@ -138,9 +148,6 @@ namespace ULox
                     break;
                 case OpCode.ONE:
                     Push(Value.New(1));
-                    break;
-                case OpCode.PRINT:
-                    _printer(Pop().ToString());
                     break;
                 case OpCode.POP:
                     _ = Pop();
@@ -524,11 +531,19 @@ namespace ULox
 
         private bool CallNative(System.Func<VM, int, Value> asNativeFunc, int argCount)
         {
+            callFrames.Push(new CallFrame()
+            {
+                stackStart = _valueStack.Count - argCount - 1,
+                closure = null
+            });
+
             var stackPos = _valueStack.Count - argCount;
             var res = asNativeFunc.Invoke(this, stackPos);
 
-            while (_valueStack.Count > stackPos)
+            while (_valueStack.Count > stackPos-1)
                 Pop();
+
+            callFrames.Pop();
 
             Push(res);
 

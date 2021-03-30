@@ -45,6 +45,17 @@ namespace ULox
             }
         }
 
+        public void Reset()
+        {
+            compilerStates = new IndexableStack<CompilerState>();
+            currentToken = default;
+            previousToken = default;
+            tokenIndex = 0;
+            tokens = null;
+
+            PushCompilerState(string.Empty, FunctionType.Script);
+        }
+
         public class Local
         {
             public string name;
@@ -112,7 +123,7 @@ namespace ULox
         public Compiler()
         {
             GenerateRules();
-            PushCompilerState(string.Empty, FunctionType.Script);
+            Reset();
         }
 
         public Chunk Compile(List<Token> inTokens)
@@ -561,11 +572,7 @@ namespace ULox
 
         private void Statement()
         {
-            if (Match(TokenType.PRINT))
-            {
-                PrintStatement();
-            }
-            else if (Match(TokenType.IF))
+            if (Match(TokenType.IF))
             {
                 IfStatement();
             }
@@ -792,13 +799,6 @@ namespace ULox
         private void Expression()
         {
             ParsePrecedence(Precedence.Assignment);
-        }
-
-        void PrintStatement()
-        {
-            Expression();
-            Consume(TokenType.END_STATEMENT, "Expect ; after print statement.");
-            EmitOpCode(OpCode.PRINT);
         }
 
         private void Grouping(bool canAssign)

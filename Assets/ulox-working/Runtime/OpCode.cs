@@ -52,7 +52,5 @@
         SUBTRACT,
         MULTIPLY,
         DIVIDE,
-
-        PRINT,
     }
 }

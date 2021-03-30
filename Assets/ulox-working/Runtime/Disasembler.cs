@@ -56,7 +56,6 @@ namespace ULox
                 case OpCode.SET_PROPERTY:
                 case OpCode.GET_SUPER:
                 case OpCode.CLASS:
-                case OpCode.CALL:
                 case OpCode.METHOD:
                     {
                         stringBuilder.Append(" ");
@@ -84,6 +83,7 @@ namespace ULox
                 case OpCode.SET_UPVALUE:
                 case OpCode.GET_LOCAL:
                 case OpCode.SET_LOCAL:
+                case OpCode.CALL:
                     {
                         stringBuilder.Append(" ");
                         i++;
@@ -130,7 +130,6 @@ namespace ULox
                 case OpCode.GREATER:
                 case OpCode.LESS:
                 case OpCode.EQUAL:
-                case OpCode.PRINT:
                 case OpCode.POP:
                 case OpCode.CLOSE_UPVALUE:
                 case OpCode.INHERIT:

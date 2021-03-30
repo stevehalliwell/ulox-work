@@ -40,7 +40,6 @@ namespace ULox
             { "throw",  TokenType.THROW},
             { "test",  TokenType.TEST},
             { "testcase",  TokenType.TESTCASE},
-            { "print",  TokenType.PRINT},
         };
 
         public Scanner()
