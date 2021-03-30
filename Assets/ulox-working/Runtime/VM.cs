@@ -21,7 +21,7 @@ namespace ULox
 
     public class VM
     {
-        private const string InitMethodName = "init";
+        public const string InitMethodName = "init";
         private IndexableStack<Value> _valueStack = new IndexableStack<Value>();
 
         private void Push(Value val) => _valueStack.Push(val);
@@ -495,7 +495,7 @@ namespace ULox
             {
                 throw new VMException($"No method of name '{methodName}' found on '{fromClass}'.");
             }
-            return Call(method.val.asClosure, argCount);
+            return CallValue(method, argCount);
         }
 
         private bool CreateInstance(ClassInternal asClass, int argCount)
@@ -505,7 +505,7 @@ namespace ULox
 
             if (!asClass.initialiser.IsNull)
             {
-                return Call(asClass.initialiser.val.asClosure, argCount);
+                return CallValue(asClass.initialiser, argCount);
             }
             else if (argCount != 0)
             {
@@ -538,7 +538,7 @@ namespace ULox
             });
 
             var stackPos = _valueStack.Count - argCount;
-            var res = asNativeFunc.Invoke(this, stackPos);
+            var res = asNativeFunc.Invoke(this, argCount);
 
             while (_valueStack.Count > stackPos-1)
                 Pop();
@@ -620,8 +620,6 @@ namespace ULox
 
         private void DoComparisonOp(OpCode opCode)
         {
-            UnityEngine.Debug.Log(GenerateStackDump());
-
             var rhs = Pop();
             var lhs = Pop();
             //todo fix handling of NaNs on either side

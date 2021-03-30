@@ -48,6 +48,7 @@ namespace ULox
             Class,
             Instance,
             BoundMethod,
+            Object,
         }
 
         [StructLayout(LayoutKind.Explicit)]
@@ -73,6 +74,8 @@ namespace ULox
             public InstanceInternal asInstance;
             [FieldOffset(0)]
             public BoundMethod asBoundMethod;
+            [FieldOffset(0)]
+            public object asObject;
         }
 
         public Type type;
@@ -114,6 +117,8 @@ namespace ULox
                 return $"<inst {val.asInstance.fromClass.name}>";
             case Type.BoundMethod:
                 return $"<boundMeth {val.asBoundMethod.method.chunk.Name}>";
+            case Type.Object:
+                return $"<object {val.asObject}>";
             default:
                 throw new System.NotImplementedException();
             }
@@ -155,5 +160,7 @@ namespace ULox
 
         public static Value Null()
             => new Value() { type = Type.Null };
+        public static Value Object(object obj)
+            => new Value() { type = Type.Object, val = new DataUnion() { asObject = obj } };
     }
 }

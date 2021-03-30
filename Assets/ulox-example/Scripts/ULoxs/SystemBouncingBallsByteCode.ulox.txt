@@ -1,0 +1,68 @@
+/*
+Code we expect from Unity's side;
+SetUIText(string)
+CreateFromPrefab(string):GameObject (returns a GameObject reference that we'll pass back to unity)
+GetKey(string):bool
+SetGameObjectPosition(GameObject, x, y, z)
+ReloadScene - reload the current unity scene
+
+
+Unity will find and call: 
+- SetupGame in Start
+- Update in Update
+*/
+
+//functions and data
+var dt = 0;
+var limit = 5;
+var numBallsToSpawn = 100;
+
+var ballName = "BouncyBall";
+var balls = List();
+
+class Ball
+{
+	init() 
+	{
+		this.x = RandRange(-3,3);
+		this.y = RandRange(-3,3);
+		this.vx = RandRange(-3,3);
+		this.vy = RandRange(-3,3);
+		this.go = CreateFromPrefab(ballName);
+	}
+
+	Tick(dt)
+	{
+		this.x = this.x + this.vx * dt;
+		this.y = this.y + this.vy * dt;
+
+		//bounds
+		if(this.x < -limit and this.vx < 0) { this.vx = this.vx * -1; }
+		if(this.x > limit  and this.vx > 0) { this.vx = this.vx * -1; }
+		if(this.y < -limit and this.vy < 0) { this.vy = this.vy * -1; }
+		if(this.y > limit  and this.vy > 0) { this.vy = this.vy * -1; }
+
+		SetGameObjectPosition(this.go, this.x, this.y, 0);
+	}
+}
+
+fun SetupGame()
+{
+	print ("Setting Up Game");
+
+	for(var i = 0; i < numBallsToSpawn; i = i + 1)
+	{
+		balls.Add(Ball());
+	}
+}
+
+fun Update()
+{
+	if(GetKey("escape")){ReloadScene();}
+
+	var len = balls.Count();
+	for(var i = 0; i < len; i = i + 1)
+	{
+		balls.Get(i).Tick(dt);
+	}
+}
