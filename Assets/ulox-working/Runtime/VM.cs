@@ -10,7 +10,7 @@ namespace ULox
         RUNTIME_ERROR,
     }
 
-    public class CallFrame
+    public struct CallFrame
     {
         public int ip;
         public int stackStart;
@@ -52,12 +52,38 @@ namespace ULox
             return Run();
         }
 
-        private int CurrentCallFrame => callFrames.Count-1;
+        private CallFrame CurrentCallFrame => callFrames[callFrames.Count-1];
 
-        private int CurrentIP
+        private void AdjustCurrentIP(int jump)
         {
-            get { return callFrames[CurrentCallFrame].ip; }
-            set { callFrames[CurrentCallFrame].ip = value; }
+            var callFrame = callFrames[callFrames.Count - 1];
+            callFrame.ip += jump;
+            callFrames[callFrames.Count - 1] = callFrame;
+        }
+
+        private OpCode ReadOpCode(Chunk chunk)
+        {
+            return (OpCode)ReadByte(chunk);
+        }
+
+        private byte ReadByte(Chunk chunk)
+        {
+            var callFrame = callFrames[callFrames.Count - 1];
+            var b = chunk.instructions[callFrame.ip];
+            callFrame.ip++;
+            callFrames[callFrames.Count - 1] = callFrame;
+            return b;
+        }
+
+        private ushort ReadUShort(Chunk chunk)
+        {
+            var callFrame = callFrames[callFrames.Count - 1];
+            var bhi = chunk.instructions[callFrame.ip];
+            callFrame.ip++;
+            var blo = chunk.instructions[callFrame.ip];
+            callFrame.ip++;
+            callFrames[callFrames.Count - 1] = callFrame;
+            return (ushort)((bhi << 8) | blo);
         }
 
         public string GenerateStackDump()
@@ -83,7 +109,7 @@ namespace ULox
         {
             while (true)
             {
-                var chunk = callFrames[CurrentCallFrame].closure.chunk;
+                var chunk = CurrentCallFrame.closure.chunk;
 
                 OpCode opCode = ReadOpCode(chunk);
 
@@ -156,19 +182,19 @@ namespace ULox
                     {
                         ushort jump = ReadUShort(chunk);
                         if (Peek().IsFalsey)
-                            CurrentIP += jump;
+                            AdjustCurrentIP(jump);
                     }
                     break;
                 case OpCode.JUMP:
                     {
                         ushort jump = ReadUShort(chunk);
-                        CurrentIP += jump;
+                        AdjustCurrentIP(jump);
                     }
                     break;
                 case OpCode.LOOP:
                     {
                         ushort jump = ReadUShort(chunk);
-                        CurrentIP -= jump;
+                        AdjustCurrentIP(-jump);
                     }
                     break;
                 case OpCode.GET_LOCAL:
@@ -552,35 +578,12 @@ namespace ULox
 
         private void AssignLocalStack(byte slot, Value val)
         {
-            _valueStack[slot + callFrames[CurrentCallFrame].stackStart] = val;
+            _valueStack[slot + CurrentCallFrame.stackStart] = val;
         }
 
         private Value FetchLocalStack(byte slot)
         {
-            return _valueStack[slot + callFrames[CurrentCallFrame].stackStart];
-        }
-
-        private OpCode ReadOpCode(Chunk chunk)
-        {
-            var opCode = (OpCode)chunk.instructions[CurrentIP];
-            CurrentIP++;
-            return opCode;
-        }
-
-        private byte ReadByte(Chunk chunk)
-        {
-            var b = chunk.instructions[CurrentIP];
-            CurrentIP++;
-            return b;
-        }
-
-        private ushort ReadUShort(Chunk chunk)
-        {
-            var bhi = chunk.instructions[CurrentIP];
-            CurrentIP++;
-            var blo = chunk.instructions[CurrentIP];
-            CurrentIP++;
-            return (ushort)((bhi << 8) | blo);
+            return _valueStack[slot + CurrentCallFrame.stackStart];
         }
 
         private void DoMathOp(OpCode opCode)

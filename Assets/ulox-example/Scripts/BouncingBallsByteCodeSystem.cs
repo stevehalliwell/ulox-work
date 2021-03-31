@@ -5,8 +5,7 @@ using UnityEngine.UI;
 namespace ULox.Demo
 {
     /// <summary>
-    /// This demo uses lox to move objects, unity just draws things.
-    /// This demo also uses direct gameobject referenes in script rather than ids.
+    /// This demo uses bytecode lox to move objects, unity just draws things.
     /// </summary>
     public class BouncingBallsByteCodeSystem : MonoBehaviour
     {
