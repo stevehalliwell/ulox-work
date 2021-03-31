@@ -20,9 +20,9 @@ namespace ULox.Demo
         {
             engine = new ByteCodeInterpreterEngine();
 
-                //new LoxCoreLibrary(Debug.Log),
-                //new StandardClassesLibrary(),
-                //new UnityFunctionsLibrary(availablePrefabs));
+            engine.AddLibrary(new ByteCodeCoreLibrary(Debug.Log));
+            engine.AddLibrary(new StandardByteCodeClassesLibrary());
+            engine.AddLibrary(new UnityByteCodeLibrary(availablePrefabs));
 
             engine.VM.SetGlobal("SetUIText", Value.New((vm, args) =>
             {

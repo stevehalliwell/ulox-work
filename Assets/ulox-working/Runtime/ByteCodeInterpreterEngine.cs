@@ -35,5 +35,10 @@ namespace ULox
             _disasembler.DoChunk(chunk);
             _vm.Interpret(chunk);
         }
+
+        public virtual void AddLibrary(ILoxByteCodeLibrary lib)
+        {
+            lib.BindToEngine(this);
+        }
     }
 }
