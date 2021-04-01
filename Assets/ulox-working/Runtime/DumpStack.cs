@@ -8,7 +8,7 @@ namespace ULox
     {
         private StringBuilder sb = new StringBuilder();
 
-        public string Generate(IndexableStack<Value> valueStack)
+        public string Generate(FastStack<Value> valueStack)
         {
             for (int i = valueStack.Count - 1; i >= 0; i--)
             {

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace ULox
 {
@@ -22,12 +23,12 @@ namespace ULox
     public class VM
     {
         public const string InitMethodName = "init";
-        private IndexableStack<Value> _valueStack = new IndexableStack<Value>();
+        private FastStack<Value> _valueStack = new FastStack<Value>();
 
         private void Push(Value val) => _valueStack.Push(val);
         private Value Pop() => _valueStack.Pop();
         private Value Peek(int ind = 0) => _valueStack.Peek(ind);
-        private IndexableStack<CallFrame> callFrames = new IndexableStack<CallFrame>();
+        private FastStack<CallFrame> callFrames = new FastStack<CallFrame>();
         private LinkedList<Value> openUpvalues = new LinkedList<Value>();
         private Table globals = new Table();
 
@@ -52,15 +53,14 @@ namespace ULox
             return Run();
         }
 
-        private CallFrame CurrentCallFrame => callFrames[callFrames.Count-1];
-
         private void AdjustCurrentIP(int jump)
         {
-            var callFrame = callFrames[callFrames.Count - 1];
+            var callFrame = callFrames.Peek();
             callFrame.ip += jump;
-            callFrames[callFrames.Count - 1] = callFrame;
+            callFrames.SetAt(callFrames.Count - 1, callFrame);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private OpCode ReadOpCode(Chunk chunk)
         {
             return (OpCode)ReadByte(chunk);
@@ -68,21 +68,21 @@ namespace ULox
 
         private byte ReadByte(Chunk chunk)
         {
-            var callFrame = callFrames[callFrames.Count - 1];
+            var callFrame = callFrames.Peek();
             var b = chunk.instructions[callFrame.ip];
             callFrame.ip++;
-            callFrames[callFrames.Count - 1] = callFrame;
+            callFrames.SetAt(callFrames.Count - 1, callFrame);
             return b;
         }
 
         private ushort ReadUShort(Chunk chunk)
         {
-            var callFrame = callFrames[callFrames.Count - 1];
+            var callFrame = callFrames.Peek();
             var bhi = chunk.instructions[callFrame.ip];
             callFrame.ip++;
             var blo = chunk.instructions[callFrame.ip];
             callFrame.ip++;
-            callFrames[callFrames.Count - 1] = callFrame;
+            callFrames.SetAt(callFrames.Count - 1, callFrame);
             return (ushort)((bhi << 8) | blo);
         }
 
@@ -109,7 +109,7 @@ namespace ULox
         {
             while (true)
             {
-                var chunk = CurrentCallFrame.closure.chunk;
+                var chunk = callFrames.Peek().closure.chunk;
 
                 OpCode opCode = ReadOpCode(chunk);
 
@@ -578,12 +578,12 @@ namespace ULox
 
         private void AssignLocalStack(byte slot, Value val)
         {
-            _valueStack[slot + CurrentCallFrame.stackStart] = val;
+            _valueStack[slot + callFrames.Peek().stackStart] = val;
         }
 
         private Value FetchLocalStack(byte slot)
         {
-            return _valueStack[slot + CurrentCallFrame.stackStart];
+            return _valueStack[slot + callFrames.Peek().stackStart];
         }
 
         private void DoMathOp(OpCode opCode)
