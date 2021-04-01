@@ -92,7 +92,6 @@ namespace ULox
 
         private int ExistingSimpleConstant(Value val)
         {
-            int ret = -1;
             switch (val.type)
             {
             case Value.Type.Null:

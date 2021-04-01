@@ -353,7 +353,6 @@ namespace ULox
                         var value = Pop();
                         Pop();
                         Push(value);
-                        break;
                     }
                     break;
                 case OpCode.METHOD:

@@ -33,6 +33,8 @@ namespace ULox.Demo
 
             engine.VM.CallFunction(engine.VM.GetGlobal("SetupGame"),0);
             gameUpdateFunction = engine.VM.GetGlobal("Update");
+
+            Debug.Log(engine.Disassembly);
         }
 
         private void Update()
