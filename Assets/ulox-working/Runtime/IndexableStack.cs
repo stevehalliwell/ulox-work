@@ -32,7 +32,7 @@ namespace ULox
 
         public void Push(T val)
         {
-            if (_back >= _array.Length)
+            if (_back >= _array.Length-1)
                 System.Array.Resize(ref _array, _array.Length * 2);
 
             _array[++_back] = val;

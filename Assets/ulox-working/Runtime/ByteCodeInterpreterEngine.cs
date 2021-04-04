@@ -1,7 +1,4 @@
 ﻿//todo class vars
-//todo system based bouncing ball scriptworking under bytecode interp
-//todo native interop
-//todo collections
 //todo separate the treewalk interpreter innards from the bytecode innards
 //todo caching of fetch globals in lnear list
 //todo delay calls to end of scope

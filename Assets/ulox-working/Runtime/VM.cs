@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 namespace ULox
 {
     //todo better, standardisead errors, including from native
+    //todo wrap calls to peek, push, pop as they relate to the callstack, then we can cache top values to speed up access
     public enum InterpreterResult
     {
         OK,
@@ -84,6 +85,17 @@ namespace ULox
             callFrame.ip++;
             callFrames.SetAt(callFrames.Count - 1, callFrame);
             return (ushort)((bhi << 8) | blo);
+        }
+
+
+        private void AssignLocalStack(byte slot, Value val)
+        {
+            _valueStack[slot + callFrames.Peek().stackStart] = val;
+        }
+
+        private Value FetchLocalStack(byte slot)
+        {
+            return _valueStack[slot + callFrames.Peek().stackStart];
         }
 
         public string GenerateStackDump()
@@ -573,16 +585,6 @@ namespace ULox
             Push(res);
 
             return true;
-        }
-
-        private void AssignLocalStack(byte slot, Value val)
-        {
-            _valueStack[slot + callFrames.Peek().stackStart] = val;
-        }
-
-        private Value FetchLocalStack(byte slot)
-        {
-            return _valueStack[slot + callFrames.Peek().stackStart];
         }
 
         private void DoMathOp(OpCode opCode)
