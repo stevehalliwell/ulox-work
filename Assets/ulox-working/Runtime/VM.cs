@@ -4,6 +4,7 @@ using System.Runtime.CompilerServices;
 namespace ULox
 {
     //todo better, standardisead errors, including from native
+    //todo add same features the tree walk interp has
     public enum InterpreterResult
     {
         OK,
@@ -54,17 +55,7 @@ namespace ULox
             return Run();
         }
 
-        private void AdjustCurrentIP(int jump)
-        {
-            currentCallFrame.ip += jump;
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private OpCode ReadOpCode(Chunk chunk)
-        {
-            return (OpCode)ReadByte(chunk);
-        }
-
         private byte ReadByte(Chunk chunk)
         {
             var b = chunk.instructions[currentCallFrame.ip];
@@ -72,6 +63,7 @@ namespace ULox
             return b;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort ReadUShort(Chunk chunk)
         {
             var bhi = chunk.instructions[currentCallFrame.ip];
@@ -107,16 +99,6 @@ namespace ULox
                 currentCallFrame = default;
         }
 
-        private void AssignLocalStack(byte slot, Value val)
-        {
-            _valueStack[currentCallFrame.stackStart + slot] = val;
-        }
-
-        private Value FetchLocalStack(byte slot)
-        {
-            return _valueStack[slot + currentCallFrame.stackStart];
-        }
-
         public string GenerateStackDump()
         {
             return new DumpStack().Generate(_valueStack);
@@ -142,7 +124,7 @@ namespace ULox
             {
                 var chunk = currentCallFrame.closure.chunk;
 
-                OpCode opCode = ReadOpCode(chunk);
+                OpCode opCode = (OpCode)ReadByte(chunk);
 
                 switch (opCode)
                 {
@@ -216,31 +198,31 @@ namespace ULox
                     {
                         ushort jump = ReadUShort(chunk);
                         if (Peek().IsFalsey)
-                            AdjustCurrentIP(jump);
+                            currentCallFrame.ip += jump;
                     }
                     break;
                 case OpCode.JUMP:
                     {
                         ushort jump = ReadUShort(chunk);
-                        AdjustCurrentIP(jump);
+                        currentCallFrame.ip += jump;
                     }
                     break;
                 case OpCode.LOOP:
                     {
                         ushort jump = ReadUShort(chunk);
-                        AdjustCurrentIP(-jump);
+                        currentCallFrame.ip -= jump;
                     }
                     break;
                 case OpCode.GET_LOCAL:
                     {
                         var slot = ReadByte(chunk);
-                        Push(FetchLocalStack(slot));
+                        Push(_valueStack[currentCallFrame.stackStart + slot]);
                     }
                     break;
                 case OpCode.SET_LOCAL:
                     {
                         var slot = ReadByte(chunk);
-                        AssignLocalStack(slot,  Peek());
+                        _valueStack[currentCallFrame.stackStart + slot] = Peek();
                     }
                     break;
                 case OpCode.GET_UPVALUE:
@@ -305,6 +287,7 @@ namespace ULox
                     break;
                 case OpCode.INVOKE:
                     {
+                        //todo add inline caching of some kind
                         var constantIndex = ReadByte(chunk);
                         var methName = chunk.ReadConstant(constantIndex).val.asString;
                         var argCount = ReadByte(chunk);
@@ -355,6 +338,7 @@ namespace ULox
                         var targetVal = Peek();
                         if (targetVal.type != Value.Type.Instance)
                             throw new VMException($"Only instances have properties. Got {targetVal}.");
+                        //todo add inline caching of some kind
                         var instance = targetVal.val.asInstance;
                         var constantIndex = ReadByte(chunk);
                         var name = chunk.ReadConstant(constantIndex).val.asString;
@@ -377,6 +361,7 @@ namespace ULox
                         var targetVal = Peek(1);
                         if (targetVal.type != Value.Type.Instance)
                             throw new VMException($"Only instances have properties. Got {targetVal}.");
+                        //todo add inline caching of some kind
                         var instance = targetVal.val.asInstance;
 
                         var constantIndex = ReadByte(chunk);
@@ -512,6 +497,7 @@ namespace ULox
             return upval;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool CallValue(Value callee, int argCount)
         {
             switch (callee.type)
@@ -525,12 +511,14 @@ namespace ULox
             throw new VMException("Can only call functions and classes.");
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool CallMethod(BoundMethod asBoundMethod, int argCount)
         {
             _valueStack[_valueStack.Count - 1 - argCount] = asBoundMethod.receiver;
             return Call(asBoundMethod.method, argCount);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool Invoke(string methodName, int argCount)
         {
             var receiver = Peek(argCount);
@@ -548,6 +536,7 @@ namespace ULox
             return InvokeFromClass(inst.fromClass, methodName, argCount);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool InvokeFromClass(ClassInternal fromClass, string methodName, int argCount)
         {
             if(!fromClass.methods.TryGetValue(methodName, out var method))
@@ -574,6 +563,7 @@ namespace ULox
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool Call(ClosureInternal closureInternal, int argCount)
         {
             if (argCount != closureInternal.chunk.Arity)
@@ -588,6 +578,7 @@ namespace ULox
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool CallNative(System.Func<VM, int, Value> asNativeFunc, int argCount)
         {
             PushNewCallframe(new CallFrame()

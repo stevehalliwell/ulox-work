@@ -31,32 +31,32 @@ class Ball
 		this.go = CreateFromPrefab(ballName);
 	}
 	
-//	TickLocals(dt, lim)
-//	{
-//		var x = this.x;
-//		var y = this.y;
-//		var vx = this.vx;
-//		var vy = this.vy;
-//
-//		x = x + vx * dt;
-//		y = y + vy * dt;
-//
-//		//bounds
-//		if(x < -lim and vx < 0)  
-//			this.vx = vx * -1; 
-//		if(x > lim  and vx > 0)  
-//			this.vx = vx * -1; 
-//		
-//		if(y < -lim and vy < 0) 
-//			this.vy = vy * -1; 
-//		if(y > lim  and vy > 0)  
-//			this.vy = vy * -1; 
-//
-//		SetGameObjectPosition(this.go, x, y, 0);
-//
-//		this.x = x;
-//		this.y = y;
-//	}
+  	TickLocals(dt, lim)
+  	{
+  		var x = this.x;
+  		var y = this.y;
+  		var vx = this.vx;
+  		var vy = this.vy;
+  
+  		x = x + vx * dt;
+  		y = y + vy * dt;
+  
+  		//bounds
+  		if(x < -lim and vx < 0)  
+  			this.vx = vx * -1; 
+  		if(x > lim  and vx > 0)  
+  			this.vx = vx * -1; 
+  		
+  		if(y < -lim and vy < 0) 
+  			this.vy = vy * -1; 
+  		if(y > lim  and vy > 0)  
+  			this.vy = vy * -1; 
+  
+  		SetGameObjectPosition(this.go, x, y, 0);
+  
+  		this.x = x;
+  		this.y = y;
+  	}
 
 	Tick()
 	{
@@ -93,7 +93,7 @@ fun Update()
 	var len = balls.Count();
 	for(var i = 0; i < len; i = i + 1)
 	{
-		//balls.Get(i).TickLocals(ldt, llimit);
-		balls.Get(i).Tick();
+		balls.Get(i).TickLocals(ldt, llimit);
+		//balls.Get(i).Tick();
 	}
 }
