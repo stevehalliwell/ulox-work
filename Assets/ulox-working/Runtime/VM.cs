@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 namespace ULox
 {
     //todo better, standardisead errors, including from native
-    //todo wrap calls to peek, push, pop as they relate to the callstack, then we can cache top values to speed up access
     public enum InterpreterResult
     {
         OK,
@@ -29,7 +28,8 @@ namespace ULox
         private void Push(Value val) => _valueStack.Push(val);
         private Value Pop() => _valueStack.Pop();
         private Value Peek(int ind = 0) => _valueStack.Peek(ind);
-        private FastStack<CallFrame> callFrames = new FastStack<CallFrame>();
+        private FastStack<CallFrame> _callFrames = new FastStack<CallFrame>();
+        private CallFrame currentCallFrame;
         private LinkedList<Value> openUpvalues = new LinkedList<Value>();
         private Table globals = new Table();
 
@@ -45,7 +45,7 @@ namespace ULox
 
         public Value GetArg(int index)
         {
-            return _valueStack[callFrames.Peek().stackStart+index];
+            return _valueStack[currentCallFrame.stackStart+index];
         }
 
         public InterpreterResult CallFunction(Value func, int args)
@@ -56,9 +56,7 @@ namespace ULox
 
         private void AdjustCurrentIP(int jump)
         {
-            var callFrame = callFrames.Peek();
-            callFrame.ip += jump;
-            callFrames.SetAt(callFrames.Count - 1, callFrame);
+            currentCallFrame.ip += jump;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -69,33 +67,54 @@ namespace ULox
 
         private byte ReadByte(Chunk chunk)
         {
-            var callFrame = callFrames.Peek();
-            var b = chunk.instructions[callFrame.ip];
-            callFrame.ip++;
-            callFrames.SetAt(callFrames.Count - 1, callFrame);
+            var b = chunk.instructions[currentCallFrame.ip];
+            currentCallFrame.ip++;
             return b;
         }
 
         private ushort ReadUShort(Chunk chunk)
         {
-            var callFrame = callFrames.Peek();
-            var bhi = chunk.instructions[callFrame.ip];
-            callFrame.ip++;
-            var blo = chunk.instructions[callFrame.ip];
-            callFrame.ip++;
-            callFrames.SetAt(callFrames.Count - 1, callFrame);
+            var bhi = chunk.instructions[currentCallFrame.ip];
+            currentCallFrame.ip++;
+            var blo = chunk.instructions[currentCallFrame.ip];
+            currentCallFrame.ip++;
             return (ushort)((bhi << 8) | blo);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void PushNewCallframe(CallFrame callFrame)
+        {
+            if (_callFrames.Count > 0)
+            {
+                //save current state
+                _callFrames.SetAt(_callFrames.Count - 1, currentCallFrame);
+            }
+
+            currentCallFrame = callFrame;
+            _callFrames.Push(callFrame);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void PopCallFrame()
+        {
+            //remove top
+            _callFrames.Pop();
+
+            //update cache
+            if (_callFrames.Count > 0)
+                currentCallFrame = _callFrames.Peek();
+            else
+                currentCallFrame = default;
+        }
 
         private void AssignLocalStack(byte slot, Value val)
         {
-            _valueStack[slot + callFrames.Peek().stackStart] = val;
+            _valueStack[currentCallFrame.stackStart + slot] = val;
         }
 
         private Value FetchLocalStack(byte slot)
         {
-            return _valueStack[slot + callFrames.Peek().stackStart];
+            return _valueStack[slot + currentCallFrame.stackStart];
         }
 
         public string GenerateStackDump()
@@ -121,7 +140,7 @@ namespace ULox
         {
             while (true)
             {
-                var chunk = callFrames.Peek().closure.chunk;
+                var chunk = currentCallFrame.closure.chunk;
 
                 OpCode opCode = ReadOpCode(chunk);
 
@@ -137,16 +156,19 @@ namespace ULox
                     {
                         Value result = Pop();
 
-                        CloseUpvalues(callFrames.Peek().stackStart);
+                        CloseUpvalues(currentCallFrame.stackStart);
 
-                        var prev = callFrames.Pop();
-                        if (callFrames.Count == 0)
+                        var prevStackStart = currentCallFrame.stackStart;
+
+                        PopCallFrame();
+                        
+                        if (_callFrames.Count == 0)
                         {
                             Pop();
                             return InterpreterResult.OK;
                         }
 
-                        while (_valueStack.Count > prev.stackStart)
+                        while (_valueStack.Count > prevStackStart)
                             Pop();
 
                         Push(result);
@@ -224,7 +246,7 @@ namespace ULox
                 case OpCode.GET_UPVALUE:
                     {
                         var slot = ReadByte(chunk);
-                        var upval = callFrames.Peek().closure.upvalues[slot].val.asUpvalue;
+                        var upval = currentCallFrame.closure.upvalues[slot].val.asUpvalue;
                         if (!upval.isClosed)
                              Push(_valueStack[upval.index]);
                         else
@@ -234,7 +256,7 @@ namespace ULox
                 case OpCode.SET_UPVALUE:
                     {
                         var slot = ReadByte(chunk);
-                        var upval = callFrames.Peek().closure.upvalues[slot].val.asUpvalue;
+                        var upval = currentCallFrame.closure.upvalues[slot].val.asUpvalue;
                         if (!upval.isClosed)
                             _valueStack[upval.index] = Peek();
                         else
@@ -307,12 +329,12 @@ namespace ULox
                             var index = ReadByte(chunk);
                             if(isLocal == 1)
                             {
-                                var local = callFrames.Peek().stackStart + index;
+                                var local = currentCallFrame.stackStart + index;
                                 closure.upvalues[i] = CaptureUpvalue(local);
                             }
                             else
                             {
-                                closure.upvalues[i] = callFrames.Peek().closure.upvalues[index];
+                                closure.upvalues[i] = currentCallFrame.closure.upvalues[index];
                             }
                         }
                     }
@@ -558,7 +580,7 @@ namespace ULox
                 throw new VMException($"Wrong number of params given to '{closureInternal.chunk.Name}'" +
                     $", got '{argCount}' but expected '{closureInternal.chunk.Arity}'");
 
-            callFrames.Push(new CallFrame()
+            PushNewCallframe(new CallFrame()
             {
                 stackStart = _valueStack.Count - argCount-1,
                 closure = closureInternal
@@ -568,7 +590,7 @@ namespace ULox
 
         private bool CallNative(System.Func<VM, int, Value> asNativeFunc, int argCount)
         {
-            callFrames.Push(new CallFrame()
+            PushNewCallframe(new CallFrame()
             {
                 stackStart = _valueStack.Count - argCount - 1,
                 closure = null
@@ -580,7 +602,7 @@ namespace ULox
             while (_valueStack.Count > stackPos-1)
                 Pop();
 
-            callFrames.Pop();
+            PopCallFrame();
 
             Push(res);
 
