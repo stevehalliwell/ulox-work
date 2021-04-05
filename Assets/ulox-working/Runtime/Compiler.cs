@@ -5,7 +5,6 @@ namespace ULox
     //todo better string parsing token support
     //todo add conditional
     //todo add self assignment
-    //todo add class vars
     //todo add pods
     //todo add more to libraries
     //todo add sandboxing
@@ -13,6 +12,7 @@ namespace ULox
     //todo add classof
     //todo multiple returns?
     //todo add operator overloads
+    //todo add testing library
     //todo emit functions when no upvals are required https://github.com/munificent/craftinginterpreters/blob/master/note/answers/chapter25_closures/1.md
     public class Compiler
     {
@@ -346,7 +346,10 @@ namespace ULox
             Consume(TokenType.OPEN_BRACE, "Expect '{' before class body.");
             while (!Check(TokenType.CLOSE_BRACE) && !Check(TokenType.EOF))
             {
-                Method();
+                if (Match(TokenType.VAR))
+                    Property();
+                else
+                    Method();
             }
             Consume(TokenType.CLOSE_BRACE, "Expect '}' after class body.");
             EmitOpCode(OpCode.POP);
@@ -355,6 +358,18 @@ namespace ULox
             {
                 EndScope();
             }
+        }
+
+        private void Property()
+        {
+            do
+            {
+                Consume(TokenType.IDENTIFIER, "Expect var name.");
+                byte constant = AddStringConstant();
+                EmitBytes((byte)OpCode.PROPERTY, constant);
+            } while (Match(TokenType.COMMA));
+
+            Consume(TokenType.END_STATEMENT, "Expect ; after property declaration.");
         }
 
         private void Method()

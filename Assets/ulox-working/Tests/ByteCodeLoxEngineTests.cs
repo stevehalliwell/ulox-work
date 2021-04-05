@@ -1247,8 +1247,6 @@ for(var i = 0; i < c; i = i + 1)
         {
             var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
 
-            engine.AddLibrary(new StandardByteCodeClassesLibrary());
-
             Assert.Throws<PanicException>(() => engine.Run(@"throw;"),"Null");
         }
 
@@ -1257,9 +1255,61 @@ for(var i = 0; i < c; i = i + 1)
         {
             var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
 
-            engine.AddLibrary(new StandardByteCodeClassesLibrary());
-
             Assert.Throws<PanicException>(() => engine.Run(@"throw 2+3;"), "5");
+        }
+
+        [Test]
+        public void Engine_Class_Var()
+        {
+            var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
+
+            engine.Run(@"
+class T
+{
+    var a;
+}
+
+var t = T();
+print(t.a);");
+
+            Assert.AreEqual(engine.InterpreterResult, "null");
+        }
+
+        [Test]
+        public void Engine_Class_2Var()
+        {
+            var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
+
+            engine.Run(@"
+class T
+{
+    var a;
+    var b;
+}
+
+var t = T();
+print(t.a);
+print(t.b);");
+
+            Assert.AreEqual(engine.InterpreterResult, "nullnull");
+        }
+
+        [Test]
+        public void Engine_Class_MultiVar()
+        {
+            var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
+
+            engine.Run(@"
+class T
+{
+    var a,b;
+}
+
+var t = T();
+print(t.a);
+print(t.b);");
+
+            Assert.AreEqual(engine.InterpreterResult, "nullnull");
         }
 
     }

@@ -18,6 +18,7 @@ namespace ULox
     {
         public string name;
         public Table methods = new Table();
+        public List<string> properties = new List<string>();
         public Value initialiser = Value.Null();
     }
     //todo ability to ask if field or method exists at runtime

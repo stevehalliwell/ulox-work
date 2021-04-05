@@ -57,6 +57,7 @@ namespace ULox
                 case OpCode.GET_SUPER:
                 case OpCode.CLASS:
                 case OpCode.METHOD:
+                case OpCode.PROPERTY:
                     {
                         stringBuilder.Append(" ");
                         i++;

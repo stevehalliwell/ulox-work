@@ -4,7 +4,6 @@ using System.Runtime.CompilerServices;
 namespace ULox
 {
     //todo better, standardisead errors, including from native
-    //todo add same features the tree walk interp has
     public enum InterpreterResult
     {
         OK,
@@ -381,6 +380,14 @@ namespace ULox
                         DefineMethod(name);
                     }
                     break;
+                case OpCode.PROPERTY:
+                    {
+                        var constantIndex = ReadByte(chunk);
+                        var name = chunk.ReadConstant(constantIndex).val.asString;
+                        var klass = Peek().val.asClass;
+                        klass.properties.Add(name);
+                    }
+                    break;
                 case OpCode.INHERIT:
                     {
                         var superClass = Peek(1);
@@ -554,8 +561,14 @@ namespace ULox
 
         private bool CreateInstance(ClassInternal asClass, int argCount)
         {
-            var inst = Value.New(new InstanceInternal() { fromClass = asClass });
+            var instInternal = new InstanceInternal() { fromClass = asClass };
+            var inst = Value.New(instInternal);
             _valueStack[_valueStack.Count - 1 - argCount] = inst;
+
+            foreach (var item in asClass.properties)
+            {
+                instInternal.fields.Add(item, Value.Null());
+            }
 
             if (!asClass.initialiser.IsNull)
             {

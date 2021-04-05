@@ -46,6 +46,7 @@
         INHERIT,
         GET_SUPER,
         SUPER_INVOKE,
+        PROPERTY,
 
         NEGATE,
         ADD,
