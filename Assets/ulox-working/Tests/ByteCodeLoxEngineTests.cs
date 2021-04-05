@@ -1224,7 +1224,7 @@ print (res);
         {
             var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
 
-            engine.AddLibrary(new StandardByteCodeClassesLibrary());
+            engine.AddLibrary(new ByteCodeStandardClassesLibrary());
 
             engine.Run(@"
 var list = List();
@@ -1312,8 +1312,37 @@ print(t.b);");
             Assert.AreEqual(engine.InterpreterResult, "nullnull");
         }
 
-    }
+        [Test]
+        public void Engine_Assert()
+        {
+            var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
 
+            engine.AddLibrary(new ByteCodeAssertLibrary());
+
+            engine.Run(@"
+Assert.AreEqual(1,1);
+Assert.AreEqual(1,2);
+Assert.AreEqual(1,1);");
+
+            Assert.AreEqual(engine.InterpreterResult, "'1' does not equal '2'.");
+        }
+
+        [Test]
+        public void Engine_Approx_Assert()
+        {
+            var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
+
+            engine.AddLibrary(new ByteCodeAssertLibrary());
+
+            engine.Run(@"
+Assert.AreApproxEqual(1,1);
+Assert.AreApproxEqual(1,1.000000001);
+Assert.AreApproxEqual(1,2);");
+
+            Assert.AreEqual(engine.InterpreterResult, "'1' and '2' are '-1' apart.");
+        }
+
+    }
 
     public class ByteCodeInterpreterTestEngine : ByteCodeInterpreterEngine
     {

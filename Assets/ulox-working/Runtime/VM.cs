@@ -662,31 +662,7 @@ namespace ULox
             switch (opCode)
             {
             case OpCode.EQUAL:
-                if (lhs.type != rhs.type)
-                {
-                    Push(Value.New(false));
-                    return;
-                }
-                else
-                {
-                    switch (lhs.type)
-                    {
-                    case Value.Type.Null:
-                        Push(Value.New(true));
-                        break;
-                    case Value.Type.Double:
-                        Push(Value.New(lhs.val.asDouble == rhs.val.asDouble));
-                        break;
-                    case Value.Type.Bool:
-                        Push(Value.New(lhs.val.asBool == rhs.val.asBool));
-                        break;
-                    case Value.Type.String:
-                        Push(Value.New(lhs.val.asString == rhs.val.asString));
-                        break;
-                    default:
-                        break;
-                    }
-                }
+                Push(Value.New(VMValueCompare(ref lhs, ref rhs)));
                 break;
             case OpCode.LESS:
                 if (lhs.type != Value.Type.Double || rhs.type != Value.Type.Double)
@@ -698,6 +674,30 @@ namespace ULox
                     throw new VMException($"Cannot greater across on different types '{lhs.type}' and '{rhs.type}'.");
                 Push(Value.New(lhs.val.asDouble > rhs.val.asDouble));
                 break;
+            }
+        }
+
+        public static bool VMValueCompare(ref Value lhs, ref Value rhs)
+        {
+            if (lhs.type != rhs.type)
+            {
+                return false;
+            }
+            else
+            {
+                switch (lhs.type)
+                {
+                case Value.Type.Null:
+                    return true;
+                case Value.Type.Double:
+                    return lhs.val.asDouble == rhs.val.asDouble;
+                case Value.Type.Bool:
+                    return lhs.val.asBool == rhs.val.asBool;
+                case Value.Type.String:
+                    return lhs.val.asString == rhs.val.asString;
+                default:
+                    throw new VMException($"Cannot perform compare on type '{lhs.type}'.");
+                }
             }
         }
     }

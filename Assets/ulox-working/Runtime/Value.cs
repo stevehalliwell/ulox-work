@@ -115,7 +115,7 @@ namespace ULox
             case Type.Class:
                 return $"<class {val.asClass.name}>";
             case Type.Instance:
-                return $"<inst {val.asInstance.fromClass.name}>";
+                return $"<inst {val.asInstance.fromClass?.name}>";
             case Type.BoundMethod:
                 return $"<boundMeth {val.asBoundMethod.method.chunk.Name}>";
             case Type.Object:
