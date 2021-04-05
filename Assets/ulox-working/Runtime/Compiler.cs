@@ -3,6 +3,16 @@
 namespace ULox
 {
     //todo better string parsing token support
+    //todo add conditional
+    //todo add self assignment
+    //todo add class vars
+    //todo add pods
+    //todo add more to libraries
+    //todo add sandboxing
+    //todo auto init assign
+    //todo add classof
+    //todo multiple returns?
+    //todo add operator overloads
     //todo emit functions when no upvals are required https://github.com/munificent/craftinginterpreters/blob/master/note/answers/chapter25_closures/1.md
     public class Compiler
     {
@@ -602,6 +612,10 @@ namespace ULox
                 Block();
                 EndScope();
             }
+            else if (Match(TokenType.THROW))
+            {
+                ThrowStatement();
+            }
             else
             {
                 ExpressionStatement();
@@ -794,6 +808,21 @@ namespace ULox
             Expression();
             Consume(TokenType.END_STATEMENT, "Expect ; after expression statement.");
             EmitOpCode(OpCode.POP);
+        }
+
+        private void ThrowStatement()
+        {
+            if (!Check(TokenType.END_STATEMENT))
+            {
+                Expression();
+            }
+            else
+            {
+                EmitOpCode(OpCode.NULL);
+            }
+
+            Consume(TokenType.END_STATEMENT, "Expect ; after throw statement.");
+            EmitOpCode(OpCode.THROW);
         }
 
         private void Expression()

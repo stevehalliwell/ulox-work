@@ -136,6 +136,7 @@ namespace ULox
                 case OpCode.NEG_ONE:
                 case OpCode.ZERO:
                 case OpCode.ONE:
+                case OpCode.THROW:
                 default:
                     break;
                 }

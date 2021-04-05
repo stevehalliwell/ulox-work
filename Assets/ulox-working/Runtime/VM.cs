@@ -423,6 +423,12 @@ namespace ULox
                         }
                     }
                     break;
+                case OpCode.THROW:
+                    {
+                        var value = Pop();
+                        throw new PanicException(value.ToString());
+                    }
+                    break; 
                 case OpCode.NONE:
                     break;
                 default:

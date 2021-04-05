@@ -52,5 +52,7 @@
         SUBTRACT,
         MULTIPLY,
         DIVIDE,
+
+        THROW,
     }
 }

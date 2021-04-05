@@ -1242,6 +1242,26 @@ for(var i = 0; i < c; i = i + 1)
             Assert.AreEqual(engine.InterpreterResult, "501234");
         }
 
+        [Test]
+        public void Engine_Throw()
+        {
+            var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
+
+            engine.AddLibrary(new StandardByteCodeClassesLibrary());
+
+            Assert.Throws<PanicException>(() => engine.Run(@"throw;"),"Null");
+        }
+
+        [Test]
+        public void Engine_Throw_Exp()
+        {
+            var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
+
+            engine.AddLibrary(new StandardByteCodeClassesLibrary());
+
+            Assert.Throws<PanicException>(() => engine.Run(@"throw 2+3;"), "5");
+        }
+
     }
 
 
