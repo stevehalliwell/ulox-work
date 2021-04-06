@@ -3,6 +3,21 @@ using System.Runtime.CompilerServices;
 
 namespace ULox
 {
+    //todo introduce optimiser, pass after compile, have compile build slim ast as it goes
+    //  convert labels to offsets
+    //  identify and remove unused constants
+    //todo better string parsing token support
+    //todo add conditional
+    //todo add self assignment
+    //todo add pods
+    //todo add more to libraries
+    //todo add sandboxing
+    //todo auto init assign
+    //todo add classof
+    //todo multiple returns?
+    //todo add operator overloads
+    //todo add testing instructions
+    //todo emit functions when no upvals are required https://github.com/munificent/craftinginterpreters/blob/master/note/answers/chapter25_closures/1.md
     //todo better, standardisead errors, including from native
     public enum InterpreterResult
     {
@@ -284,7 +299,7 @@ namespace ULox
                         }
                     }
                     break;
-                case OpCode.INVOKE:
+                case OpCode.INVOKE_UNCACHED:
                     {
                         //todo add inline caching of some kind
                         var constantIndex = ReadByte(chunk);
@@ -332,8 +347,9 @@ namespace ULox
                         Push(Value.New( new ClassInternal() { name = name.val.asString }));
                     }
                     break;
-                case OpCode.GET_PROPERTY:
+                case OpCode.GET_PROPERTY_UNCACHED:
                     {
+                        //use class to build a cached route to the field, introduce an cannot cache instruction
                         var targetVal = Peek();
                         if (targetVal.type != Value.Type.Instance)
                             throw new VMException($"Only instances have properties. Got {targetVal}.");
@@ -355,7 +371,7 @@ namespace ULox
                         }
                     }
                     break;
-                case OpCode.SET_PROPERTY:
+                case OpCode.SET_PROPERTY_UNCACHED:
                     {
                         var targetVal = Peek(1);
                         if (targetVal.type != Value.Type.Instance)
@@ -435,7 +451,6 @@ namespace ULox
                         var value = Pop();
                         throw new PanicException(value.ToString());
                     }
-                    break; 
                 case OpCode.NONE:
                     break;
                 default:
@@ -624,13 +639,21 @@ namespace ULox
             var rhs = Pop();
             var lhs = Pop();
 
+            if (lhs.type != rhs.type)
+                throw new VMException($"Cannot perform math op across types '{lhs.type}' and '{rhs.type}'.");
+
             if(opCode == OpCode.ADD && lhs.type == Value.Type.String && rhs.type == lhs.type)
             {
                 Push(Value.New(lhs.val.asString + rhs.val.asString));
                 return;
             }
 
-            if (lhs.type != Value.Type.Double && lhs.type != rhs.type)
+            if(lhs.type == Value.Type.Instance)
+            {
+                //identify if lhs has a matching method or field
+            }
+
+            if (lhs.type != Value.Type.Double)
             {
                 throw new VMException($"Cannot perform math op on non math types '{lhs.type}' and '{rhs.type}'.");
             }

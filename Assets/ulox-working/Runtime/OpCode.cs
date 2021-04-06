@@ -23,8 +23,10 @@
         SET_UPVALUE,
         CLOSE_UPVALUE,
 
-        GET_PROPERTY,
-        SET_PROPERTY,
+        GET_PROPERTY_UNCACHED,
+        GET_PROPERTY_CACHED,
+        SET_PROPERTY_UNCACHED,
+        SET_PROPERTY_CACHED,
 
         JUMP_IF_FALSE,
         JUMP,
@@ -42,7 +44,8 @@
 
         CLASS,
         METHOD,
-        INVOKE,
+        INVOKE_UNCACHED, 
+        INVOKE_CACHED,
         INHERIT,
         GET_SUPER,
         SUPER_INVOKE,

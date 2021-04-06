@@ -2,18 +2,8 @@
 
 namespace ULox
 {
-    //todo better string parsing token support
-    //todo add conditional
-    //todo add self assignment
-    //todo add pods
-    //todo add more to libraries
-    //todo add sandboxing
-    //todo auto init assign
-    //todo add classof
-    //todo multiple returns?
-    //todo add operator overloads
-    //todo add testing library
-    //todo emit functions when no upvals are required https://github.com/munificent/craftinginterpreters/blob/master/note/answers/chapter25_closures/1.md
+    //todo introduce labels so that instructions can be modified freely
+    //  and afterwards labels can be removed with offsets by an optimizer step.
     public class Compiler
     {
         public enum Precedence
@@ -99,6 +89,7 @@ namespace ULox
             {
                 public int loopStart = -1;
                 public List<int> loopExitPatchLocations = new List<int>();
+
             }
 
             public Stack<LoopState> loopStates = new Stack<LoopState>();
@@ -239,17 +230,17 @@ namespace ULox
             if (canAssign && Match(TokenType.ASSIGN))
             {
                 Expression();
-                EmitBytes((byte)OpCode.SET_PROPERTY, name);
+                EmitBytes((byte)OpCode.SET_PROPERTY_UNCACHED, name);
             }
             else if(Match(TokenType.OPEN_PAREN))
             {
                 var argCount = ArgumentList();
-                EmitBytes((byte)OpCode.INVOKE, name);
+                EmitBytes((byte)OpCode.INVOKE_UNCACHED, name);
                 EmitBytes(argCount);
             }
             else
             {
-                EmitBytes((byte)OpCode.GET_PROPERTY, name);
+                EmitBytes((byte)OpCode.GET_PROPERTY_UNCACHED, name);
             }
         }
 
@@ -362,6 +353,8 @@ namespace ULox
 
         private void Property()
         {
+            //todo support default value assign by storing expressions in functions and running those in the class
+            //  pre init so they are already on the stack to pop and assign pre init
             do
             {
                 Consume(TokenType.IDENTIFIER, "Expect var name.");
@@ -613,6 +606,10 @@ namespace ULox
             {
                 ContinueStatement();
             }
+            else if (Match(TokenType.LOOP))
+            {
+                LoopStatement();
+            }
             else if(Match(TokenType.WHILE))
             {
                 WhileStatement();
@@ -682,6 +679,23 @@ namespace ULox
             Consume(TokenType.END_STATEMENT, "Expect ';' after break.");
         }
 
+        private void LoopStatement()
+        {
+            var comp = compilerStates.Peek();
+            var loopState = new CompilerState.LoopState();
+            comp.loopStates.Push(loopState);
+            loopState.loopStart = CurrentChunkInstructinCount;
+
+            Statement();
+
+            EmitLoop(loopState.loopStart);
+
+            PatchLoopExits(loopState);
+
+            EmitOpCode(OpCode.POP);
+            comp.loopStates.Pop();
+        }
+
         private void WhileStatement()
         {
             var comp = compilerStates.Peek();
@@ -699,17 +713,23 @@ namespace ULox
             EmitOpCode(OpCode.POP);
             Statement();
 
-            //if we encounter a break here we need to know where to go, exitJump, perhaps save list of all break locations
-            //if we encournter a continue we need to know to go tothe loop start
-
             EmitLoop(loopState.loopStart);
+
+            PatchLoopExits(loopState);
+
+            EmitOpCode(OpCode.POP);
+            comp.loopStates.Pop();
+        }
+
+        private void PatchLoopExits(CompilerState.LoopState loopState)
+        {
+            if (loopState.loopExitPatchLocations.Count == 0)
+                throw new CompilerException("Loops must contain an termination.");
 
             for (int i = 0; i < loopState.loopExitPatchLocations.Count; i++)
             {
                 PatchJump(loopState.loopExitPatchLocations[i]);
             }
-            EmitOpCode(OpCode.POP);
-            comp.loopStates.Pop();
         }
 
         private void ForStatement()
@@ -766,10 +786,7 @@ namespace ULox
 
             EmitLoop(loopStart);
 
-            for (int i = 0; i < loopState.loopExitPatchLocations.Count; i++)
-            {
-                PatchJump(loopState.loopExitPatchLocations[i]);
-            }
+            PatchLoopExits(loopState);
 
             if (exitJump != -1)
             {

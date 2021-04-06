@@ -52,8 +52,8 @@ namespace ULox
                 case OpCode.DEFINE_GLOBAL:
                 case OpCode.FETCH_GLOBAL:
                 case OpCode.ASSIGN_GLOBAL:
-                case OpCode.GET_PROPERTY:
-                case OpCode.SET_PROPERTY:
+                case OpCode.GET_PROPERTY_UNCACHED:
+                case OpCode.SET_PROPERTY_UNCACHED:
                 case OpCode.GET_SUPER:
                 case OpCode.CLASS:
                 case OpCode.METHOD:
@@ -66,7 +66,7 @@ namespace ULox
                     }
                     break;
                 case OpCode.SUPER_INVOKE:
-                case OpCode.INVOKE:
+                case OpCode.INVOKE_UNCACHED:
                     {
                         stringBuilder.Append(" ");
                         i++;
@@ -85,6 +85,9 @@ namespace ULox
                 case OpCode.GET_LOCAL:
                 case OpCode.SET_LOCAL:
                 case OpCode.CALL:
+                case OpCode.INVOKE_CACHED:
+                case OpCode.GET_PROPERTY_CACHED:
+                case OpCode.SET_PROPERTY_CACHED:
                     {
                         stringBuilder.Append(" ");
                         i++;

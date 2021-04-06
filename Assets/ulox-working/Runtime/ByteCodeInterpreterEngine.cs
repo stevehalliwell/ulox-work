@@ -1,4 +1,4 @@
-﻿//todo class vars
+﻿//todo class var initial values
 //todo separate the treewalk interpreter innards from the bytecode innards
 //todo caching of fetch globals in lnear list
 //todo delay calls to end of scope

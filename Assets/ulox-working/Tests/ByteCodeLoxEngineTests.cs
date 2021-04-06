@@ -1342,6 +1342,41 @@ Assert.AreApproxEqual(1,2);");
             Assert.AreEqual(engine.InterpreterResult, "'1' and '2' are '-1' apart.");
         }
 
+        [Test]
+        public void Engine_Loop()
+        {
+            var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
+
+            engine.Run(@"
+var i = 0;
+loop
+{
+    print (i);
+    i = i + 1;
+    if(i > 5)
+        break;
+    print (i);
+}");
+
+            Assert.AreEqual(engine.InterpreterResult, "01122334455");
+        }
+
+        [Test]
+        public void Engine_Loop_NoTerminate()
+        {
+            var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
+
+            engine.Run(@"
+var i = 0;
+loop
+{
+    print (i);
+    i = i + 1;
+}");
+
+            Assert.AreEqual(engine.InterpreterResult, "Loops must contain an termination.");
+        }
+
     }
 
     public class ByteCodeInterpreterTestEngine : ByteCodeInterpreterEngine
