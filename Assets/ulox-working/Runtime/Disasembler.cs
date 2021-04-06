@@ -50,8 +50,8 @@ namespace ULox
                     break;
                 case OpCode.CONSTANT:
                 case OpCode.DEFINE_GLOBAL:
-                case OpCode.FETCH_GLOBAL:
-                case OpCode.ASSIGN_GLOBAL:
+                case OpCode.FETCH_GLOBAL_UNCACHED:
+                case OpCode.ASSIGN_GLOBAL_UNCACHED:
                 case OpCode.GET_PROPERTY_UNCACHED:
                 case OpCode.SET_PROPERTY_UNCACHED:
                 case OpCode.GET_SUPER:

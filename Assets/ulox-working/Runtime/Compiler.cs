@@ -886,7 +886,7 @@ namespace ULox
 
         private void NamedVariable(string name, bool canAssign)
         {
-            OpCode getOp = OpCode.FETCH_GLOBAL, setOp = OpCode.ASSIGN_GLOBAL;
+            OpCode getOp = OpCode.FETCH_GLOBAL_UNCACHED, setOp = OpCode.ASSIGN_GLOBAL_UNCACHED;
             var argID = ResolveLocal(compilerStates.Peek(), name);
             if (argID != -1)
             {

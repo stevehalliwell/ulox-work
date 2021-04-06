@@ -16,6 +16,7 @@ namespace ULox
     //todo add classof
     //todo multiple returns?
     //todo add operator overloads
+    //todo caching of fetch globals in lnear list
     //todo add testing instructions
     //todo emit functions when no upvals are required https://github.com/munificent/craftinginterpreters/blob/master/note/answers/chapter25_closures/1.md
     //todo better, standardisead errors, including from native
@@ -46,7 +47,7 @@ namespace ULox
         private FastStack<CallFrame> _callFrames = new FastStack<CallFrame>();
         private CallFrame currentCallFrame;
         private LinkedList<Value> openUpvalues = new LinkedList<Value>();
-        private Table globals = new Table();
+        private IndexedTable globals = new IndexedTable();
 
         public void SetGlobal(string name, Value val)
         {
@@ -266,28 +267,50 @@ namespace ULox
                         globals[globalName.val.asString] = Pop();
                     }
                     break;
-                case OpCode.FETCH_GLOBAL:
+                case OpCode.FETCH_GLOBAL_UNCACHED:
                     {
                         var global = ReadByte(chunk);
                         var globalName = chunk.ReadConstant(global);
                         var actualName = globalName.val.asString;
-                        if (!globals.TryGetValue(actualName, out var globalValue))
+                        var index = globals.FindIndex(actualName);
+                        if (index == -1)
                         {
                             throw new VMException($"Global var of name '{actualName}' was not found.");
                         }
-                        Push(globalValue);
+                        Push(globals[index]);
+
+                        //it worked patch the instruction so we never have to be in here again.
+                        chunk.instructions[currentCallFrame.ip - 2] = (byte)OpCode.FETCH_GLOBAL_CACHED;
+                        chunk.instructions[currentCallFrame.ip - 1] = (byte)index;
                     }
                     break;
-                case OpCode.ASSIGN_GLOBAL:
+                case OpCode.FETCH_GLOBAL_CACHED:
+                    {
+                        var index = ReadByte(chunk);
+                        Push(globals[index]);
+                    }
+                    break;
+                case OpCode.ASSIGN_GLOBAL_UNCACHED:
                     {
                         var global = ReadByte(chunk);
                         var globalName = chunk.ReadConstant(global);
                         var actualName = globalName.val.asString;
-                        if (!globals.ContainsKey(actualName))
+                        var index = globals.FindIndex(actualName);
+                        if (index == -1)
                         {
                             throw new VMException($"Global var of name '{actualName}' was not found.");
                         }
-                        globals[actualName] = Peek();
+                        globals[index] = Peek();
+
+                        //it worked patch the instruction so we never have to be in here again.
+                        chunk.instructions[currentCallFrame.ip - 2] = (byte)OpCode.ASSIGN_GLOBAL_CACHED;
+                        chunk.instructions[currentCallFrame.ip - 1] = (byte)index;
+                    }
+                    break;
+                case OpCode.ASSIGN_GLOBAL_CACHED:
+                    {
+                        var index = ReadByte(chunk);
+                        globals[index] = Peek();
                     }
                     break;
                 case OpCode.CALL:

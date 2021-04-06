@@ -1,6 +1,5 @@
 ﻿//todo class var initial values
 //todo separate the treewalk interpreter innards from the bytecode innards
-//todo caching of fetch globals in lnear list
 //todo delay calls to end of scope
 //todo caching of instance access to local vars, use delay call to write back to instance at close of scope
 namespace ULox

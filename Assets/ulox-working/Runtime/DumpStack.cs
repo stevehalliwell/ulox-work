@@ -25,7 +25,7 @@ namespace ULox
     {
         private StringBuilder sb = new StringBuilder();
 
-        public string Generate(Dictionary<string, Value> globals)
+        public string Generate(IndexedTable globals)
         {
             int count = 0;
             foreach (var item in globals)
