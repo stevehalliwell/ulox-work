@@ -17,7 +17,7 @@ namespace ULox
     public class ClassInternal
     {
         public string name;
-        public Table methods = new Table();
+        public IndexedTable methods = new IndexedTable();
         public List<string> properties = new List<string>();
         public Value initialiser = Value.Null();
     }

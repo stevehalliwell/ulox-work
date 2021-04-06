@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace ULox
@@ -15,13 +16,19 @@ namespace ULox
             {
                 if(!lookup.ContainsKey(str))
                 {
-                    lookup[str] = values.Count;
-                    values.Add(value);
+                    Add(str, value);
                     return;
                 }
 
                 values[lookup[str]] = value;
             }
+        }
+
+        public void Add(string str, Value value)
+        {
+            lookup[str] = values.Count;
+            values.Add(value);
+            return;
         }
 
         public Value this[int index]

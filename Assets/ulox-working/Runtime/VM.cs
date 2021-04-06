@@ -16,7 +16,6 @@ namespace ULox
     //todo add classof
     //todo multiple returns?
     //todo add operator overloads
-    //todo caching of fetch globals in lnear list
     //todo add testing instructions
     //todo emit functions when no upvals are required https://github.com/munificent/craftinginterpreters/blob/master/note/answers/chapter25_closures/1.md
     //todo better, standardisead errors, including from native
@@ -326,12 +325,53 @@ namespace ULox
                     {
                         //todo add inline caching of some kind
                         var constantIndex = ReadByte(chunk);
-                        var methName = chunk.ReadConstant(constantIndex).val.asString;
+                        var methodName = chunk.ReadConstant(constantIndex).val.asString;
                         var argCount = ReadByte(chunk);
-                        if (!Invoke(methName, argCount))
+
+                        var receiver = Peek(argCount);
+                        if (receiver.type != Value.Type.Instance)
+                            throw new VMException("Cannot invoke on non instance receiver.");
+
+                        var inst = receiver.val.asInstance;
+
+                        if (inst.fields.TryGetValue(methodName, out var fieldFunc))
                         {
-                            return InterpreterResult.RUNTIME_ERROR;
+                            _valueStack[_valueStack.Count - 1 - argCount] = fieldFunc;
+                            if (!CallValue(fieldFunc, argCount))
+                            {
+                                return InterpreterResult.RUNTIME_ERROR;
+                            }
                         }
+                        else
+                        {
+                            var fromClass = inst.fromClass;
+                            var index = fromClass.methods.FindIndex(methodName);
+                            if (index == -1)
+                            {
+                                throw new VMException($"No method of name '{methodName}' found on '{fromClass}'.");
+                            }
+
+                            var method = fromClass.methods[index];
+
+                            //it worked so lets rewrite, it's 3 instructions, the last being the arg count
+                            chunk.instructions[currentCallFrame.ip - 3] = (byte)OpCode.INVOKE_CACHED;
+                            chunk.instructions[currentCallFrame.ip - 2] = (byte)index;
+
+                            if (!CallValue(method, argCount))
+                                return InterpreterResult.RUNTIME_ERROR;
+                        }
+                    }
+                    break;
+                case OpCode.INVOKE_CACHED:
+                    {
+                        var index = ReadByte(chunk);
+                        var argCount = ReadByte(chunk);
+                        var receiver = Peek(argCount);
+                        var inst = receiver.val.asInstance;
+                        var fromClass = inst.fromClass;
+                        var method = fromClass.methods[index];
+                        if (!CallValue(method, argCount))
+                            return InterpreterResult.RUNTIME_ERROR;
                     }
                     break;
                 case OpCode.CLOSURE:
@@ -439,8 +479,8 @@ namespace ULox
                         foreach (var item in superMethods)
                         {
                             var k = item.Key;
-                            var v = item.Value;
-                            subMethods.Add(item.Key, item.Value);
+                            var v = superMethods[item.Value];
+                            subMethods.Add(k, v);
                         }
 
                         Pop();
@@ -486,10 +526,12 @@ namespace ULox
 
         private bool BindMethod(ClassInternal fromClass, string name)
         {
-            if(!fromClass.methods.TryGetValue(name, out Value value))
+            var index = fromClass.methods.FindIndex(name);
+            if (index == -1)
             {
                 throw new VMException($"Undefined property {name}");
             }
+            var value = fromClass.methods[index];
 
             var bound = Value.New(new BoundMethod() { receiver = Peek(), method = value.val.asClosure });
 
@@ -570,30 +612,16 @@ namespace ULox
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool Invoke(string methodName, int argCount)
-        {
-            var receiver = Peek(argCount);
-            if (receiver.type != Value.Type.Instance)
-                throw new VMException("Cannot invoke on non instance receiver.");
-
-            var inst = receiver.val.asInstance;
-
-            if(inst.fields.TryGetValue(methodName, out var fieldFunc))
-            {
-                _valueStack[_valueStack.Count - 1 - argCount] = fieldFunc;
-                return CallValue(fieldFunc, argCount);
-            }
-
-            return InvokeFromClass(inst.fromClass, methodName, argCount);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool InvokeFromClass(ClassInternal fromClass, string methodName, int argCount)
         {
-            if(!fromClass.methods.TryGetValue(methodName, out var method))
+            var index = fromClass.methods.FindIndex(methodName);
+            if (index == -1)
             {
                 throw new VMException($"No method of name '{methodName}' found on '{fromClass}'.");
             }
+
+            var method = fromClass.methods[index];
+
             return CallValue(method, argCount);
         }
 
