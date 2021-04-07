@@ -86,6 +86,8 @@ namespace ULox
                 case OpCode.SET_LOCAL:
                 case OpCode.CALL:
                 case OpCode.INVOKE_CACHED:
+                case OpCode.PUSH_BOOL:
+                case OpCode.PUSH_BYTE:
                 case OpCode.GET_PROPERTY_CACHED:
                 case OpCode.SET_PROPERTY_CACHED:
                     {
@@ -128,8 +130,6 @@ namespace ULox
                 case OpCode.DIVIDE:
                 case OpCode.NONE:
                 case OpCode.NULL:
-                case OpCode.TRUE:
-                case OpCode.FALSE:
                 case OpCode.NOT:
                 case OpCode.GREATER:
                 case OpCode.LESS:
@@ -137,9 +137,6 @@ namespace ULox
                 case OpCode.POP:
                 case OpCode.CLOSE_UPVALUE:
                 case OpCode.INHERIT:
-                case OpCode.NEG_ONE:
-                case OpCode.ZERO:
-                case OpCode.ONE:
                 case OpCode.THROW:
                 default:
                     break;

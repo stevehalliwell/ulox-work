@@ -187,23 +187,23 @@ namespace ULox
                 case OpCode.NOT:
                     Push(Value.New(Pop().IsFalsey));
                     break;
-                case OpCode.TRUE:
-                    Push(Value.New(true));
-                    break;
-                case OpCode.FALSE:
-                    Push(Value.New(false));
+                case OpCode.PUSH_BOOL:
+                    {
+                        var b = ReadByte(chunk);
+                        if (b == 1)
+                            Push(Value.New(true));
+                        else
+                            Push(Value.New(false));
+                    }
                     break;
                 case OpCode.NULL:
                     Push(Value.Null());
                     break;
-                case OpCode.NEG_ONE:
-                    Push(Value.New(-1));
-                    break;
-                case OpCode.ZERO:
-                    Push(Value.New(0));
-                    break;
-                case OpCode.ONE:
-                    Push(Value.New(1));
+                case OpCode.PUSH_BYTE:
+                    {
+                        var b = ReadByte(chunk);
+                        Push(Value.New(b));
+                    }
                     break;
                 case OpCode.POP:
                     _ = Pop();
@@ -323,7 +323,6 @@ namespace ULox
                     break;
                 case OpCode.INVOKE_UNCACHED:
                     {
-                        //todo add inline caching of some kind
                         var constantIndex = ReadByte(chunk);
                         var methodName = chunk.ReadConstant(constantIndex).val.asString;
                         var argCount = ReadByte(chunk);
@@ -334,6 +333,7 @@ namespace ULox
 
                         var inst = receiver.val.asInstance;
 
+                        //it could be a field
                         if (inst.fields.TryGetValue(methodName, out var fieldFunc))
                         {
                             _valueStack[_valueStack.Count - 1 - argCount] = fieldFunc;
@@ -344,6 +344,7 @@ namespace ULox
                         }
                         else
                         {
+                            //it must be a method, if it is we can rewrite
                             var fromClass = inst.fromClass;
                             var index = fromClass.methods.FindIndex(methodName);
                             if (index == -1)
@@ -353,7 +354,7 @@ namespace ULox
 
                             var method = fromClass.methods[index];
 
-                            //it worked so lets rewrite, it's 3 instructions, the last being the arg count
+                            //it worked so lets rewrite, it's a 3 byte instructions, the last being the arg count
                             chunk.instructions[currentCallFrame.ip - 3] = (byte)OpCode.INVOKE_CACHED;
                             chunk.instructions[currentCallFrame.ip - 2] = (byte)index;
 
@@ -413,6 +414,11 @@ namespace ULox
                 case OpCode.GET_PROPERTY_UNCACHED:
                     {
                         //use class to build a cached route to the field, introduce an cannot cache instruction
+                        //  once there are class vars this can be done through that as those are known and safe, not
+                        //  dynamically added at will to arbitrary objects.
+                        //if the class has the property name then we know it MUST be there, find it's index and then rewrite
+                        //  problem then is that the chunk could be given different object types, we need to fall back if a
+                        //  different type is given or generate variants for each type
                         var targetVal = Peek();
                         if (targetVal.type != Value.Type.Instance)
                             throw new VMException($"Only instances have properties. Got {targetVal}.");
@@ -420,6 +426,7 @@ namespace ULox
                         var instance = targetVal.val.asInstance;
                         var constantIndex = ReadByte(chunk);
                         var name = chunk.ReadConstant(constantIndex).val.asString;
+
 
                         if (instance.fields.TryGetValue(name, out var val))
                         {

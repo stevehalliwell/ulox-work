@@ -6,11 +6,8 @@
      
         CONSTANT,
         NULL,
-        TRUE,
-        FALSE,
-        NEG_ONE,
-        ZERO,
-        ONE,
+        PUSH_BOOL,
+        PUSH_BYTE,
 
         POP, 
 

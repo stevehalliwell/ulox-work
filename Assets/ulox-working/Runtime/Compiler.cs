@@ -204,13 +204,13 @@ namespace ULox
             {
                 byte argCount = ArgumentList();
                 NamedVariable("super", false);
-                EmitBytes((byte)OpCode.SUPER_INVOKE, nameID);
-                EmitBytes(argCount);
+                EmitOpAndByte(OpCode.SUPER_INVOKE, nameID);
+                EmitByte(argCount);
             }
             else
             {
                 NamedVariable("super", false);
-                EmitBytes((byte)OpCode.GET_SUPER, nameID);
+                EmitOpAndByte(OpCode.GET_SUPER, nameID);
             }
         }
 
@@ -230,24 +230,24 @@ namespace ULox
             if (canAssign && Match(TokenType.ASSIGN))
             {
                 Expression();
-                EmitBytes((byte)OpCode.SET_PROPERTY_UNCACHED, name);
+                EmitOpAndByte(OpCode.SET_PROPERTY_UNCACHED, name);
             }
             else if(Match(TokenType.OPEN_PAREN))
             {
                 var argCount = ArgumentList();
-                EmitBytes((byte)OpCode.INVOKE_UNCACHED, name);
-                EmitBytes(argCount);
+                EmitOpAndByte(OpCode.INVOKE_UNCACHED, name);
+                EmitByte(argCount);
             }
             else
             {
-                EmitBytes((byte)OpCode.GET_PROPERTY_UNCACHED, name);
+                EmitOpAndByte(OpCode.GET_PROPERTY_UNCACHED, name);
             }
         }
 
         private void Call(bool canAssign)
         {
             var argCount = ArgumentList();
-            EmitBytes((byte)OpCode.CALL, argCount);
+            EmitOpAndByte(OpCode.CALL, argCount);
         }
 
         private byte ArgumentList()
@@ -312,7 +312,7 @@ namespace ULox
             byte nameConstant = AddStringConstant();
             DeclareVariable();
 
-            EmitBytes((byte)OpCode.CLASS, nameConstant);
+            EmitOpAndByte(OpCode.CLASS, nameConstant);
             DefineVariable(nameConstant);
 
             bool hasSuper = false;
@@ -359,7 +359,7 @@ namespace ULox
             {
                 Consume(TokenType.IDENTIFIER, "Expect var name.");
                 byte constant = AddStringConstant();
-                EmitBytes((byte)OpCode.PROPERTY, constant);
+                EmitOpAndByte(OpCode.PROPERTY, constant);
             } while (Match(TokenType.COMMA));
 
             Consume(TokenType.END_STATEMENT, "Expect ; after property declaration.");
@@ -376,7 +376,7 @@ namespace ULox
                 funcType = FunctionType.Init;
 
             Function(name, funcType);
-            EmitBytes((byte)OpCode.METHOD, constant);
+            EmitOpAndByte(OpCode.METHOD, constant);
         }
 
         private void FunctionDeclaration()
@@ -420,12 +420,12 @@ namespace ULox
             // Create the function object.
             var comp = compilerStates.Peek();   //we need this to mark upvalues
             var function = EndCompile();
-            EmitBytes((byte)OpCode.CLOSURE, CurrentChunk.AddConstant(Value.New( function )));
+            EmitOpAndByte(OpCode.CLOSURE, CurrentChunk.AddConstant(Value.New( function )));
 
             for (int i = 0; i < function.UpvalueCount; i++)
             {
-                EmitBytes(comp.upvalues[i].isLocal ?  (byte)1 : (byte)0);
-                EmitBytes(comp.upvalues[i].index);
+                EmitByte(comp.upvalues[i].isLocal ?  (byte)1 : (byte)0);
+                EmitByte(comp.upvalues[i].index);
             }
         }
 
@@ -493,7 +493,7 @@ namespace ULox
                 return;
             }
 
-            EmitBytes((byte)OpCode.DEFINE_GLOBAL, global);
+            EmitOpAndByte(OpCode.DEFINE_GLOBAL, global);
         }
 
         private void MarkInitialised()
@@ -878,8 +878,8 @@ namespace ULox
         {
             switch (previousToken.TokenType)
             {
-            case TokenType.TRUE: EmitOpCode(OpCode.TRUE); break;
-            case TokenType.FALSE: EmitOpCode(OpCode.FALSE); break;
+            case TokenType.TRUE: EmitOpAndByte(OpCode.PUSH_BOOL, 1); break;
+            case TokenType.FALSE: EmitOpAndByte(OpCode.PUSH_BOOL, 0); break;
             case TokenType.NULL: EmitOpCode(OpCode.NULL); break;
             }
         }
@@ -910,11 +910,11 @@ namespace ULox
             if (canAssign && Match(TokenType.ASSIGN))
             {
                 Expression();
-                EmitBytes((byte)setOp, (byte)argID);
+                EmitOpAndByte(setOp, (byte)argID);
             }
             else
             {
-                EmitBytes((byte)getOp, (byte)argID);
+                EmitOpAndByte(getOp, (byte)argID);
             }
         }
 
@@ -950,9 +950,9 @@ namespace ULox
             case TokenType.EQUALITY:      EmitOpCode(OpCode.EQUAL);     break;
             case TokenType.GREATER:       EmitOpCode(OpCode.GREATER);   break;
             case TokenType.LESS:          EmitOpCode(OpCode.LESS);      break;
-            case TokenType.BANG_EQUAL:    EmitOpCodes(OpCode.EQUAL, OpCode.NOT);    break;
-            case TokenType.GREATER_EQUAL: EmitOpCodes(OpCode.GREATER, OpCode.NOT);  break;
-            case TokenType.LESS_EQUAL:    EmitOpCodes(OpCode.LESS, OpCode.NOT);     break;
+            case TokenType.BANG_EQUAL:    EmitOpCodePair(OpCode.EQUAL, OpCode.NOT);    break;
+            case TokenType.GREATER_EQUAL: EmitOpCodePair(OpCode.GREATER, OpCode.NOT);  break;
+            case TokenType.LESS_EQUAL:    EmitOpCodePair(OpCode.LESS, OpCode.NOT);     break;
 
             default:
                 break;
@@ -969,21 +969,12 @@ namespace ULox
         {
             var number = (double)previousToken.Literal;
 
-            switch (number)
-            {
-            case -1:
-                EmitOpCode(OpCode.NEG_ONE);
-                break;
-            case 0 :
-                EmitOpCode(OpCode.ZERO);
-                break;
-            case 1:
-                EmitOpCode(OpCode.ONE);
-                break;
-            default:
+            var isInt = number == System.Math.Truncate(number);
+
+            if (isInt && number < 255 && number >= 0)
+                EmitOpAndByte(OpCode.PUSH_BYTE, (byte)number);
+            else
                 CurrentChunk.WriteConstant(Value.New(number), previousToken.Line);
-                break;
-            }
         }
 
         private void String(bool canAssign)
@@ -1006,7 +997,7 @@ namespace ULox
         private void EmitReturn()
         {
             if (compilerStates.Peek().functionType == FunctionType.Init)
-                EmitBytes((byte)OpCode.GET_LOCAL, 0);
+                EmitOpAndByte(OpCode.GET_LOCAL, 0);
             else
                 EmitOpCode(OpCode.NULL);
             
@@ -1039,12 +1030,16 @@ namespace ULox
             CurrentChunk.WriteSimple(op, previousToken.Line);
         }
 
-        void EmitOpCodes(params OpCode[] op)
+        void EmitOpCodePair(OpCode op1, OpCode op2)
         {
-            foreach (var item in op)
-            {
-                CurrentChunk.WriteSimple(item, previousToken.Line);
-            }
+            CurrentChunk.WriteSimple(op1, previousToken.Line);
+            CurrentChunk.WriteSimple(op2, previousToken.Line);
+        }
+
+        void EmitOpAndByte(OpCode op, byte b)
+        {
+            CurrentChunk.WriteSimple(op, previousToken.Line);
+            CurrentChunk.WriteByte(b, previousToken.Line);
         }
 
         void EmitBytes(params byte[] b)
@@ -1053,6 +1048,11 @@ namespace ULox
             {
                 CurrentChunk.WriteByte(b[i], previousToken.Line);
             }
+        }
+
+        void EmitByte(byte b)
+        {
+            CurrentChunk.WriteByte(b, previousToken.Line);
         }
 
         void WriteBytesAt(int at, params byte[] b)
