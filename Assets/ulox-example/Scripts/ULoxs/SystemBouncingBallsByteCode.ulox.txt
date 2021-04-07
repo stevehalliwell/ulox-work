@@ -22,6 +22,8 @@ var balls = List();
 
 class Ball
 {
+	var x,y,vx,vy,go;
+
 	init() 
 	{
 		this.x = RandRange(-3,3);

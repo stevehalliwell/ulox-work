@@ -360,6 +360,16 @@ namespace ULox
                 Consume(TokenType.IDENTIFIER, "Expect var name.");
                 byte constant = AddStringConstant();
                 EmitOpAndByte(OpCode.PROPERTY, constant);
+
+                //emit jump // to skip this during imperative
+                //patch jump previous init fragment if it exists
+                //  if doesn't exist note this instruction as the start of the init chain
+                //if = consume it and then
+                //eat 1 expression or a push null
+                //emit set prop
+                //emit jump // to move to next prop init fragment, defaults to jump over the return
+                //emit return //if we are the last link in the chain this ends our call
+                //patch jump from skip imperative
             } while (Match(TokenType.COMMA));
 
             Consume(TokenType.END_STATEMENT, "Expect ; after property declaration.");

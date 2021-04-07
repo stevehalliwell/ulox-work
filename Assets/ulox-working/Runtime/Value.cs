@@ -21,8 +21,6 @@ namespace ULox
         public List<string> properties = new List<string>();
         public Value initialiser = Value.Null();
     }
-    //todo ability to ask if field or method exists at runtime
-    //todo ability to add remove fields and methods at runtime
     public class InstanceInternal
     {
         public ClassInternal fromClass;

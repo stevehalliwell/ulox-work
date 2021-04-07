@@ -19,6 +19,11 @@
             return _array[_back--];
         }
 
+        public void DiscardPop(int amount = 1)
+        {
+            _back -= amount;
+        }
+
         public T Peek(int down = 0)
         {
             return _array[_back-down];

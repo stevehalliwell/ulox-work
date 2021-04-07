@@ -3,6 +3,8 @@ using System.Runtime.CompilerServices;
 
 namespace ULox
 {
+    //todo ability to ask if field or method exists at runtime
+    //todo ability to add remove fields and methods at runtime?
     //todo introduce optimiser, pass after compile, have compile build slim ast as it goes
     //  convert labels to offsets
     //  identify and remove unused constants
@@ -41,6 +43,7 @@ namespace ULox
         private FastStack<Value> _valueStack = new FastStack<Value>();
 
         private void Push(Value val) => _valueStack.Push(val);
+        //todo how many of these actually need to be pop vs discard pop
         private Value Pop() => _valueStack.Pop();
         private Value Peek(int ind = 0) => _valueStack.Peek(ind);
         private FastStack<CallFrame> _callFrames = new FastStack<CallFrame>();
@@ -164,8 +167,7 @@ namespace ULox
                             return InterpreterResult.OK;
                         }
 
-                        while (_valueStack.Count > prevStackStart)
-                            Pop();
+                         _valueStack.DiscardPop(_valueStack.Count - prevStackStart);
 
                         Push(result);
                     }
@@ -419,6 +421,8 @@ namespace ULox
                         //if the class has the property name then we know it MUST be there, find it's index and then rewrite
                         //  problem then is that the chunk could be given different object types, we need to fall back if a
                         //  different type is given or generate variants for each type
+                        //the problem here is we don't know that the targetVal is of the same type that we are caching so 
+                        //  turn it off for now.
                         var targetVal = Peek();
                         if (targetVal.type != Value.Type.Instance)
                             throw new VMException($"Only instances have properties. Got {targetVal}.");
@@ -645,12 +649,16 @@ namespace ULox
 
             if (!asClass.initialiser.IsNull)
             {
+                //with an init list we don't return this
                 return CallValue(asClass.initialiser, argCount);
             }
             else if (argCount != 0)
             {
                 throw new VMException("Args given for a class that does not have an 'init' method");
             }
+
+            //manually add this to stack and push a call frame directing the ip to the start of the init frag chain
+            //return should remove the null and the this
             
             return true;
         }
