@@ -45,6 +45,7 @@ namespace ULox
         private void Push(Value val) => _valueStack.Push(val);
         //todo how many of these actually need to be pop vs discard pop
         private Value Pop() => _valueStack.Pop();
+        private void DiscardPop(int amt = 1) => _valueStack.DiscardPop(amt);
         private Value Peek(int ind = 0) => _valueStack.Peek(ind);
         private FastStack<CallFrame> _callFrames = new FastStack<CallFrame>();
         private CallFrame currentCallFrame;
@@ -163,11 +164,11 @@ namespace ULox
                         
                         if (_callFrames.Count == 0)
                         {
-                            Pop();
+                            
                             return InterpreterResult.OK;
                         }
 
-                         _valueStack.DiscardPop(_valueStack.Count - prevStackStart);
+                        DiscardPop(_valueStack.Count - prevStackStart);
 
                         Push(result);
                     }
@@ -208,7 +209,7 @@ namespace ULox
                     }
                     break;
                 case OpCode.POP:
-                    _ = Pop();
+                    DiscardPop();
                     break;
                 case OpCode.JUMP_IF_FALSE:
                     {
@@ -404,7 +405,7 @@ namespace ULox
                     break;
                 case OpCode.CLOSE_UPVALUE:
                     CloseUpvalues(_valueStack.Count-1);
-                    Pop();
+                    DiscardPop();
                     break;
                 case OpCode.CLASS:
                     {
@@ -434,7 +435,7 @@ namespace ULox
 
                         if (instance.fields.TryGetValue(name, out var val))
                         {
-                            Pop();
+                            DiscardPop();
                             Push(val);
                             break;
                         }
@@ -459,7 +460,7 @@ namespace ULox
                         instance.fields[name] = Peek();
 
                         var value = Pop();
-                        Pop();
+                        DiscardPop();
                         Push(value);
                     }
                     break;
@@ -494,7 +495,7 @@ namespace ULox
                             subMethods.Add(k, v);
                         }
 
-                        Pop();
+                        DiscardPop();
                     }
                     break;
                 case OpCode.GET_SUPER:
@@ -546,7 +547,7 @@ namespace ULox
 
             var bound = Value.New(new BoundMethod() { receiver = Peek(), method = value.val.asClosure });
 
-            Pop();
+            DiscardPop();
             Push(bound);
             return true;
         }
@@ -560,7 +561,7 @@ namespace ULox
             {
                 klass.initialiser = method;
             }
-            Pop();
+            DiscardPop();
         }
 
         private void CloseUpvalues(int last)
@@ -690,8 +691,7 @@ namespace ULox
             var stackPos = _valueStack.Count - argCount;
             var res = asNativeFunc.Invoke(this, argCount);
 
-            while (_valueStack.Count > stackPos-1)
-                Pop();
+            DiscardPop(_valueStack.Count - (stackPos - 1));
 
             PopCallFrame();
 
