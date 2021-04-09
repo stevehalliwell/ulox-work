@@ -22,15 +22,14 @@ var balls = List();
 
 class Ball
 {
-	var x,y,vx,vy,go;
+	var x = RandRange(-3,3),
+		y = RandRange(-3,3),
+		vx = RandRange(-3,3),
+		vy = RandRange(-3,3),
+		go = CreateFromPrefab(ballName);
 
 	init() 
 	{
-		this.x = RandRange(-3,3);
-		this.y = RandRange(-3,3);
-		this.vx = RandRange(-3,3);
-		this.vy = RandRange(-3,3);
-		this.go = CreateFromPrefab(ballName);
 	}
 	
   	TickLocals(dt, lim)

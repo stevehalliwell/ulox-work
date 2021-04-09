@@ -78,6 +78,7 @@ namespace ULox
             public Chunk chunk;
             public CompilerState enclosing;
             public string currentClassName;
+            public int previousInitFragJumpLocation = -1;
             public FunctionType functionType;
             public CompilerState(CompilerState enclosingState, FunctionType funcType) 
             { 
@@ -353,23 +354,55 @@ namespace ULox
 
         private void Property()
         {
-            //todo support default value assign by storing expressions in functions and running those in the class
-            //  pre init so they are already on the stack to pop and assign pre init
             do
             {
                 Consume(TokenType.IDENTIFIER, "Expect var name.");
-                byte constant = AddStringConstant();
-                EmitOpAndByte(OpCode.PROPERTY, constant);
+                byte nameConstant = AddStringConstant();
+                EmitOpAndByte(OpCode.PROPERTY, nameConstant);
+                {
+                    var compState = compilerStates.Peek();
+                    //todo
+                    //  if doesn't exist note this instruction as the start of the init chain
+                    if (compState.previousInitFragJumpLocation == -1) 
+                    {
+                        EmitOpCode(OpCode.INIT_CHAIN_START);
+                        EmitUShort((ushort)(CurrentChunk.instructions.Count + 2 + 3));//2 for our ushort and 3 for the following jump.
+                    }
+                    //emit jump // to skip this during imperative
+                    int initFragmentJump = EmitJump(OpCode.JUMP);
+                    //patch jump previous init fragment if it exists
+                    if(compState.previousInitFragJumpLocation != -1)
+                    {
+                        PatchJump(compState.previousInitFragJumpLocation);
+                    }
 
-                //emit jump // to skip this during imperative
-                //patch jump previous init fragment if it exists
-                //  if doesn't exist note this instruction as the start of the init chain
-                //if = consume it and then
-                //eat 1 expression or a push null
-                //emit set prop
-                //emit jump // to move to next prop init fragment, defaults to jump over the return
-                //emit return //if we are the last link in the chain this ends our call
-                //patch jump from skip imperative
+                    //get this on the stack
+                    EmitOpAndByte(OpCode.GET_LOCAL, 0);
+
+                    //if = consume it and then
+                    //eat 1 expression or a push null
+                    if (Match(TokenType.ASSIGN))
+                    {
+                        Expression();
+                    }
+                    else
+                    {
+                        EmitOpCode(OpCode.NULL);
+                    }
+                    //emit set prop
+                    EmitOpAndByte(OpCode.SET_PROPERTY_UNCACHED, nameConstant);
+                    EmitOpCode(OpCode.POP);
+
+                    //emit jump // to move to next prop init fragment, defaults to jump nowhere return
+
+                    int endReturnJump = EmitJump(OpCode.JUMP);
+                    compState.previousInitFragJumpLocation = endReturnJump;
+                    //emit return //if we are the last link in the chain this ends our call
+                    PatchJump(endReturnJump);
+                    EmitOpCode(OpCode.RETURN);
+                    //patch jump from skip imperative
+                    PatchJump(initFragmentJump);
+                }
             } while (Match(TokenType.COMMA));
 
             Consume(TokenType.END_STATEMENT, "Expect ; after property declaration.");
@@ -984,13 +1017,13 @@ namespace ULox
             if (isInt && number < 255 && number >= 0)
                 EmitOpAndByte(OpCode.PUSH_BYTE, (byte)number);
             else
-                CurrentChunk.WriteConstant(Value.New(number), previousToken.Line);
+                CurrentChunk.AddConstantAndWriteInstruction(Value.New(number), previousToken.Line);
         }
 
         private void String(bool canAssign)
         {
             var str = (string)previousToken.Literal;
-            CurrentChunk.WriteConstant(Value.New(str), previousToken.Line);
+            CurrentChunk.AddConstantAndWriteInstruction(Value.New(str), previousToken.Line);
         }
 
         private byte AddStringConstant()
@@ -1063,6 +1096,11 @@ namespace ULox
         void EmitByte(byte b)
         {
             CurrentChunk.WriteByte(b, previousToken.Line);
+        }
+
+        void EmitUShort(ushort us)
+        {
+            EmitBytes((byte)((us >> 8) & 0xff), (byte)(us & 0xff));
         }
 
         void WriteBytesAt(int at, params byte[] b)

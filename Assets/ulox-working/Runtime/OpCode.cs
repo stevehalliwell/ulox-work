@@ -49,6 +49,7 @@
         GET_SUPER,
         SUPER_INVOKE,
         PROPERTY,
+        INIT_CHAIN_START,
 
         NEGATE,
         ADD,

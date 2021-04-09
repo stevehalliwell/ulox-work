@@ -12,11 +12,11 @@ namespace ULox.Tests
         {
             var chunk = new Chunk("main");
 
-            chunk.WriteConstant(Value.New(0.5), 1);
-            chunk.WriteConstant(Value.New(1), 1);
+            chunk.AddConstantAndWriteInstruction(Value.New(0.5), 1);
+            chunk.AddConstantAndWriteInstruction(Value.New(1), 1);
             chunk.WriteSimple(OpCode.NEGATE, 1);
             chunk.WriteSimple(OpCode.ADD, 1);
-            chunk.WriteConstant(Value.New(2), 1);
+            chunk.AddConstantAndWriteInstruction(Value.New(2), 1);
             chunk.WriteSimple(OpCode.MULTIPLY, 1);
             chunk.WriteSimple(OpCode.RETURN, 2);
 
@@ -1375,6 +1375,81 @@ loop
 }");
 
             Assert.AreEqual(engine.InterpreterResult, "Loops must contain an termination.");
+        }
+
+        [Test]
+        public void Engine_Class_VarInitChain()
+        {
+            var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
+
+            engine.Run(@"
+var aVal = 10;
+class T
+{
+    var a = aVal;
+}
+
+var t = T();
+print(t.a);");
+
+            Assert.AreEqual(engine.InterpreterResult, "10");
+        }
+
+        [Test]
+        public void Engine_Class_VarInitChain2()
+        {
+            var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
+
+            engine.Run(@"
+class T
+{
+    var a = 1, b = 2;
+}
+
+var t = T();
+print(t.a);
+print(t.b);");
+
+            Assert.AreEqual(engine.InterpreterResult, "12");
+        }
+
+        [Test]
+        public void Engine_Class_VarInitChain_AndInit()
+        {
+            var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
+
+            engine.Run(@"
+var aVal = 10;
+class T
+{
+    var a = aVal;
+
+    init(){this.a = this.a * 2;}
+}
+
+var t = T();
+print(t.a);");
+
+            Assert.AreEqual(engine.InterpreterResult, "20");
+        }
+
+        [Test]
+        public void Engine_Class_VarInitChainEmpty_AndInit()
+        {
+            var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
+
+            engine.Run(@"
+class T
+{
+    var a;
+
+    init(){this.a = 20;}
+}
+
+var t = T();
+print(t.a);");
+
+            Assert.AreEqual(engine.InterpreterResult, "20");
         }
 
     }

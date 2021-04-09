@@ -20,6 +20,8 @@ namespace ULox
         public IndexedTable methods = new IndexedTable();
         public List<string> properties = new List<string>();
         public Value initialiser = Value.Null();
+        public ClosureInternal initChainStartClosure;
+        public int initChainStartLocation = -1;
     }
     public class InstanceInternal
     {
@@ -41,7 +43,7 @@ namespace ULox
             Bool,
             String,
             Chunk,
-            NativeFunction, //todo native functions need helpers at some point
+            NativeFunction,
             Closure,
             Upvalue,
             Class,

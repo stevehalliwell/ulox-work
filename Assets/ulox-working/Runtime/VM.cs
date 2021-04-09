@@ -43,7 +43,6 @@ namespace ULox
         private FastStack<Value> _valueStack = new FastStack<Value>();
 
         private void Push(Value val) => _valueStack.Push(val);
-        //todo how many of these actually need to be pop vs discard pop
         private Value Pop() => _valueStack.Pop();
         private void DiscardPop(int amt = 1) => _valueStack.DiscardPop(amt);
         private Value Peek(int ind = 0) => _valueStack.Peek(ind);
@@ -318,10 +317,7 @@ namespace ULox
                 case OpCode.CALL:
                     {
                         int argCount = ReadByte(chunk);
-                        if (!CallValue(Peek(argCount), argCount))
-                        {
-                            return InterpreterResult.RUNTIME_ERROR;
-                        }
+                        CallValue(Peek(argCount), argCount);
                     }
                     break;
                 case OpCode.INVOKE_UNCACHED:
@@ -340,10 +336,7 @@ namespace ULox
                         if (inst.fields.TryGetValue(methodName, out var fieldFunc))
                         {
                             _valueStack[_valueStack.Count - 1 - argCount] = fieldFunc;
-                            if (!CallValue(fieldFunc, argCount))
-                            {
-                                return InterpreterResult.RUNTIME_ERROR;
-                            }
+                            CallValue(fieldFunc, argCount);
                         }
                         else
                         {
@@ -361,8 +354,7 @@ namespace ULox
                             chunk.instructions[currentCallFrame.ip - 3] = (byte)OpCode.INVOKE_CACHED;
                             chunk.instructions[currentCallFrame.ip - 2] = (byte)index;
 
-                            if (!CallValue(method, argCount))
-                                return InterpreterResult.RUNTIME_ERROR;
+                            CallValue(method, argCount);
                         }
                     }
                     break;
@@ -374,8 +366,7 @@ namespace ULox
                         var inst = receiver.val.asInstance;
                         var fromClass = inst.fromClass;
                         var method = fromClass.methods[index];
-                        if (!CallValue(method, argCount))
-                            return InterpreterResult.RUNTIME_ERROR;
+                        CallValue(method, argCount);
                     }
                     break;
                 case OpCode.CLOSURE:
@@ -479,6 +470,14 @@ namespace ULox
                         klass.properties.Add(name);
                     }
                     break;
+                case OpCode.INIT_CHAIN_START:
+                    {
+                        var loc = ReadUShort(chunk);
+                        var klass = Peek().val.asClass;
+                        klass.initChainStartLocation = loc;
+                        klass.initChainStartClosure = currentCallFrame.closure;
+                    }
+                    break;
                 case OpCode.INHERIT:
                     {
                         var superClass = Peek(1);
@@ -510,15 +509,11 @@ namespace ULox
                     break;
                 case OpCode.SUPER_INVOKE:
                     {
-                        UnityEngine.Debug.Log(GenerateStackDump());
                         var constantIndex = ReadByte(chunk);
                         var methName = chunk.ReadConstant(constantIndex).val.asString;
                         var argCount = ReadByte(chunk);
                         var superClass = Pop().val.asClass;
-                        if (!InvokeFromClass(superClass, methName, argCount))
-                        {
-                            return InterpreterResult.RUNTIME_ERROR;
-                        }
+                        InvokeFromClass(superClass, methName, argCount);
                     }
                     break;
                 case OpCode.THROW:
@@ -603,28 +598,36 @@ namespace ULox
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool CallValue(Value callee, int argCount)
+        private void CallValue(Value callee, int argCount)
         {
             switch (callee.type)
             {
-            case Value.Type.NativeFunction: return CallNative(callee.val.asNativeFunc, argCount);
-            case Value.Type.Closure: return Call(callee.val.asClosure, argCount);
-            case Value.Type.Class: return CreateInstance(callee.val.asClass, argCount);
-            case Value.Type.BoundMethod: return CallMethod(callee.val.asBoundMethod, argCount);
+            case Value.Type.NativeFunction: 
+                CallNative(callee.val.asNativeFunc, argCount);
+                break;
+            case Value.Type.Closure: 
+                Call(callee.val.asClosure, argCount);
+                break;
+            case Value.Type.Class: 
+                CreateInstance(callee.val.asClass, argCount);
+                break;
+            case Value.Type.BoundMethod: 
+                CallMethod(callee.val.asBoundMethod, argCount);
+                break;
+            default:
+                throw new VMException("Can only call functions and classes.");
             }
-
-            throw new VMException("Can only call functions and classes.");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool CallMethod(BoundMethod asBoundMethod, int argCount)
+        private void CallMethod(BoundMethod asBoundMethod, int argCount)
         {
             _valueStack[_valueStack.Count - 1 - argCount] = asBoundMethod.receiver;
-            return Call(asBoundMethod.method, argCount);
+            Call(asBoundMethod.method, argCount);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool InvokeFromClass(ClassInternal fromClass, string methodName, int argCount)
+        private void InvokeFromClass(ClassInternal fromClass, string methodName, int argCount)
         {
             var index = fromClass.methods.FindIndex(methodName);
             if (index == -1)
@@ -634,38 +637,41 @@ namespace ULox
 
             var method = fromClass.methods[index];
 
-            return CallValue(method, argCount);
+            CallValue(method, argCount);
         }
 
-        private bool CreateInstance(ClassInternal asClass, int argCount)
+        private void CreateInstance(ClassInternal asClass, int argCount)
         {
             var instInternal = new InstanceInternal() { fromClass = asClass };
             var inst = Value.New(instInternal);
             _valueStack[_valueStack.Count - 1 - argCount] = inst;
 
-            foreach (var item in asClass.properties)
-            {
-                instInternal.fields.Add(item, Value.Null());
-            }
-
             if (!asClass.initialiser.IsNull)
             {
                 //with an init list we don't return this
-                return CallValue(asClass.initialiser, argCount);
+                CallValue(asClass.initialiser, argCount);
             }
             else if (argCount != 0)
             {
                 throw new VMException("Args given for a class that does not have an 'init' method");
             }
 
-            //manually add this to stack and push a call frame directing the ip to the start of the init frag chain
-            //return should remove the null and the this
-            
-            return true;
+            if (asClass.initChainStartLocation != -1)
+            {
+                //manually add this to stack and push a call frame directing the ip to the start of the init frag chain
+                //return should remove the null and the this
+                Push(inst);
+                PushNewCallframe(new CallFrame()
+                {
+                    closure = asClass.initChainStartClosure,
+                    ip = asClass.initChainStartLocation,
+                    stackStart = _valueStack.Count - 2, //last thing checked
+                });
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool Call(ClosureInternal closureInternal, int argCount)
+        private void Call(ClosureInternal closureInternal, int argCount)
         {
             if (argCount != closureInternal.chunk.Arity)
                 throw new VMException($"Wrong number of params given to '{closureInternal.chunk.Name}'" +
@@ -676,11 +682,10 @@ namespace ULox
                 stackStart = _valueStack.Count - argCount-1,
                 closure = closureInternal
             });
-            return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool CallNative(System.Func<VM, int, Value> asNativeFunc, int argCount)
+        private void CallNative(System.Func<VM, int, Value> asNativeFunc, int argCount)
         {
             PushNewCallframe(new CallFrame()
             {
@@ -696,8 +701,6 @@ namespace ULox
             PopCallFrame();
 
             Push(res);
-
-            return true;
         }
 
         private void DoMathOp(OpCode opCode)

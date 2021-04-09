@@ -41,6 +41,7 @@ namespace ULox
                 case OpCode.JUMP_IF_FALSE:
                 case OpCode.JUMP:
                 case OpCode.LOOP:
+                case OpCode.INIT_CHAIN_START:
                     stringBuilder.Append(" ");
                     i++;
                     var bhi = chunk.instructions[i];

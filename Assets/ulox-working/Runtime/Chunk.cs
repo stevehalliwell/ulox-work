@@ -62,7 +62,7 @@ namespace ULox
             AddLine(line);
         }
 
-        public byte WriteConstant(Value val, int line)
+        public byte AddConstantAndWriteInstruction(Value val, int line)
         {
             //todo add support for long constant, when we overflow 255 constants in 1 chunk
             instructions.Add((byte)OpCode.CONSTANT);
