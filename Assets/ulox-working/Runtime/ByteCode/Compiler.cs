@@ -83,7 +83,6 @@ namespace ULox.ByteCode
             public int scopeDepth;
             public Chunk chunk;
             public CompilerState enclosing;
-            //TODO need to have a stack of class compilers, there can be more than 1 per chunk
             public Stack<ClassCompilerState> classCompilerStates = new Stack<ClassCompilerState>();
             public FunctionType functionType;
             public CompilerState(CompilerState enclosingState, FunctionType funcType) 

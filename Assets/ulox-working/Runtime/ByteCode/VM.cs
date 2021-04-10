@@ -549,6 +549,7 @@ namespace ULox.ByteCode
             return true;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DefineMethod(string name)
         {
             Value method = Peek();
@@ -574,6 +575,7 @@ namespace ULox.ByteCode
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Value CaptureUpvalue(int index)
         {
             var node = openUpvalues.First;
@@ -705,6 +707,7 @@ namespace ULox.ByteCode
             Push(res);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DoMathOp(OpCode opCode)
         {
             var rhs = Pop();
@@ -748,6 +751,7 @@ namespace ULox.ByteCode
             Push(res);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DoComparisonOp(OpCode opCode)
         {
             var rhs = Pop();
@@ -771,6 +775,7 @@ namespace ULox.ByteCode
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool VMValueCompare(ref Value lhs, ref Value rhs)
         {
             if (lhs.type != rhs.type)

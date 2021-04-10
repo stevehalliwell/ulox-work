@@ -1,5 +1,4 @@
-﻿//todo separate the treewalk interpreter innards from the bytecode innards
-//todo delay calls to end of scope
+﻿//todo delay calls to end of scope
 //todo caching of instance access to local vars, use delay call to write back to instance at close of scope
 namespace ULox.ByteCode
 {
