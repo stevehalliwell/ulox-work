@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ULox
+namespace ULox.ByteCode
 {
     public class DumpStack
     {

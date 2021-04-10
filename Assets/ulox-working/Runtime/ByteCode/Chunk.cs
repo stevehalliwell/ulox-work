@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace ULox
+namespace ULox.ByteCode
 {
     public class Chunk
     {

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ULox
+namespace ULox.ByteCode
 {
     //todo introduce labels so that instructions can be modified freely
     //  and afterwards labels can be removed with offsets by an optimizer step.
@@ -69,6 +69,12 @@ namespace ULox
             public bool isLocal;
         }
 
+        private class ClassCompilerState
+        {
+            public string currentClassName;
+            public int previousInitFragJumpLocation = -1;
+        }
+
         private class CompilerState
         {
             public Local[] locals = new Local[byte.MaxValue + 1];
@@ -77,8 +83,8 @@ namespace ULox
             public int scopeDepth;
             public Chunk chunk;
             public CompilerState enclosing;
-            public string currentClassName;
-            public int previousInitFragJumpLocation = -1;
+            //TODO need to have a stack of class compilers, there can be more than 1 per chunk
+            public Stack<ClassCompilerState> classCompilerStates = new Stack<ClassCompilerState>();
             public FunctionType functionType;
             public CompilerState(CompilerState enclosingState, FunctionType funcType) 
             { 
@@ -100,11 +106,14 @@ namespace ULox
         {
             for (int i = compilerStates.Count - 1; i >= 0; i--)
             {
-                var cur = compilerStates[i].currentClassName;
-                if (string.IsNullOrEmpty(cur))
+                if (compilerStates[i].classCompilerStates.Count == 0)
                     continue;
 
-                return cur;
+                var cur = compilerStates[i].classCompilerStates.Peek();
+                if (string.IsNullOrEmpty(cur.currentClassName))
+                    continue;
+
+                return cur.currentClassName;
             }
 
             return null;
@@ -309,7 +318,8 @@ namespace ULox
         {
             Consume(TokenType.IDENTIFIER, "Expect class name.");
             var className = (string)previousToken.Literal;
-            compilerStates.Peek().currentClassName = className;
+            var compState = compilerStates.Peek();
+            compState.classCompilerStates.Push(new ClassCompilerState() { currentClassName = className });
             byte nameConstant = AddStringConstant();
             DeclareVariable();
 
@@ -326,7 +336,7 @@ namespace ULox
                     throw new CompilerException("A class cannot inhert from itself.");
 
                 BeginScope();
-                AddLocal(compilerStates.Peek(), "super");
+                AddLocal(compState, "super");
                 DefineVariable(0);
 
                 NamedVariable(className, false);
@@ -350,6 +360,8 @@ namespace ULox
             {
                 EndScope();
             }
+
+            compState.classCompilerStates.Pop();
         }
 
         private void Property()
@@ -361,9 +373,9 @@ namespace ULox
                 EmitOpAndByte(OpCode.PROPERTY, nameConstant);
                 {
                     var compState = compilerStates.Peek();
-                    //todo
-                    //  if doesn't exist note this instruction as the start of the init chain
-                    if (compState.previousInitFragJumpLocation == -1) 
+                    var classCompState = compState.classCompilerStates.Peek();
+                    //if doesn't exist note this instruction as the start of the init chain
+                    if (classCompState.previousInitFragJumpLocation == -1) 
                     {
                         EmitOpCode(OpCode.INIT_CHAIN_START);
                         EmitUShort((ushort)(CurrentChunk.instructions.Count + 2 + 3));//2 for our ushort and 3 for the following jump.
@@ -371,9 +383,9 @@ namespace ULox
                     //emit jump // to skip this during imperative
                     int initFragmentJump = EmitJump(OpCode.JUMP);
                     //patch jump previous init fragment if it exists
-                    if(compState.previousInitFragJumpLocation != -1)
+                    if(classCompState.previousInitFragJumpLocation != -1)
                     {
-                        PatchJump(compState.previousInitFragJumpLocation);
+                        PatchJump(classCompState.previousInitFragJumpLocation);
                     }
 
                     //get this on the stack
@@ -396,7 +408,7 @@ namespace ULox
                     //emit jump // to move to next prop init fragment, defaults to jump nowhere return
 
                     int endReturnJump = EmitJump(OpCode.JUMP);
-                    compState.previousInitFragJumpLocation = endReturnJump;
+                    classCompState.previousInitFragJumpLocation = endReturnJump;
                     //emit return //if we are the last link in the chain this ends our call
                     PatchJump(endReturnJump);
                     EmitOpCode(OpCode.RETURN);

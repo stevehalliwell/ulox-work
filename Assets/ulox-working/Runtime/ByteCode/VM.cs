@@ -1,26 +1,28 @@
 ﻿using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 
-namespace ULox
+namespace ULox.ByteCode
 {
     //todo ability to ask if field or method exists at runtime
     //todo ability to add remove fields and methods at runtime?
     //todo introduce optimiser, pass after compile, have compile build slim ast as it goes
     //  convert labels to offsets
     //  identify and remove unused constants
+    //  identify push local 0 and paired get or set member, replace with specific this accessing ops
     //todo better string parsing token support
     //todo add conditional
     //todo add self assignment
     //todo add pods
     //todo add more to libraries
     //todo add sandboxing
-    //todo auto init assign
     //todo add classof
     //todo multiple returns?
     //todo add operator overloads
     //todo add testing instructions
     //todo emit functions when no upvals are required https://github.com/munificent/craftinginterpreters/blob/master/note/answers/chapter25_closures/1.md
     //todo better, standardisead errors, including from native
+    //todo track and output class information from compile
+    //todo change fetch global behaviour to check for correct name on this in a method, that can the rewrite when a get this
     public enum InterpreterResult
     {
         OK,
@@ -42,9 +44,13 @@ namespace ULox
         public const string InitMethodName = "init";
         private FastStack<Value> _valueStack = new FastStack<Value>();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Push(Value val) => _valueStack.Push(val);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Value Pop() => _valueStack.Pop();
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DiscardPop(int amt = 1) => _valueStack.DiscardPop(amt);
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private Value Peek(int ind = 0) => _valueStack.Peek(ind);
         private FastStack<CallFrame> _callFrames = new FastStack<CallFrame>();
         private CallFrame currentCallFrame;
@@ -75,18 +81,14 @@ namespace ULox
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private byte ReadByte(Chunk chunk)
         {
-            var b = chunk.instructions[currentCallFrame.ip];
-            currentCallFrame.ip++;
-            return b;
+            return chunk.instructions[currentCallFrame.ip++];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private ushort ReadUShort(Chunk chunk)
         {
-            var bhi = chunk.instructions[currentCallFrame.ip];
-            currentCallFrame.ip++;
-            var blo = chunk.instructions[currentCallFrame.ip];
-            currentCallFrame.ip++;
+            var bhi = chunk.instructions[currentCallFrame.ip++];
+            var blo = chunk.instructions[currentCallFrame.ip++];
             return (ushort)((bhi << 8) | blo);
         }
 

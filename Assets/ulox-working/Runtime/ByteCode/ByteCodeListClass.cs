@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace ULox
+namespace ULox.ByteCode
 {
     public class ByteCodeListClass : ClassInternal
     {

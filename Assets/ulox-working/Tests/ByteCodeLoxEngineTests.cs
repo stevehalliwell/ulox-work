@@ -1,9 +1,7 @@
 ﻿using NUnit.Framework;
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
-namespace ULox.Tests
+namespace ULox.ByteCode.Tests
 {
     //todo external code call lox function with params from external code
     public class ByteCodeLoxEngineTests
@@ -1450,6 +1448,43 @@ var t = T();
 print(t.a);");
 
             Assert.AreEqual(engine.InterpreterResult, "20");
+        }
+
+        [Test]
+        public void Engine_DynamicType_SameFunc()
+        {
+            var engine = new ByteCodeInterpreterTestEngine(UnityEngine.Debug.Log);
+
+            engine.Run(@"
+fun AddPrint(obj)
+{
+    print(obj.a + obj.b);
+}
+
+class T1 
+{
+    var z,a=1,b=2;
+}
+class T2 
+{
+    var x,y,z,a=""Hello "",b=""World"";
+}
+class T3
+{
+}
+
+var t1 = T1();
+var t2 = T2();
+var t3 = T3();
+t3.a = 1;
+t3.b = 1;
+
+AddPrint(t1);
+AddPrint(t2);
+AddPrint(t3);
+");
+
+            Assert.AreEqual(engine.InterpreterResult, "3Hello World2");
         }
 
     }

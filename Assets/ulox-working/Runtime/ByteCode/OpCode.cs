@@ -1,4 +1,4 @@
-﻿namespace ULox
+﻿namespace ULox.ByteCode
 {
     public enum OpCode : byte
     {
