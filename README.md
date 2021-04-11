@@ -16,6 +16,8 @@ ByteCode style interpreter, akin to clox, has parity with some minor changes and
 
 <details>
 <summary>Show Details</summary>
+Less variants and experiements exist on the bytecode version that on the interpreter, none the less, it can run a bouncing balls demo and does so faster and with FAR less garbage being created. In simple release comparison to native C# unity demo is it ~0.07ms per frame, and the ByteCode interpreter is ~0.33ms, a very pleaseant only ~5x slowdown.
+
 - [Challenges, Sugar, and Demos](../../tree/bytecode_vars)
   - RLE line numbers.
   - Add loop, break, and continue keywords.
