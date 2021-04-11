@@ -1,18 +1,91 @@
 # ulox-work
 
-Worked through [Crafting Interpreters](http://craftinginterpreters.com/), in Unity C#. Now I'm just noodling around.
+Worked through [Crafting Interpreters](http://craftinginterpreters.com/), in Unity C#. Both Tree-Walking and ByteCode interpreters. Now I'm just noodling around.
 
 ## Why though?
 
 Don't expect this to be used (very much) in production. At least not in the state it is right now. Honestly it was something fun to work through, a pleasant sparetime distraction.
 
-Beyond a port of jlox, it is now something to toy with, optimize, prototype with, mess with features and usability.
+Beyond a port of jlox and clox, it was something to toy with, optimize, prototype with, mess with features and usability.
 
 ## Status
 
-ulox is no longer a superset of lox. The last point where that was the case is at [this commit](../../tree/core_jlox_varloc)
+### ByteCode
 
-![current code coverage](badge_linecoverage.png)
+ByteCode style interpreter, akin to clox, has parity with some minor changes and a few additions. Details below.
+
+<details>
+<summary>Show Details</summary>
+- [Challenges, Sugar, and Demos](../../tree/bytecode_vars)
+  - RLE line numbers.
+  - Add loop, break, and continue keywords.
+  - Remove print instruction, use standard function instead.
+  - Replace default stacks and lists with faster, lazier version. Improves perf related to push and pop of value stack and callframes.
+  - Cache current callframe.
+  - Add Throw OpCode.
+  - Add Cached and Uncached global OpCodes, allows the VM to rewrite the OpCode to a cached version. Improves performance of all subsequent calls.
+  - Add OpCode for common constants and bytecode stream encoded small integers.
+  - Add class var and default values for class vars, see [ByteCode Class Sugar](#bytecode-class-sugar). Adds OpCodes for Property and Init_Chain_Start.
+
+- [Core clox](../../tree/core_clox) Core clox equivalent implemented in C# inside a Unity project using the TestRunner and Bouncing to confirm correct behavior and error reporting.
+
+#### Differences
+
+-----
+
+- null instead of nil.
+- Reusing scanner from jlox port, rather than token at a tme.
+- No manual memory management, host language does this for us.
+
+#### ByteCode Class Sugar
+
+-----
+
+We can add fields to a class with the `var` keyword, this is functionally the same as declaring them in the class `init` but less boilerplate.
+
+```cs
+class T
+{
+  init()
+  {
+    this.a = null;
+    this.b = null;
+    this.c = null;
+  }
+}
+```
+
+Can be simplified to
+
+```cs
+class T
+{
+  var a,b,c;
+}
+```
+
+These var style declares can be chained as above and can have default values given. This is acheived by having the compiler weave jumps, get locals, expression, set properties, segments within the class property code. These chains are linked by the compiler and set via an OpCode in the class. When an instance is created, the chain is executed like a function before the init, if one exists, is run.
+
+Allowing for things like
+
+```cs
+var SomeGlobal = 2;
+
+class T
+{
+  var a = 7,b = SomeGlobal,c;
+}
+```
+
+</details>
+
+### Tree-Walk
+
+Tree-Walk style interpreter, akin to jlox, has had a lot of variants and experiments done to it, you can explore it in stages if you wish to via the repo tags.
+
+<details>
+<summary>Show Details</summary>
+ulox is no longer a superset of jlox. The last point where that was the case is at [this commit](../../tree/core_jlox_varloc)
 
 - [Closureless Variant](../../tree/closureless)
   - This adds the explicit concept of an environment stack to the interpreter.
@@ -98,13 +171,9 @@ ulox is no longer a superset of lox. The last point where that was the case is a
 
 - [Core jlox](../../tree/core_jlox) Core jlox equivalent implemented in C# inside a Unity project using the TestRunner and Code Coverage to confirm correct behavior and error reporting.
 
-## Pending
+#### Differences
 
-- Add Unity specific hooks and functions.
-- Add Performance tests.
-- Add/port tests from [craftinginterpreters](https://github.com/munificent/craftinginterpreters/tree/master/test)
-
-## Differences
+-----
 
 - null instead of nil.
 - [Class Sugar](#class-sugar).
@@ -112,7 +181,9 @@ ulox is no longer a superset of lox. The last point where that was the case is a
 - print is no longer a statement. It's now a function in the LoxCoreLibrary.
 - Globals are in an instance, rather than an environment and bind themselves with the name 'Globals'. Allows for adding to globals from lower deeper scopes.
 
-## Operator Overloading
+#### Operator Overloading
+
+-----
 
 Classes can implement their own operators for binary operators, specifically the following; `_bang_equal, _equality, _greater, _greater_equal, _less, _less_equal, _minus, _add, _slash, _star, _percent` as a method within it's class, like the following.
 
@@ -129,7 +200,9 @@ class Vector2
 }
 ```
 
-## Multiple Return Values
+#### Multiple Return Values
+
+-----
 
 Functions can return more than 1 value by enclosing multiple expressions in braces. `return (a,b,c);`
 
@@ -167,7 +240,9 @@ If regular assign or var receives a multiple return values, it simply takes the 
 var x,y = Meth();// x is null, y is 1
 ```
 
-## Class Sugar
+#### Class Sugar
+
+-----
 
 The variant you are looking at right now has reduced class functionality as it is methodless. This puts us somewhere between fully duck typed c and python.
 
@@ -256,7 +331,9 @@ In both cases this is used as follows.
 var f = Foo(1,2,3);
 ```
 
-## Testing
+#### Testing
+
+------
 
 Testing statements are built into the language itself now.
 
@@ -336,3 +413,6 @@ test IntegerMath
 ```
 
 Inside a testcase there is a variable `testCaseName` which olds the name of the testcase.  Within a test, there is a variable `testName`.
+
+
+</details>
