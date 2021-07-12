@@ -1,6 +1,8 @@
 # ulox-work
 
-Worked through [Crafting Interpreters](http://craftinginterpreters.com/), in Unity C#. Both Tree-Walking and ByteCode interpreters. Now I'm just noodling around.
+No further changes expected here. Future experiements, noodling, and messing around will be structed and take place over here, [ulox](https://github.com/stevehalliwell/ulox).
+
+Worked through [Crafting Interpreters](http://craftinginterpreters.com/), in Unity C#. Both Tree-Walking and ByteCode interpreters.
 
 ## Why though?
 
